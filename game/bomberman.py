@@ -71,8 +71,12 @@ class Bomberman:
     def get_startup_status(self):
         return {
             "map": "\n".join(["".join(line) for line in self.map]),
-            "positions": {player: list(starmap(add, zip(self.players[player].position, map(lambda x: x / GAME_OFFSET_PER_POSITION, self.players[player].offset)))) for player in self.players},
-            "direction": {player: self.players[player].direction for player in self.players}
+            "position": {
+                player: (
+                    list(starmap(add, zip(self.players[player].position, map(lambda x: x / GAME_OFFSET_PER_POSITION, self.players[player].offset)))),
+                    self.players[player].direction
+                ) for player in self.players
+            }
         }
 
     def handle_players(self, status):
