@@ -19,8 +19,9 @@ def onconnect(client, server):
 def ondisconnect(client, server):
     """Handle disconnections"""
 
-    logger.info("Client ID %d disconnected.", client["id"])
-    manager.disconnect(client["id"])  # Remove this client from the manager
+    if client:
+        logger.info("Client ID %d disconnected.", client["id"])
+        manager.disconnect(client["id"])  # Remove this client from the manager
 
 def onmessage(client, server, message):
     """Handle incoming messages"""
