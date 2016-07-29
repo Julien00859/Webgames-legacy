@@ -30,14 +30,15 @@ fi
 
 if [ ! -f ./settings/game_settings.py ]; then
 	echo "File $PWD/settings/game_settings.py not found, downloading a template from github..."
-	wget https://www.github.com/Julien00859/Bomberman/master/settings/game_settings.py ./settings/
+	wget https://raw.githubusercontent.com/Julien00859/Bomberman/master/settings/game_settings.py ./settings/
 	echo "Please check the file before restarting this script"
+
 	startfail=1
 fi
 
 if [ ! -f ./settings/server_settings.py ]; then
 	echo "File $PWD/settings/server_settings.py not found, downloading a template from github..."
-	wget https://www.github.com/Julien00859/Bomberman/master/settings/server_settings.py ./settings/
+	wget https://raw.githubusercontent.com/Julien00859/Bomberman/master/settings/server_settings.py ./settings/
 	echo "Please check the file before restarting this script"
 	startfail=1
 fi
