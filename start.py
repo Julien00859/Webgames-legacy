@@ -114,9 +114,8 @@ if DB_TYPE == "sqlite":
         conn.commit()
         conn.close()
 
-# Redirect stdout and stderr to logging
+# Redirect stdout to logging
 sys.stdout = LogFile('sys.stdout')
-sys.stderr = LogFile('sys.stderr')
 
 # Launch the server
 try:
