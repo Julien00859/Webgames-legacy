@@ -7,3 +7,6 @@ wiki/
 *.gz
 *.log
 *.db
+.idea
+client/js/playground.js
+client/images

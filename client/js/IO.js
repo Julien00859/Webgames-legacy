@@ -1,6 +1,8 @@
 var IO = function IO(address, port) {
     this.ws = new WebSocket("ws://" + address + ":" + port);
 
+    this.msg = {};
+
 
     this.ws.onopen = function() {
         console.log("[ws open]");
@@ -18,6 +20,7 @@ var IO = function IO(address, port) {
     this.ws.onmessage = function(e) {
         console.log("[ws message]");
         console.log(e.data);
+        this.msg = e.data;
     }
 }
 

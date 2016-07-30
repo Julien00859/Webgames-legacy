@@ -21,10 +21,10 @@ if (-not (Get-Command python -errorAction SilentlyContinue) -or -not ((python -V
 
         if (-not (Get-Command virtualenv -errorAction SilentlyContinue)) {
             Write-Host "Installing virtualenv with pip" -ForegroundColor Yellow
-            pip.exe install virtualenv
+            C:\Users\matte\AppData\Local\Programs\Python\Python35-32\Scripts\pip.ex install virtualenv
         }
         Write-Host "Setting up a windows virtual environnement" -ForegroundColor Yellow
-        virtualenv .\venv\
+        C:\Users\matte\AppData\Local\Programs\Python\Python35-32\Scripts\virtualenv.exe .\venv\
 
         Write-Host "Installing dependencies..." -ForegroundColor Yellow
         .\venv\Scripts\pip.exe install websocket-server
