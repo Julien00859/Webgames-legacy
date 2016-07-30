@@ -7,8 +7,9 @@ config = {
     fuseKey: "p"
 }
 
+io = new IO("localhost", 28456);
+
 function main() {
-    io = new IO("localhost", 28456)
 
     document.getElementById("game").addEventListener("focus", function(){
         console.log("focus");
@@ -49,6 +50,49 @@ function main() {
     document.getElementById("select_game").addEventListener("submit", function(event){
         event.preventDefault();
         io.send_raw({cmd: "join_queue", queue: this.game_name.value})
-    })
+
+        io.ws.onmessage(function(e){
+            console.log('msg');
+            var data = e.data;
+
+            if (data.cmd == "startup_status") { // Démarrage du jeu
+                console.log('start');
+                console.log(data);
+            }
+        })
+
+        var app = playground({
+            // BOMBERMAN
+            container: document.querySelector("#game"),
+
+            create: function() {
+
+                this.loadImage("beam", "rock", "floor" ); //Incassable, Cassable, Sol
+
+            },
+
+            ready: function() {
+
+                /*
+                 ready event listener - if you want to do something
+                 when loader has finished the job
+                 */
+
+
+
+            },
+
+            render: function() {
+
+                this.layer.clear("#ffffff")
+                this.layer.drawImage(this.images.floor, 0, 0)
+
+            }
+
+        })
+    });
+
+
 }
+
 

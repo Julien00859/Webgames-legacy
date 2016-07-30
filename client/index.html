@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8">
     <title>Bomberman</title>
-    <script src="js/main.js"></script>
-    <script src="js/IO.js"></script>
     <style>
     	#game {
     		height: 5em;
     		border: 1px solid black;
+			width: 470px;
+			height: 600px;
     	}
     	input[type=text] {
     		width: 1em;
@@ -32,7 +32,7 @@
 		<input type=submit>
 	</form>
 	</div>
-    <div id="game" contenteditable></div>
+    <div id="game"></div>
     <div>
     <form id="config">
     	<label for="upKey">Up key:</label><input type="text" value="z" required maxlength=1 name="upKey"><br>
@@ -44,5 +44,8 @@
     	<input type="submit">
     </form>
     </div>
+	<script src="js/playground.js"></script>
+	<script src="js/IO.js"></script>
+	<script src="js/main.js"></script>
 </body>
 </html>
