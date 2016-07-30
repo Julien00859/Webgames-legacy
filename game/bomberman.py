@@ -70,12 +70,12 @@ class Bomberman:
 
     def get_startup_status(self):
         return {
-            "map": "\n".join(["".join(line) for line in self.map]),
-            "position": {
-                player: (
-                    list(starmap(add, zip(self.players[player].position, map(lambda x: x / GAME_OFFSET_PER_POSITION, self.players[player].offset)))),
-                    self.players[player].direction
-                ) for player in self.players
+            "map": self.map,
+            "players": {
+                player: {
+                    "position": list(starmap(add, zip(self.players[player].position, map(lambda x: x / GAME_OFFSET_PER_POSITION, self.players[player].offset)))),
+                    "direction": self.players[player].direction
+                } for player in self.players
             }
         }
 
@@ -414,8 +414,8 @@ class Status:
         self.entities[id(entity) if id_ is None else id_] = {
             "name": str(entity),
             "isalive": entity.isalive,
-            "position": entity.position,
-            "offset": entity.offset,
+            # player.postition + (player.offset / offset_per_position)
+            "position": list(starmap(add, zip(self.players[player].position, map(lambda x: x / GAME_OFFSET_PER_POSITION, self.players[player].offset)))),
             "ismoving": entity.ismoving
         }
 
@@ -435,7 +435,10 @@ class Status:
         if "map" not in self.__dict__:
             self.map = dict()
 
-        self.map[(xpos, ypos)] = ceil
+        # In python you can use anything hashable as dictionnary key.
+        # In javascript it has to be a string
+        # str([]) is an hack to convert a python's list into a JSON list 
+        self.map[str([xpos, ypos])] = ceil
 
     def gameover(self, winner=None):
         self.didsmthhappen = True
