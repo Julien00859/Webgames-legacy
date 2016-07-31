@@ -1,22 +1,25 @@
-var IO = function IO(address, port) {
-    this.ws = new WebSocket("ws://" + address + ":" + port);
+var IO = function IO(address, port, game, playground) {
+    var self = this;
 
-    this.map = {}
+    self.ws = new WebSocket("ws://" + address + ":" + port);
 
-    this.ws.onopen = function() {
+    self.map = {}
+
+    self.ws.onopen = function() {
         console.log("[ws open]");
+        self.ws.send(JSON.stringify({cmd: "join_queue", queue: game}));
     }
 
-    this.ws.onclose = function() {
+    self.ws.onclose = function() {
             console.log("[ws close]");
     }
 
-    this.ws.onerror = function(e) {
+    self.ws.onerror = function(e) {
         console.log("[ws error]");
         console.log(e);
     }
 
-    this.ws.onmessage = function(e) {
+    self.ws.onmessage = function(e) {
         console.log("[ws message]");
         var data = JSON.parse(e.data);
         console.log(data);
@@ -41,8 +44,8 @@ var IO = function IO(address, port) {
                 }
             }*/
             playground.render(data.map);
-            this.map = data.map;
-            console.log(this.map)
+            self.map = data.map;
+            console.log(self.map)
         }
 
     }
@@ -52,7 +55,7 @@ IO.prototype.send_event = function send_event(event, args=undefined, kwargs=unde
     if (args === undefined) args = [];
     if (kwargs === undefined) kwargs = {};
 
-    this.send_raw({
+    self.send_raw({
         cmd: "event",
         event: event,
         args: args,
@@ -61,5 +64,5 @@ IO.prototype.send_event = function send_event(event, args=undefined, kwargs=unde
 }
 
 IO.prototype.send_raw = function(obj) {
-    this.ws.send(JSON.stringify(obj))
+    self.ws.send(JSON.stringify(obj))
 };
