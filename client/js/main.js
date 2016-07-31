@@ -41,7 +41,7 @@ function main() {
 
             create: function() {
 
-                this.loadImage("beam", "rock", "floor" ); //Incassable, Cassable, Sol
+                this.loadImage("beam", "rock", "floor", "p_1_down", "p_1_left", "p_1_right", "p_1_up", "p_2_down", "p_2_left", "p_2_right", "p_2_up" ); //Incassable, Cassable, Sol
 
             },
 
@@ -57,19 +57,33 @@ function main() {
             render: function() {
 
                 this.layer.clear("#ffffff");
-                this.layer.drawImage(this.images.rock, (2 * 40), (2 * 40));
-                this.layer.drawImage(this.images.rock, 40, 40);
-                this.layer.drawImage(this.images.rock, 0, 0);
 
-                //map = io.map;
-                for (var ligne in io.map) { // Rendu de la map à partir de l'Array 2D
-                    for (var colonne in io.map[ligne]) {
+                var map = io.map;
+                var players = io.players;
+
+
+                for (var x in io.map) { // Rendu de la map à partir de l'Array 2D
+                    for (var y in io.map[x]) {
                         //console.log(ligne, colonne);
-                        if (io.map[ligne][colonne] == "#") this.layer.drawImage(this.images.rock, (colonne * 40), (ligne * 40));
-                        else if (io.map[ligne][colonne] == "&") this.layer.drawImage(this.images.beam, colonne * 40, ligne * 40);
-                        else if (io.map[ligne][colonne] == " ") this.layer.drawImage(this.images.floor, colonne * 40, ligne * 40);
+                        if (io.map[x][y] == "#") this.layer.drawImage(this.images.rock, x * 40, y * 40);
+                        else if (io.map[x][y] == "&") this.layer.drawImage(this.images.beam, x * 40, y * 40);
+                        else if (io.map[x][y] == " ") this.layer.drawImage(this.images.floor, x * 40, y * 40);
                     }
                 }
+
+                for (var player in Object.keys(players)) {
+                    switch (players[Object.keys(players)[player]].direction) {
+                        case "N": this.layer.drawImage(this.images["p_" + (parseInt(player) + 1) + "_up"], players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20)
+                            break;
+                        case "S": this.layer.drawImage(this.images["p_" + (parseInt(player) + 1) + "_down"], players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20)
+                            break;
+                        case "E": this.layer.drawImage(this.images["p_" + (parseInt(player) + 1) + "_right"], players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20)
+                            break;
+                        case "W": this.layer.drawImage(this.images["p_" + (parseInt(player) + 1) + "_left"], players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20)
+                            break;
+                    }
+                }
+
 
             }
 
