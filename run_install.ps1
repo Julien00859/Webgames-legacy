@@ -21,16 +21,16 @@ if (-not (Get-Command python -errorAction SilentlyContinue) -or -not ((python -V
 
         if (-not (Get-Command virtualenv -errorAction SilentlyContinue)) {
             Write-Host "Installing virtualenv with pip" -ForegroundColor Yellow
-            C:\Users\matte\AppData\Local\Programs\Python\Python35-32\Scripts\pip.ex install virtualenv
+            pip.exe install virtualenv
         }
         Write-Host "Setting up a windows virtual environnement" -ForegroundColor Yellow
-        C:\Users\matte\AppData\Local\Programs\Python\Python35-32\Scripts\virtualenv.exe .\venv\
+        virtualenv.exe .\venv\
 
         Write-Host "Installing dependencies..." -ForegroundColor Yellow
         .\venv\Scripts\pip.exe install websocket-server
     }
 
-    if (-not (Test-Path .\client\js\playgound.js)) {
+    if (-not (Test-Path .\client\js\playground.js)) {
     	Write-Host -ForegroundColor Yellow "Library playground.js not found, downloading..."
     	Invoke-WebRequest -Uri https://raw.githubusercontent.com/rezoner/playground/master/build/playground.js -OutFile .\client\js\playground.js
     }

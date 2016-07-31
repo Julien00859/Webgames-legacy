@@ -339,7 +339,7 @@ class Bomberman:
             else:
                 return True  # It's a hack to not check wether we walk to a powerup
 
-            self.handle_powerup(entity) 
+            self.handle_powerup(entity)
 
         # Le joueur ne peut pas se diriger sur la case voulu (question de position),
         # on regarde s'il peut tout de même se rapprocher du mur
@@ -394,8 +394,8 @@ class Bomberman:
             self.gameover = True
             status.gameover(alives[0] if alives else None)
 
-    def run_event(self, pid, event, *args, **kwargs):
-        getattr(self.players[pid], event)(*args, **kwargs)
+    def run_event(self, pid, event, **kwargs):
+        getattr(self.players[pid], event)(**kwargs)
 
     def get_events(self):
         return [attr for attr in dir(Player) if not attr.startswith("__")]
@@ -437,7 +437,7 @@ class Status:
 
         # In python you can use anything hashable as dictionnary key.
         # In javascript it has to be a string
-        # str([]) is an hack to convert a python's list into a JSON list 
+        # str([]) is an hack to convert a python's list into a JSON list
         self.map[str([xpos, ypos])] = ceil
 
     def gameover(self, winner=None):

@@ -35,16 +35,14 @@ var IO = function IO(address, port, game, playground) {
     }
 }
 
-IO.prototype.send_event = function send_event(event, args=undefined, kwargs=undefined) {
-    if (args === undefined) args = [];
+IO.prototype.send_event = function send_event(event, kwargs=undefined) {
     if (kwargs === undefined) kwargs = {};
 
     this.send_raw({
         cmd: "event",
         event: event,
-        args: args,
         kwargs: kwargs
-    }) 
+    })
 }
 
 IO.prototype.send_raw = function(obj) {

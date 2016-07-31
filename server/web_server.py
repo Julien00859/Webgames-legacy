@@ -14,7 +14,8 @@ def onconnect(client, server):
     """Handle incoming connections"""
 
     logger.info("Client ID %d connected from %s:%d.", client["id"], client["address"][0], client["address"][1])
-    manager.connect(client)  # Add this client (client ID, client socket) to the manager
+    token = manager.connect(client)  # Add this client (client ID, client socket) to the manager
+    server.send_message(client, json.dumps({"cmd": repr(e)}))
 
 def ondisconnect(client, server):
     """Handle disconnections"""
@@ -35,8 +36,8 @@ def onmessage(client, server, message):
 
         # Client want to send an event
         if dictmsg["cmd"] == "event":
-            assert "event" in dictmsg and "args" in dictmsg and "kwargs" in dictmsg
-            manager.send_event(client["id"], dictmsg["event"], dictmsg["args"], dictmsg["kwargs"])
+            assert "event" in dictmsg and "kwargs" in dictmsg
+            manager.send_event(client["id"], dictmsg["event"], **dictmsg["kwargs"])
 
         # Client want to join a queue
         elif dictmsg["cmd"] == "join_queue":
@@ -46,7 +47,7 @@ def onmessage(client, server, message):
     # Syntax, Grammatical or Semantic Error
     except (json.decoder.JSONDecodeError, AssertionError, ProjectException) as e:
         logger.warning("Client ID %d generated error %s with message %s", client["id"], repr(e), message)
-        server.send_message(client, json.dumps({"error": repr(e)}))
+        server.send_message(client, json.dumps({"cmd": "error", "error": repr(e)}))
 
 def start_server():
     """Start both the Game Manager and the Web Server"""

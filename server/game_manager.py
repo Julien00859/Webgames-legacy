@@ -18,7 +18,7 @@ class Manager:
     def __init__(self, webserver):
         self.webserver = webserver # The webserver to send messages to clients
         self.players = {} # A map of clients where the key is the ID given by the webserver
-        self.games = {} # A map of games where the 
+        self.games = {} # A map of games where the
         self.gameid = count(1)
         self.queues = {}
         self.running = True
@@ -197,7 +197,7 @@ class Manager:
             # Delete the game
             del self.games[gid]
 
-    def send_event(self, client_id, event, *args, **kwargs):
+    def send_event(self, client_id, event, **kwargs):
         """Send an event (call a function with the given args) in the game the player is in"""
         if client_id not in self.players:
             raise NotRegistered("This client hasn't registered yet")
@@ -212,11 +212,11 @@ class Manager:
             raise InvalidEvent("{} is not a valid event, valids one are: {}".format(event, ", ".join(events)))
 
         logger.debug("Player ID %d fired event \"%s\" to Game ID %d", client_id, event, self.players[client_id]["gameid"])
-        game.run_event(client_id, event, *args, **kwargs)
-        
+        game.run_event(client_id, event, **kwargs)
+
     def safe_stop(self):
         """Disconnect all users and wait for all game the stop"""
-        
+
         logger.info("Stopping Game Manager")
 
         self.running = False

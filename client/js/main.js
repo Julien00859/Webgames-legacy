@@ -100,10 +100,10 @@ function main() {
         // Ecoute les touches
 
         document.getElementById("game").addEventListener("keydown", function(event){
-            if      (event.key == config.upKey)     io.send_event("move", ["N"]);
-            else if (event.key == config.downKey)   io.send_event("move", ["S"]);
-            else if (event.key == config.leftKey)   io.send_event("move", ["W"]);
-            else if (event.key == config.rigthKey)  io.send_event("move", ["E"]);
+            if      (event.key == config.upKey)     io.send_event("move", {"direction": "N"});
+            else if (event.key == config.downKey)   io.send_event("move", {"direction": "S"});
+            else if (event.key == config.leftKey)   io.send_event("move", {"direction": "E"});
+            else if (event.key == config.rigthKey)  io.send_event("move", {"direction": "W"});
             else if (event.key == config.plantKey)  io.send_event("plant");
             else if (event.key == config.fuseKey)   io.send_event("fuse");
         });
@@ -123,5 +123,3 @@ function main() {
     }); // Fin de la fonction onsubmit
 
 } // Fin du main()
-
-
