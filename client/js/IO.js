@@ -1,8 +1,7 @@
 var IO = function IO(address, port) {
     this.ws = new WebSocket("ws://" + address + ":" + port);
 
-    this.msg = {};
-
+    this.map = {}
 
     this.ws.onopen = function() {
         console.log("[ws open]");
@@ -20,7 +19,15 @@ var IO = function IO(address, port) {
     this.ws.onmessage = function(e) {
         console.log("[ws message]");
         console.log(e.data);
-        this.msg = e.data;
+        console.log(typeof e)
+        console.log(typeof e.data)
+        var data = JSON.parse(e.data);
+
+        if (data.cmd == "startup_status") { // Démarrage du jeu
+            console.log("trol")
+            this.map = data.map;
+        } else console.log("brol")
+
     }
 }
 

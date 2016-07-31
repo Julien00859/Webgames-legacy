@@ -51,15 +51,7 @@ function main() {
         event.preventDefault();
         io.send_raw({cmd: "join_queue", queue: this.game_name.value})
 
-        io.ws.onmessage(function(e){
-            console.log('msg');
-            var data = e.data;
-
-            if (data.cmd == "startup_status") { // Démarrage du jeu
-                console.log('start');
-                console.log(data);
-            }
-        })
+        console.log(io.map);
 
         var app = playground({
             // BOMBERMAN
