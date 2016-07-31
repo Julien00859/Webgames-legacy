@@ -15,7 +15,7 @@ def onconnect(client, server):
 
     logger.info("Client ID %d connected from %s:%d.", client["id"], client["address"][0], client["address"][1])
     token = manager.connect(client)  # Add this client (client ID, client socket) to the manager
-    server.send_message(client, json.dumps({"cmd": repr(e)}))
+    server.send_message(client, json.dumps({"cmd": "connection_success", "id": client["id"], "token": token}))
 
 def ondisconnect(client, server):
     """Handle disconnections"""
@@ -36,8 +36,8 @@ def onmessage(client, server, message):
 
         # Client want to send an event
         if dictmsg["cmd"] == "event":
-            assert "event" in dictmsg and "kwargs" in dictmsg
-            manager.send_event(client["id"], dictmsg["event"], **dictmsg["kwargs"])
+            assert "event" in dictmsg and "args" in dictmsg and "kwargs" in dictmsg
+            manager.send_event(client["id"], dictmsg["event"], dictmsg["args"], dictmsg["kwargs"])
 
         # Client want to join a queue
         elif dictmsg["cmd"] == "join_queue":
