@@ -30,6 +30,11 @@ if (-not (Get-Command python -errorAction SilentlyContinue) -or -not ((python -V
         .\venv\Scripts\pip.exe install websocket-server
     }
 
+    if (-not (Test-Path .\client\js\playgound.js)) {
+    	Write-Host -ForegroundColor Yellow "Library playground.js not found, downloading..."
+    	Invoke-WebRequest -Uri https://raw.githubusercontent.com/rezoner/playground/master/build/playground.js -OutFile .\client\js\playground.js
+    }
+
     if (-not (Test-Path .\settings\)) {
         Write-Host ".\settings package not found, creating one" -ForegroundColor Yellow
     	New-Item .\settings -type directory | Out-Null

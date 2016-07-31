@@ -23,6 +23,10 @@ if [ ! -f ./venv/bin/python ]; then
 	./venv/bin/pip install websocket-server
 fi
 
+if [ ! -f ./client/js/playground.js ]; then
+	wget https://raw.githubusercontent.com/rezoner/playground/master/build/playground.js ./client/js/playground.js
+fi
+
 if [ ! -d ./settings/ ]; then
 	echo "Creating a settings directory"
 	mkdir ./settings
@@ -38,6 +42,13 @@ fi
 
 if [ ! -f ./settings/server_settings.py ]; then
 	echo "File $PWD/settings/server_settings.py not found, downloading a template from github..."
+	wget https://raw.githubusercontent.com/Julien00859/Bomberman/master/settings/server_settings.py ./settings/
+	echo "Please check the file before restarting this script"
+	startfail=1
+fi
+
+if [ ! -f ./settings/schema.sql ]; then
+	echo "File $PWD/settings/schema.sql not found, downloading a template from github..."
 	wget https://raw.githubusercontent.com/Julien00859/Bomberman/master/settings/server_settings.py ./settings/
 	echo "Please check the file before restarting this script"
 	startfail=1
