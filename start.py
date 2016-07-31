@@ -83,7 +83,7 @@ if KEEP_LOG:
 logging.basicConfig(
     filename=log_path,
     level=getattr(logging, FILE_LEVEL),
-    format="{asctime} {levelname:<8} {name:<20} {message}",
+    format="{asctime} [{levelname}] <{name}> {message}",
     style="{",
     datefmt="%Y/%m/%d %X",
     filemode="w"

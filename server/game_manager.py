@@ -156,7 +156,7 @@ class Manager:
 
                 # If something happened during this tick, send the status to the players
                 if status["didsmthhappen"]:
-                    status_json = json.dumps({"command": "status", "status": status})
+                    status_json = json.dumps({"cmd": "status", "status": status})
                     logger.debug("Game ID %d sent the following command: %s", gid, status_json)
 
                     for pid in players:
