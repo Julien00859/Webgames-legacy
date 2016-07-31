@@ -35,6 +35,54 @@ def updatable_queue(iterable):
             new = yield
 
 
+class Status:
+    """Garde une trace de ce qu'il s'est passé durant un tour"""
+    def __init__(self, tickno):
+        self.didsmthhappen = False
+        self.tickno = tickno
+
+    def add_entity(self, entity, id_=None):
+        self.didsmthhappen = True
+        if "entities" not in self.__dict__:
+            self.entities = dict()
+
+        self.entities[id(entity) if id_ is None else id_] = {
+            "name": str(entity),
+            "isalive": entity.isalive,
+            # player.postition + (player.offset / offset_per_position)
+            "position": list(starmap(add, zip(entity.position, map(lambda x: x / GAME_OFFSET_PER_POSITION, entity.offset)))),
+            "ismoving": entity.ismoving
+        }
+
+    def add_explosion(self, bomb):
+        self.didsmthhappen = True
+        if "explosions" not in self.__dict__:
+            self.explosions = dict()
+
+        self.explosions[id(bomb)] = {
+            "name": str(bomb),
+            "position": bomb.position,
+            "radius": bomb.power
+        }
+
+    def update_map(self, xpos, ypos, ceil):
+        self.didsmthhappen = True
+        if "map" not in self.__dict__:
+            self.map = dict()
+
+        # In python you can use anything hashable as dictionnary key.
+        # In javascript it has to be a string
+        # str([]) is an hack to convert a python's list into a JSON list
+        self.map[str([xpos, ypos])] = ceil
+
+    def gameover(self, winner=None):
+        self.didsmthhappen = True
+        self.winner = winner
+
+    def get_dict(self):
+        return self.__dict__
+
+
 class Bomberman:
     """Le jeu"""
 
@@ -87,10 +135,14 @@ class Bomberman:
             # Calcule le déplacement du joueur et met à jour le statut
             if player.ismoving:
                 oldpos = list(starmap(add, zip(player.position, map(lambda x: x / GAME_OFFSET_PER_POSITION, player.offset))))
-                if self.move_entity(player):
-                    status.add_entity(player)
+                if self.move_entity(player, status):
                     newpos = list(starmap(add, zip(player.position, map(lambda x: x / GAME_OFFSET_PER_POSITION, player.offset))))
-                    logger.debug("Game ID %d: Player ID %d moved from %s to %s", self.gid, pid, oldpos, newpos)
+                    if (oldpos == newpos):
+                        logger.warning("Game ID %d: Internal Error, player ID %d didn't move but still moving.", self.gid, pid)
+                        player.stop()
+                    else:
+                        logger.debug("Game ID %d: Player ID %d moved from %s to %s", self.gid, pid, oldpos, newpos)
+                        status.add_entity(player, pid)
 
             # Gère l'événement "poser une bombe" et met à jour le statut
             if player.plant_event and player.bomb > 0:
@@ -212,7 +264,7 @@ class Bomberman:
             if bomb.ismoving:
                 oldpos = list(starmap(add, zip(bomb.position, map(lambda x: x / GAME_OFFSET_PER_POSITION, bomb.offset))))
                 self.map[bomb.position[0]][bomb.position[1]] = MAP_VOID
-                if self.move_entity(bomb):
+                if self.move_entity(bomb, status):
                     status.add_entity(bomb)
                     newpos = list(starmap(add, zip(bomb.position, map(lambda x: x / GAME_OFFSET_PER_POSITION, bomb.offset))))
                     logger.debug("Game ID %d: Player ID %d moved from %s to %s", self.gid, pid, oldpos, newpos)
@@ -252,7 +304,7 @@ class Bomberman:
         else:
             return None, None
 
-    def move_entity(self, entity: Entity):
+    def move_entity(self, entity: Entity, status: Status):
         """Fonction gérant le déplacement des entitées, retourne vrai si la position de l'entité a changé, faux dans les autres cas"""
 
         # L'histoire du schémas qui explique tout
@@ -294,14 +346,16 @@ class Bomberman:
 
                 # Ceci vérifie que le joueur se déplace toujours autours du milieu de son axe (pas sur les #)
                 if GAME_OFFSET_PER_POSITION / 4 < entity.offset[1] < GAME_OFFSET_PER_POSITION / 4 * 3:
+                    entity.offset[0] = xoff
+                else:
                     if xoff < GAME_OFFSET_PER_POSITION / 4:
                         entity.offset[0] = GAME_OFFSET_PER_POSITION / 4
+                        return False
                     elif xoff > GAME_OFFSET_PER_POSITION / 4 * 3:
                         entity.offset[0] = GAME_OFFSET_PER_POSITION / 4 * 3
+                        return False
                     else:
                         entity.offset[0] = xoff
-                else:
-                    entity.offset[0] = xoff
 
             # Le joueur se déplace sur l'axe des ordonnées
             else:
@@ -310,14 +364,16 @@ class Bomberman:
 
                 # Ceci vérifie que le joueur se déplace toujours autours du milieu de son axe (pas sur les #)
                 if GAME_OFFSET_PER_POSITION / 4 < entity.offset[0] < GAME_OFFSET_PER_POSITION / 4 * 3:
+                    entity.offset[1] = yoff
+                else:
                     if yoff < GAME_OFFSET_PER_POSITION / 4:
                         entity.offset[1] = GAME_OFFSET_PER_POSITION / 4
+                        return False
                     elif yoff > GAME_OFFSET_PER_POSITION / 4 * 3:
                         entity.offset[1] = GAME_OFFSET_PER_POSITION / 4 * 3
+                        return False
                     else:
                         entity.offset[1] = yoff
-                else:
-                    entity.offset[1] = yoff
 
             # Lorsque l'offset excède ou décède le nombre d'unité par case, on met à jour la position
             if entity.offset[0] < 0:
@@ -339,7 +395,7 @@ class Bomberman:
             else:
                 return True  # It's a hack to not check wether we walk to a powerup
 
-            self.handle_powerup(entity)
+            self.handle_powerup(entity, status)
 
         # Le joueur ne peut pas se diriger sur la case voulu (question de position),
         # on regarde s'il peut tout de même se rapprocher du mur
@@ -350,6 +406,7 @@ class Bomberman:
             else:
                 entity.offset[1] = GAME_OFFSET_PER_POSITION / 4
                 entity.stop()
+                return False
 
         elif entity.direction == "S" and entity.offset[1] < GAME_OFFSET_PER_POSITION / 4 * 3:
             off = entity.offset[1] + VECTORS[entity.direction][1] * entity.speed
@@ -358,6 +415,7 @@ class Bomberman:
             else:
                 entity.offset[1] = GAME_OFFSET_PER_POSITION / 4 * 3
                 entity.stop()
+                return False
 
         elif entity.direction == "W" and entity.offset[0] > GAME_OFFSET_PER_POSITION / 4:
             off = entity.offset[0] + VECTORS[entity.direction][1] * entity.speed
@@ -366,6 +424,7 @@ class Bomberman:
             else:
                 entity.offset[0] = GAME_OFFSET_PER_POSITION / 4
                 entity.stop()
+                return False
 
         elif entity.direction == "E" and entity.offset[0] < GAME_OFFSET_PER_POSITION / 4 * 3:
             off = entity.offset[0] + VECTORS[entity.direction][1] * entity.speed
@@ -374,6 +433,7 @@ class Bomberman:
             else:
                 entity.offset[0] = GAME_OFFSET_PER_POSITION / 4 * 3
                 entity.stop()
+                return False
 
         # L'entité n'a pas pu se déplacer
         else:
@@ -399,50 +459,3 @@ class Bomberman:
 
     def get_events(self):
         return [attr for attr in dir(Player) if not attr.startswith("__")]
-
-class Status:
-    """Garde une trace de ce qu'il s'est passé durant un tour"""
-    def __init__(self, tickno):
-        self.didsmthhappen = False
-        self.tickno = tickno
-
-    def add_entity(self, entity, id_=None):
-        self.didsmthhappen = True
-        if "entities" not in self.__dict__:
-            self.entities = dict()
-
-        self.entities[id(entity) if id_ is None else id_] = {
-            "name": str(entity),
-            "isalive": entity.isalive,
-            # player.postition + (player.offset / offset_per_position)
-            "position": list(starmap(add, zip(self.players[player].position, map(lambda x: x / GAME_OFFSET_PER_POSITION, self.players[player].offset)))),
-            "ismoving": entity.ismoving
-        }
-
-    def add_explosion(self, bomb):
-        self.didsmthhappen = True
-        if "explosions" not in self.__dict__:
-            self.explosions = dict()
-
-        self.explosions[id(bomb)] = {
-            "name": str(bomb),
-            "position": bomb.position,
-            "radius": bomb.power
-        }
-
-    def update_map(self, xpos, ypos, ceil):
-        self.didsmthhappen = True
-        if "map" not in self.__dict__:
-            self.map = dict()
-
-        # In python you can use anything hashable as dictionnary key.
-        # In javascript it has to be a string
-        # str([]) is an hack to convert a python's list into a JSON list
-        self.map[str([xpos, ypos])] = ceil
-
-    def gameover(self, winner=None):
-        self.didsmthhappen = True
-        self.winner = winner
-
-    def get_dict(self):
-        return self.__dict__

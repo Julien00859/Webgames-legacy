@@ -36,8 +36,8 @@ def onmessage(client, server, message):
 
         # Client want to send an event
         if dictmsg["cmd"] == "event":
-            assert "event" in dictmsg and "args" in dictmsg and "kwargs" in dictmsg
-            manager.send_event(client["id"], dictmsg["event"], dictmsg["args"], dictmsg["kwargs"])
+            assert "event" in dictmsg and "kwargs" in dictmsg
+            manager.send_event(client["id"], dictmsg["event"], **dictmsg["kwargs"])
 
         # Client want to join a queue
         elif dictmsg["cmd"] == "join_queue":
