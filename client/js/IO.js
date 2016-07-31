@@ -40,6 +40,7 @@ var IO = function IO(address, port) {
                     if (map[ligne][colonne] == " ") this.layer.drawImage(this.images.floor, colonne * 40, ligne * 40);
                 }
             }*/
+            playground.render(data.map);
             this.map = data.map;
             console.log(this.map)
         }

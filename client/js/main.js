@@ -81,11 +81,11 @@ function main() {
 
             },
 
-            render: function() {
+            render: function(map) {
 
                 this.layer.clear("#ffffff")
 
-                map = io.map;
+                //map = io.map;
                 for (var ligne in map) { // Rendu de la map à partir de l'Array 2D
                     for (var colonne in map[ligne]) {
                         console.log(ligne, colonne)
