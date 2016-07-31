@@ -10,25 +10,23 @@ CHROOT_TO_PROJECT_DIR = True # Only available on Linux
 HOST = "0.0.0.0"
 PORT = 28456
 
-#token
+# Security
 TOKEN_LENGTH = 16
 
 # Game Manager
 PLAYERS_PER_GAME = 2
-
-# log
-LOG_FILE = "latest.log"
-FILE_LEVEL = "DEBUG"
-CONSOLE_LEVEL = "INFO"
-KEEP_LOG = True
-
-# Games available
 GAMES = {
     "bomberman": {
         "gamefunc": Bomberman,
         "initfunc": (lambda: {"mapname": choice(listdir(pathjoin("game", "maps")))})
     }
 }
+
+# Log
+LOG_FILE = "latest.log"
+FILE_LEVEL = "DEBUG"
+CONSOLE_LEVEL = "INFO"
+KEEP_LOG = True
 
 # Database
 DB_TYPE = "sqlite"
