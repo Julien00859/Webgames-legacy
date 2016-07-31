@@ -18,15 +18,31 @@ var IO = function IO(address, port) {
 
     this.ws.onmessage = function(e) {
         console.log("[ws message]");
-        console.log(e.data);
-        console.log(typeof e)
-        console.log(typeof e.data)
         var data = JSON.parse(e.data);
+        console.log(data);
 
         if (data.cmd == "startup_status") { // Démarrage du jeu
-            console.log("trol")
+            console.log(data.map);
+            /*var map = []; // Array 2D
+            var mapping = []; // Une ligne de l'Array (construite à partir du string (data.map))
+            for (var i in data.map) { // Fonction qui construit l'Array 2D
+                if (data.map[i] == "\n") {
+                    map.push(mapping)
+                    mapping = []
+                } else mapping.push(data.map[i])
+            }*/
+            // console.log(map);
+            /*for (var ligne in map) { // Rendu de la map à partir de l'Array 2D
+                for (var colonne in map[ligne]) {
+                    console.log(ligne, colonne)
+                    if (map[ligne][colonne] == "#") this.layer.drawImage(this.images.rock, colonne * 40, ligne * 40);
+                    if (map[ligne][colonne] == "&") this.layer.drawImage(this.images.beam, colonne * 40, ligne * 40);
+                    if (map[ligne][colonne] == " ") this.layer.drawImage(this.images.floor, colonne * 40, ligne * 40);
+                }
+            }*/
             this.map = data.map;
-        } else console.log("brol")
+            console.log(this.map)
+        }
 
     }
 }

@@ -7,6 +7,13 @@ config = {
     fuseKey: "p"
 }
 
+// Variable Globale //
+
+var map = {}
+
+
+//////////////////////
+
 io = new IO("localhost", 28456);
 
 function main() {
@@ -77,7 +84,16 @@ function main() {
             render: function() {
 
                 this.layer.clear("#ffffff")
-                this.layer.drawImage(this.images.floor, 0, 0)
+
+                map = io.map;
+                for (var ligne in map) { // Rendu de la map à partir de l'Array 2D
+                    for (var colonne in map[ligne]) {
+                        console.log(ligne, colonne)
+                        if (map[ligne][colonne] == "#") this.layer.drawImage(this.images.rock, colonne * 40, ligne * 40);
+                        else if (map[ligne][colonne] == "&") this.layer.drawImage(this.images.beam, colonne * 40, ligne * 40);
+                        else if (map[ligne][colonne] == " ") this.layer.drawImage(this.images.floor, colonne * 40, ligne * 40);
+                    }
+                }
 
             }
 
