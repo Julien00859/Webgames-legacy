@@ -67,18 +67,20 @@ function main() {
 
             },
 
-            render: function(map) {
+            render: function() {
 
                 this.layer.clear("#ffffff");
-                this.layer.drawImage(this.images.rock, (colonne * 40), (ligne * 40));
+                this.layer.drawImage(this.images.rock, (2 * 40), (2 * 40));
+                this.layer.drawImage(this.images.rock, 40, 40);
+                this.layer.drawImage(this.images.rock, 0, 0);
 
                 //map = io.map;
-                for (var ligne in map) { // Rendu de la map à partir de l'Array 2D
-                    for (var colonne in map[ligne]) {
+                for (var ligne in io.map) { // Rendu de la map à partir de l'Array 2D
+                    for (var colonne in io.map[ligne]) {
                         //console.log(ligne, colonne);
-                        if (map[ligne][colonne] == "#") this.layer.drawImage(this.images.rock, (colonne * 40), (ligne * 40));
-                        else if (map[ligne][colonne] == "&") this.layer.drawImage(this.images.beam, colonne * 40, ligne * 40);
-                        else if (map[ligne][colonne] == " ") this.layer.drawImage(this.images.floor, colonne * 40, ligne * 40);
+                        if (io.map[ligne][colonne] == "#") this.layer.drawImage(this.images.rock, (colonne * 40), (ligne * 40));
+                        else if (io.map[ligne][colonne] == "&") this.layer.drawImage(this.images.beam, colonne * 40, ligne * 40);
+                        else if (io.map[ligne][colonne] == " ") this.layer.drawImage(this.images.floor, colonne * 40, ligne * 40);
                     }
                 }
 
