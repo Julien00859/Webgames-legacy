@@ -7,33 +7,16 @@ config = {
     fuseKey: "p"
 }
 
-// Variable Globale //
+// Variable(s) Globale(s) //
 
 var map = {}
 
 
-//////////////////////
+// --------------------- //
 
 function main() {
 
-
-    /*document.getElementById("game").addEventListener("keydown", function(event){
-        if      (event.key == config.upKey)     io.send_event("move", ["N"]);
-        else if (event.key == config.downKey)   io.send_event("move", ["S"]);
-        else if (event.key == config.leftKey)   io.send_event("move", ["W"]);
-        else if (event.key == config.rigthKey)  io.send_event("move", ["E"]);
-        else if (event.key == config.plantKey)  io.send_event("plant");
-        else if (event.key == config.fuseKey)   io.send_event("fuse");
-    });
-
-    document.getElementById("game").addEventListener("keyup", function(event){
-        if (
-            event.key == config.upKey ||
-            event.key == config.downKey ||
-            event.key == config.leftKey ||
-            event.key == config.rigthKey
-        ) io.send_event("stop");
-    });
+    // Config des touches //
 
     document.getElementById("config").addEventListener("submit", function(event){
         event.preventDefault();
@@ -43,10 +26,14 @@ function main() {
         config.rigthKey = this.rigthKey.value;
         config.plantKey = this.plantKey.value;
         config.fuseKey = this.fuseKey.value;
-    });*/
+    });
+
+    // -------------------------------------------------------------------------- //
 
     document.getElementById("select_game").addEventListener("submit", function(event){
         event.preventDefault();
+
+        // Playground => S'occupe du rendu graphique, sonore du jeu //
 
         var app = playground({
             // BOMBERMAN
@@ -88,16 +75,39 @@ function main() {
 
         })
 
+        // ------------------------------------------------------------------------------------------------------------------ //
+
+        // Nouveau IO => Gère la communication client - serveur //
+
         io = new IO("localhost", 28456, this.game_name.value, app);
 
-        //io.send_raw({cmd: "join_queue", queue: this.game_name.value})
+        // -------------------------------------------------------- //
 
-        //console.log(io.map);
+        // Ecoute les touches
+
+        document.getElementById("game").addEventListener("keydown", function(event){
+            if      (event.key == config.upKey)     io.send_event("move", ["N"]);
+            else if (event.key == config.downKey)   io.send_event("move", ["S"]);
+            else if (event.key == config.leftKey)   io.send_event("move", ["W"]);
+            else if (event.key == config.rigthKey)  io.send_event("move", ["E"]);
+            else if (event.key == config.plantKey)  io.send_event("plant");
+            else if (event.key == config.fuseKey)   io.send_event("fuse");
+        });
+
+        document.getElementById("game").addEventListener("keyup", function(event){
+            if (
+                event.key == config.upKey ||
+                event.key == config.downKey ||
+                event.key == config.leftKey ||
+                event.key == config.rigthKey
+            ) io.send_event("stop");
+        });
+
+        // ------------------------------------------------------------------------ //
 
 
-    });
+    }); // Fin de la fonction onsubmit
 
-
-}
+} // Fin du main()
 
 
