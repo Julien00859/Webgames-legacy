@@ -63,7 +63,7 @@ function main() {
 
             create: function() {
 
-                this.loadImage("beam", "rock", "floor", "p_1_down", "p_1_left", "p_1_right", "p_1_up", "p_2_down", "p_2_left", "p_2_right", "p_2_up" ); //Incassable, Cassable, Sol
+                this.loadImage("beam", "rock", "floor", "p_1_down", "p_1_left", "p_1_right", "p_1_up", "p_2_down", "p_2_left", "p_2_right", "p_2_up", "bomb", "explosion" ); //Incassable, Cassable, Sol
 
             },
 
@@ -82,6 +82,7 @@ function main() {
 
                 var map = io.map;
                 var players = io.players;
+                var bombs = io.bombs;
 
 
                 for (var x in io.map) { // Rendu de la map à partir de l'Array 2D
@@ -104,6 +105,10 @@ function main() {
                         case "W": this.layer.drawImage(this.images["p_" + (parseInt(player) + 1) + "_left"], players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20)
                             break;
                     }
+                }
+
+                for (var bomb in bombs) {
+                    this.layer.drawImage(this.images["bomb"], bombs[bomb].position[0] * 40 - 20, bombs[bomb].position[1] * 40 - 20, 40, 40);
                 }
 
 

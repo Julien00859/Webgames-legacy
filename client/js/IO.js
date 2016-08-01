@@ -5,6 +5,7 @@ var IO = function IO(address, port, game, playground) {
 
     self.map = {}
     self.players = {}
+    self.bombs = {}
     self.id;
 
     self.ws.onopen = function() {
@@ -37,11 +38,23 @@ var IO = function IO(address, port, game, playground) {
                 playground.render();
                 break;
             case "status":
-                console.log(data.status.entities)
-                if (data.status.entities[self.id].ismoving) {
-                    self.players[self.id] = data.status.entities[self.id];
-                }
 
+                for (var i in data.status.entities) {
+                    if (data.status.entities[i].name == "<Player>")
+                        if (data.status.entities[i].ismoving) {
+                            self.players[self.id] = data.status.entities[i];
+                        }
+                    /*}
+                     if (data.status.entities[self.id].ismoving) {
+                     self.players[self.id] = data.status.entities[self.id];
+                     }*/
+                    if (data.status.entities[i].name == "<Bomb>")
+                        self.bombs[i] = data.status.entities[i];
+
+                    if (data.status.entities[i].name == "<other>")
+                        console.log("rien")
+
+            }
         }
 
     }
