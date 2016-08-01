@@ -152,9 +152,9 @@ class Bomberman:
 
                 # Le joueur pose une mine
                 if player.has_mine:
-                    b = Mine(player)
-                    player.mines.append(b)
-                    self.bombs.append(b)
+                    m = Mine(player)
+                    player.mines.append(m)
+                    self.bombs.append(m)
                     self.map[m.position[0]][m.position[1]] = MAP_MINE
                     status.add_entity(b)
                     logger.debug("Game ID %d: Player ID %d planted a %s at %s", self.gid, pid, repr(m), m.position)
@@ -163,7 +163,7 @@ class Bomberman:
                 else:
                     b = Bomb(player)
                     self.bombs.append(b)
-                    self.map[m.position[0]][m.position[1]] = MAP_BOMB
+                    self.map[b.position[0]][b.position[1]] = MAP_BOMB
                     status.add_entity(b)
                     logger.debug("Game ID %d: Player ID %d planted a %s at %s", self.gid, pid, repr(b), b.position)
 
@@ -348,6 +348,7 @@ class Bomberman:
                 # Ceci vérifie que le joueur se déplace toujours autours du milieu de son axe (pas sur les #)
                 if GAME_OFFSET_PER_POSITION / 4 < entity.offset[1] < GAME_OFFSET_PER_POSITION / 4 * 3:
                     entity.offset[0] = xoff
+
                 else:
                     if xoff < GAME_OFFSET_PER_POSITION / 4:
                         entity.offset[0] = GAME_OFFSET_PER_POSITION / 4
@@ -366,6 +367,7 @@ class Bomberman:
                 # Ceci vérifie que le joueur se déplace toujours autours du milieu de son axe (pas sur les #)
                 if GAME_OFFSET_PER_POSITION / 4 < entity.offset[0] < GAME_OFFSET_PER_POSITION / 4 * 3:
                     entity.offset[1] = yoff
+
                 else:
                     if yoff < GAME_OFFSET_PER_POSITION / 4:
                         entity.offset[1] = GAME_OFFSET_PER_POSITION / 4
