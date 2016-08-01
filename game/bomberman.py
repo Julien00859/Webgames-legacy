@@ -400,7 +400,7 @@ class Bomberman:
 
             self.handle_powerup(entity, status)
 
-        # Le joueur ne peut pas se diriger sur la case voulu (question de position),
+        # Le joueur ne peut pas se diriger sur la case voulue (question de position),
         # on regarde s'il peut tout de même se rapprocher du mur
         elif entity.direction == "N" and entity.offset[1] > GAME_OFFSET_PER_POSITION / 4:
             off = entity.offset[1] + VECTORS[entity.direction][1] * entity.speed
@@ -421,7 +421,7 @@ class Bomberman:
                 return False
 
         elif entity.direction == "W" and entity.offset[0] > GAME_OFFSET_PER_POSITION / 4:
-            off = entity.offset[0] + VECTORS[entity.direction][1] * entity.speed
+            off = entity.offset[0] + VECTORS[entity.direction][0] * entity.speed
             if off > GAME_OFFSET_PER_POSITION / 4:
                 entity.offset[0] = off
             else:
@@ -430,7 +430,7 @@ class Bomberman:
                 return False
 
         elif entity.direction == "E" and entity.offset[0] < GAME_OFFSET_PER_POSITION / 4 * 3:
-            off = entity.offset[0] + VECTORS[entity.direction][1] * entity.speed
+            off = entity.offset[0] + VECTORS[entity.direction][0] * entity.speed
             if off < GAME_OFFSET_PER_POSITION / 4 * 3:
                 entity.offset[0] = off
             else:
