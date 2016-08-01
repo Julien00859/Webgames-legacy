@@ -39,7 +39,7 @@ var IO = function IO(address, port, game, playground) {
             case "status":
                 console.log(data.status.entities)
                 if (data.status.entities[self.id].ismoving) {
-                    self.players[self.id] = data.status.entities[self.id].position;
+                    self.players[self.id] = data.status.entities[self.id];
                 }
 
         }
