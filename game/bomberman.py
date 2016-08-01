@@ -29,7 +29,7 @@ def updatable_queue(iterable):
     """Because I need a queue list that can be updated on iteration"""
     dq = deque(iterable)
     while dq:
-        new = yield dq.pop(0)
+        new = yield dq.pop()
         while new is not None:
             dq.append(new)
             new = yield
@@ -218,13 +218,13 @@ class Bomberman:
                 logger.debug("Game ID %d: Bomb ID %d exploded at %s", self.gid, id(bomb), bomb.position)
 
                 # Calcule la déflagration
-                for vector in VECTORS:
+                for vector in VECTORS.values():
                     for radius in range(bomb.power + 1):
                         xpos = bomb.position[0] + vector[0] * radius
                         ypos = bomb.position[1] + vector[1] * radius
 
                         # Si une bombe est sur la déflagration, celle-ci explose
-                        b = get_bomb_at_pos(xpos, ypos)
+                        b = self.get_bomb_at_pos(xpos, ypos)
                         if b is not None:
                             b.explose()
 
@@ -235,7 +235,7 @@ class Bomberman:
                                 udq.send(b)
 
                         # Si un joueur est sur la déflagration, celui-ci meurt
-                        pid, p = get_player_at_pos(xpos, ypos)
+                        pid, p = self.get_player_at_pos(xpos, ypos)
                         if p is not None:
                             p.die()
                             status.add_entity(p, pid)
@@ -247,8 +247,8 @@ class Bomberman:
 
                         # Sinon si c'est une brique, la brique peut devenir un powerup, le status est mis à jour et la déflagration s'arrête
                         elif self.map[xpos][ypos] == MAP_BRICK:
-                            if random() > MAP_BRICK_to_powerup_ratio:
-                                powerup = choices([pwup for pwup, weigth in POWERUPS for i in range(weigth)])
+                            if random() > MAP_BRICK_TO_POWERUP_RATIO:
+                                powerup = choice([pwup for pwup, weigth in POWERUPS for i in range(weigth)])
                                 self.map[xpos][ypos] = powerup
                                 status.update_map(xpos, ypos, powerup)
                                 logger.debug("Game ID %d: Bomb ID %d blew a brick to a powerup \"%s\" at [%d, %d]", self.gid, id(bomb), powerup, xpos, ypos)
@@ -258,7 +258,7 @@ class Bomberman:
                         elif self.map[xpos][ypos] in map((itemgetter(0)), POWERUPS):
                             self.map[xpos][ypos] = MAP_VOID
                             status.update_map(xpos, ypos, MAP_VOID)
-                            logger.debug("Game ID %d: Bomb ID %d blew a powerup \"%s\" at [%d, %d]", self.gid, id(bomb), powerup, xpos, ypos)
+                            logger.debug("Game ID %d: Bomb ID %d blew a powerup at [%d, %d]", self.gid, id(bomb), xpos, ypos)
                             break
 
             # Calcule le décplacement et met à jour le statut
