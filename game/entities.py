@@ -51,7 +51,7 @@ class Player(Entity):
 
 class Bomb(Entity):
     def __init__(self, master):
-        super().__init__(master.position, BOMB_SPEED)
+        super().__init__(master.position.copy(), BOMB_SPEED)
         self.master = master
         self.power = master.power
         self.fuseTime = BOMB_FUSE_TIME

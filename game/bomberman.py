@@ -292,7 +292,7 @@ class Bomberman:
     def get_bomb_at_pos(self, xpos: int, ypos: int):
         """Retourne qui retourne la bombe à la case spécifié ou None"""
         for bomb in self.bombs:
-            if bomb.position == (xpos, ypos):
+            if bomb.position[0] == xpos and bomb.position[1] == ypos:
                 return bomb
         else:
             return None
@@ -300,7 +300,7 @@ class Bomberman:
     def get_player_at_pos(self, xpos: int, ypos: int):
         """Retourne qui retourne le joueur à la case spécifié ou None"""
         for playerid, player in self.players.items():
-            if player.position == (xpos, ypos):
+            if player.position[0] == xpos and player.position[1] == ypos:
                 return playerid, player
         else:
             return None, None
