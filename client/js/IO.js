@@ -5,6 +5,7 @@ var IO = function IO(address, port, game, playground) {
 
     self.map = {}
     self.players = {}
+    self.id;
 
     self.ws.onopen = function() {
         console.log("[ws open]");
@@ -25,11 +26,22 @@ var IO = function IO(address, port, game, playground) {
         var data = JSON.parse(e.data);
         console.log(data);
 
-        if (data.cmd == "startup_status") { // Démarrage du jeu
-            console.log(data.map);
-            self.map = data.map;
-            self.players = data.players;
-            playground.render();
+        switch(data.cmd) {
+            case "connection_success":
+                self.id = data.id;
+                break;
+            case "startup_status":
+                console.log(data.map);
+                self.map = data.map;
+                self.players = data.players;
+                playground.render();
+                break;
+            case "status":
+                console.log(data.status.entities)
+                if (data.status.entities[self.id].ismoving) {
+                    self.players[self.id] = data.status.entities[self.id].position;
+                }
+
         }
 
     }

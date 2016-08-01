@@ -39,6 +39,28 @@ function main() {
             // BOMBERMAN
             container: document.querySelector("#game"),
 
+            keydown: function(event) {
+
+                if      (event.key == config.upKey)     io.send_event("move", {"direction": "N"});
+                else if (event.key == config.downKey)   io.send_event("move", {"direction": "S"});
+                else if (event.key == config.leftKey)   io.send_event("move", {"direction": "E"});
+                else if (event.key == config.rigthKey)  io.send_event("move", {"direction": "W"});
+                else if (event.key == config.plantKey)  io.send_event("plant");
+                else if (event.key == config.fuseKey)   io.send_event("fuse");
+
+            },
+
+            keyup: function(event) {
+
+                if (
+                    event.key == config.upKey ||
+                    event.key == config.downKey ||
+                    event.key == config.leftKey ||
+                    event.key == config.rigthKey
+                ) io.send_event("stop");
+
+            },
+
             create: function() {
 
                 this.loadImage("beam", "rock", "floor", "p_1_down", "p_1_left", "p_1_right", "p_1_up", "p_2_down", "p_2_left", "p_2_right", "p_2_up" ); //Incassable, Cassable, Sol
@@ -96,29 +118,6 @@ function main() {
         io = new IO("localhost", 28456, this.game_name.value, app);
 
         // -------------------------------------------------------- //
-
-        // Ecoute les touches
-
-        document.getElementById("game").addEventListener("keydown", function(event){
-            if      (event.key == config.upKey)     io.send_event("move", {"direction": "N"});
-            else if (event.key == config.downKey)   io.send_event("move", {"direction": "S"});
-            else if (event.key == config.leftKey)   io.send_event("move", {"direction": "E"});
-            else if (event.key == config.rigthKey)  io.send_event("move", {"direction": "W"});
-            else if (event.key == config.plantKey)  io.send_event("plant");
-            else if (event.key == config.fuseKey)   io.send_event("fuse");
-        });
-
-        document.getElementById("game").addEventListener("keyup", function(event){
-            if (
-                event.key == config.upKey ||
-                event.key == config.downKey ||
-                event.key == config.leftKey ||
-                event.key == config.rigthKey
-            ) io.send_event("stop");
-        });
-
-        // ------------------------------------------------------------------------ //
-
 
     }); // Fin de la fonction onsubmit
 
