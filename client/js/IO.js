@@ -60,3 +60,5 @@ IO.prototype.send_event = function send_event(event, kwargs=undefined) {
 IO.prototype.send_raw = function(obj) {
     this.ws.send(JSON.stringify(obj))
 };
+
+
