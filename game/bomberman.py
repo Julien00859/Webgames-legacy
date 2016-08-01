@@ -156,7 +156,7 @@ class Bomberman:
                     player.mines.append(m)
                     self.bombs.append(m)
                     self.map[m.position[0]][m.position[1]] = MAP_MINE
-                    status.add_entity(b)
+                    status.add_entity(m)
                     logger.debug("Game ID %d: Player ID %d planted a %s at %s", self.gid, pid, repr(m), m.position)
 
                 # Le joueur pose une bombe
