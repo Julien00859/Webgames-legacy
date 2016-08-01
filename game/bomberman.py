@@ -51,6 +51,7 @@ class Status:
             "isalive": entity.isalive,
             # player.postition + (player.offset / offset_per_position)
             "position": list(starmap(add, zip(entity.position, map(lambda x: x / GAME_OFFSET_PER_POSITION, entity.offset)))),
+            "direction": entity.direction
             "ismoving": entity.ismoving
         }
 
