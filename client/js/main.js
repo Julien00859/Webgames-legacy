@@ -43,8 +43,8 @@ function main() {
 
                 if      (event.key == config.upKey)     io.send_event("move", {"direction": "N"});
                 else if (event.key == config.downKey)   io.send_event("move", {"direction": "S"});
-                else if (event.key == config.leftKey)   io.send_event("move", {"direction": "E"});
-                else if (event.key == config.rigthKey)  io.send_event("move", {"direction": "W"});
+                else if (event.key == config.leftKey)   io.send_event("move", {"direction": "W"});
+                else if (event.key == config.rigthKey)  io.send_event("move", {"direction": "E"});
                 else if (event.key == config.plantKey)  io.send_event("plant");
                 else if (event.key == config.fuseKey)   io.send_event("fuse");
 
