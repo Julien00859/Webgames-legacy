@@ -211,7 +211,7 @@ class Manager:
         if event not in events:
             raise InvalidEvent("{} is not a valid event, valids one are: {}".format(event, ", ".join(events)))
 
-        logger.debug("Player ID %d fired event \"%s\" to Game ID %d", client_id, event, self.players[client_id]["gameid"])
+        logger.info("Player ID %d fired event \"%s\" with args %s to Game ID %d", client_id, event, kwargs, self.players[client_id]["gameid"])
         game.run_event(client_id, event, **kwargs)
 
     def safe_stop(self):

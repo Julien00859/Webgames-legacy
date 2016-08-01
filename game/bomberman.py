@@ -102,7 +102,7 @@ class Bomberman:
                 # Si c'est un brique, il y a un peu de chance d'être changé en vide
                 if ceil == MAP_BRICK:
                     if random() < MAP_BRICK_TO_VOID_RATIO:
-                        ceil = MAP_VOID
+                        self.map[xpos][ypos] = MAP_VOID
                 # Si c'est un nombre, on lui associe un joueur (si il en reste)
                 elif ceil.isdigit():
                     if int(ceil) < len(players):
@@ -139,7 +139,7 @@ class Bomberman:
                 if self.move_entity(player, status):
                     newpos = list(starmap(add, zip(player.position, map(lambda x: x / GAME_OFFSET_PER_POSITION, player.offset))))
                     if (oldpos == newpos):
-                        logger.warning("Game ID %d: Internal Error, player ID %d didn't move but still moving.", self.gid, pid)
+                        logger.warning("Game ID %d: Internal Error, player ID %d didn't move %s at %s but still moving.", self.gid, pid, player.direction, player.position)
                         player.stop()
                     else:
                         logger.debug("Game ID %d: Player ID %d moved from %s to %s", self.gid, pid, oldpos, newpos)
@@ -157,7 +157,7 @@ class Bomberman:
                     self.bombs.append(m)
                     self.map[m.position[0]][m.position[1]] = MAP_MINE
                     status.add_entity(m)
-                    logger.debug("Game ID %d: Player ID %d planted a %s at %s", self.gid, pid, repr(m), m.position)
+                    logger.info("Game ID %d: Player ID %d planted a %s at %s", self.gid, pid, str(m), m.position)
 
                 # Le joueur pose une bombe
                 else:
@@ -165,15 +165,15 @@ class Bomberman:
                     self.bombs.append(b)
                     self.map[b.position[0]][b.position[1]] = MAP_BOMB
                     status.add_entity(b)
-                    logger.debug("Game ID %d: Player ID %d planted a %s at %s", self.gid, pid, repr(b), b.position)
+                    logger.info("Game ID %d: Player ID %d planted a %s at %s", self.gid, pid, str(b), b.position)
 
             # Gère l'événement "actionner une mine"
             if player.fuse_event and player.has_mine:
                 player.fuse_event = False
-                if self.player.mines:
-                    m = self.player.mines.popleft()
+                if player.mines:
+                    m = player.mines.popleft()
                     m.explose()
-                    logger.debug("Game ID %d: Player ID %d fused a %s at %s", self.gid, pid, repr(b), b.position)
+                    logger.info("Game ID %d: Player ID %d fused a %s at %s", self.gid, pid, repr(b), b.position)
 
     def handle_powerup(self, entity, status):
         """Fonction qui récupère la position d'une entité pour vérifier s'il y a un powerup à la même position
@@ -181,7 +181,7 @@ class Bomberman:
         ceil = self.map[entity.position[0]][entity.position[1]]
         if ceil in map((itemgetter(0)), POWERUPS):
             if isinstance(entity, Player):
-                logger.debug("Game ID %d: Player ID %d got powerup %s at %s", self.gid, [pid for (pid, player) in self.players if player == entity][0], ceil, entity.position)
+                logger.info("Game ID %d: Player ID %d got powerup %s at %s", self.gid, [pid for pid, player in self.players.items() if player == entity][0], ceil, entity.position)
                 if ceil == MAP_POWERUP_BOMB:
                     entity.bomb += 1
                 elif ceil == MAP_POWERUP_MINE:
@@ -194,9 +194,9 @@ class Bomberman:
                     entity.has_hammer = True
 
             else:
-                logger.debug("Game ID %d: powerup %s at %s has been destroy", self.gid, ceil, entity.position)
+                logger.info("Game ID %d: powerup %s at %s has been destroy", self.gid, ceil, entity.position)
             self.map[entity.position[0]][entity.position[1]] = MAP_VOID
-            status.update_map(xpos, ypos, MAP_VOID)
+            status.update_map(entity.position[0], entity.position[1], MAP_VOID)
 
     def handle_bombs(self, status):
         """Fonction de gestion des bombes et des mines"""
@@ -215,7 +215,7 @@ class Bomberman:
                 status.add_explosion(bomb)
                 self.map[bomb.position[0]][bomb.position[1]] = MAP_VOID
                 self.bombs.remove(bomb)
-                logger.debug("Game ID %d: Bomb ID %d exploded at %s", self.gid, id(bomb), bomb.position)
+                logger.info("Game ID %d: Bomb ID %d exploded at %s", self.gid, id(bomb), bomb.position)
 
                 # Calcule la déflagration
                 for vector in VECTORS.values():
@@ -239,7 +239,7 @@ class Bomberman:
                         if p is not None:
                             p.die()
                             status.add_entity(p, pid)
-                            logger.debug("Game ID %d: Bomb ID %d blew Player ID %d at %s", self.gid, id(bomb), pid, p.position)
+                            logger.info("Game ID %d: Bomb ID %d blew up Player ID %d at %s", self.gid, id(bomb), pid, p.position)
 
                         # Si la déflagration touche un mur, elle s'arrête
                         if self.map[xpos][ypos] == MAP_WALL:
@@ -251,14 +251,14 @@ class Bomberman:
                                 powerup = choice([pwup for pwup, weigth in POWERUPS for i in range(weigth)])
                                 self.map[xpos][ypos] = powerup
                                 status.update_map(xpos, ypos, powerup)
-                                logger.debug("Game ID %d: Bomb ID %d blew a brick to a powerup \"%s\" at [%d, %d]", self.gid, id(bomb), powerup, xpos, ypos)
+                                logger.info("Game ID %d: Bomb ID %d blew up a brick to a powerup \"%s\" at [%d, %d]", self.gid, id(bomb), powerup, xpos, ypos)
                             break
 
                         # Sinon si c'est un powerup, il est soufflé, le status est mis à jour et la déflagration s'arrête
                         elif self.map[xpos][ypos] in map((itemgetter(0)), POWERUPS):
                             self.map[xpos][ypos] = MAP_VOID
                             status.update_map(xpos, ypos, MAP_VOID)
-                            logger.debug("Game ID %d: Bomb ID %d blew a powerup at [%d, %d]", self.gid, id(bomb), xpos, ypos)
+                            logger.info("Game ID %d: Bomb ID %d blew up a powerup at [%d, %d]", self.gid, id(bomb), xpos, ypos)
                             break
 
             # Calcule le décplacement et met à jour le statut
@@ -268,7 +268,7 @@ class Bomberman:
                 if self.move_entity(bomb, status):
                     status.add_entity(bomb)
                     newpos = list(starmap(add, zip(bomb.position, map(lambda x: x / GAME_OFFSET_PER_POSITION, bomb.offset))))
-                    logger.debug("Game ID %d: Player ID %d moved from %s to %s", self.gid, pid, oldpos, newpos)
+                    logger.debug("Game ID %d: Bomb ID %d moved from %s to %s", self.gid, id(bomb), oldpos, newpos)
 
                 if isinstance(bomb, Bomb):
                     self.map[bomb.position[0]][bomb.position[1]] = MAP_BOMB
