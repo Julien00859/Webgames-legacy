@@ -115,10 +115,10 @@ function main() {
 
                 for (var explosion in explosions) {
                     this.layer.drawImage(this.images["explosion"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20);
-                    setTimeout(this.layer.drawImage(this.images["floor"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20), 1000);
+                    //setTimeout(this.layer.drawImage(this.images["floor"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20), 1000);
                     for (var powerup in powerups) {
-                        this.layer.drawImage(this.image[powerup], powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20, 40, 40);
-                        setTimeout(this.layer.drawImage(this.images["floor"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20), 1000);
+                        this.layer.drawImage(this.images[powerups[powerup]], powerup[0] * 40 - 20, powerup[1] * 40 - 20, 40, 40);
+                        //setTimeout(this.layer.drawImage(this.images["floor"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20), 1000);
                     }
                 }
 
