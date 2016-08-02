@@ -6,6 +6,8 @@ var IO = function IO(address, port, game, playground) {
     self.map = {}
     self.players = {}
     self.bombs = {}
+    self.explosions = {}
+    self.powerups = {}
     self.id;
 
     self.ws.onopen = function() {
@@ -39,22 +41,30 @@ var IO = function IO(address, port, game, playground) {
                 break;
             case "status":
 
+                if (data.status.winner) console.log("Le joueur " + data.status.winner + " a gagné !");
+
                 for (var i in data.status.entities) {
-                    if (data.status.entities[i].name == "<Player>")
+                    if (data.status.entities[i].name == "<Player>") {
                         if (data.status.entities[i].ismoving) {
                             self.players[self.id] = data.status.entities[i];
                         }
-                    /*}
-                     if (data.status.entities[self.id].ismoving) {
-                     self.players[self.id] = data.status.entities[self.id];
-                     }*/
-                    if (data.status.entities[i].name == "<Bomb>")
+
+                        else if (data.status.explosions) {
+                            for (var i in data.status.explosions) {
+                                self.explosions = data.status.explosions;
+                            }
+                            self.powerups = data.status.map;
+                        }
+                    }
+
+                    else if (data.status.entities[i].name == "<Bomb>")
                         self.bombs[i] = data.status.entities[i];
 
-                    if (data.status.entities[i].name == "<other>")
+                    else if (data.status.entities[i].name == "<other>")
                         console.log("rien")
 
-            }
+                }
+
         }
 
     }

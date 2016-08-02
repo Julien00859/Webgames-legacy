@@ -4,7 +4,7 @@ cd ${0%/*}
 
 startfail=0
 
-if [ -z "$(python -V 2>/dev/null | grep 'Python 3')" ]; then
+if [ -z "$(python3 -V 2>/dev/null | grep 'Python 3')" ]; then
 	echo "Python version >= 3.5 is required !"
 	exit
 fi
@@ -13,14 +13,14 @@ if [ ! -f ./venv/bin/python ]; then
 
 	if [ -z "$(virtualenv --version 2>/dev/null)" ]; then
 		echo "Installing virtualenv with pip"
-		pip install virtualenv
+		sudo pip3 install virtualenv
 	fi
 
 	echo "Setting up a linux virtual environnement"
 	virtualenv ./venv
 
 	echo "Installing dependencies..."
-	./venv/bin/pip install websocket-server
+	./venv/bin/pip3 install websocket-server
 fi
 
 if [ ! -f ./client/js/playground.js ]; then
@@ -60,5 +60,5 @@ if [ $startfail -eq 1 ]; then
 fi
 
 echo "Starting server. CTRL+C to quit."
-./venv/bin/python start.py
+./venv/bin/python3 start.py
 
