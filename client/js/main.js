@@ -63,7 +63,7 @@ function main() {
 
             create: function() {
 
-                this.loadImage("beam", "rock", "floor", "p_1_down", "p_1_left", "p_1_right", "p_1_up", "p_2_down", "p_2_left", "p_2_right", "p_2_up", "bomb", "explosion", "B", "M", "P","S", "H"); //Incassable, Cassable, Sol
+                this.loadImage("beam", "rock", "floor", "p_1_down", "p_1_left", "p_1_right", "p_1_up", "p_2_down", "p_2_left", "p_2_right", "p_2_up", "bomb", "exp", "B", "M", "P","S", "H"); //Incassable, Cassable, Sol
 
             },
 
@@ -110,22 +110,35 @@ function main() {
                 }
 
                 for (var bomb in bombs) {
+                    console.log(bombs[bomb].position);
+
                     this.layer.drawImage(this.images["bomb"], bombs[bomb].position[0] * 40 - 20, bombs[bomb].position[1] * 40 - 20, 40, 40);
                 }
 
-                for (var explosion in explosions) {
-                    this.layer.drawImage(this.images["explosion"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20);
-                    //setTimeout(this.layer.drawImage(this.images["floor"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20), 1000);
-                    for (var powerup in powerups) {
-                        this.layer.drawImage(this.image[powerup], powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20, 40, 40);
-                        //setTimeout(this.layer.drawImage(this.images["floor"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20), 1000);
-                    }
+                //  X
+                for (var i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
+                    this.layer.drawImage(this.images["exp"], i * 40 - 20, explosions[explosion].position[1] * 40 - 20, 40, 40);
                 }
+
+                // Y
+                for (var i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
+                    this.layer.drawImage(this.images["exp"], explosions[explosion].position[0] * 40 - 20, i * 40 - 20, 40, 40);
+                }
+
+                /*for (var explosion in explosions) {
+                    console.log(explosions[explosion].position)
+                    //this.layer.drawImage(this.images["exp"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20, 40, 40);
+                    //setTimeout(this.layer.drawImage(this.images["floor"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20), 1000);
+                    //for (var powerup in powerups) {
+                        //this.layer.drawImage(this.image[powerup], powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20, 40, 40);
+                        //setTimeout(this.layer.drawImage(this.images["floor"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20), 1000);
+                    //}
+                }*/
 
 
             }
 
-        })
+        });
 
         // ------------------------------------------------------------------------------------------------------------------ //
 
