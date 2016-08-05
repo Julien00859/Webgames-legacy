@@ -62,7 +62,7 @@ class Status:
 
         self.explosions[id(bomb)] = {
             "name": str(bomb),
-            "position": bomb.position,
+            "position": list(map(lambda x: x + .5, bomb.position)),
             "radius": bomb.power
         }
 
