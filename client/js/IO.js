@@ -41,29 +41,27 @@ var IO = function IO(address, port, game, playground) {
                 break;
             case "status":
 
-                if (data.status.winner) console.log("Le joueur " + data.status.winner + " a gagné !");
+                if (data.status.winner) console.log("Le joueur " + data.status.winner + " a gagné !"); // Gagné
 
                 for (var i in data.status.entities) {
-                    if (data.status.entities[i].name == "<Player>") {
+                    if (data.status.entities[i].name == "<Player>") { // Joueur ?
                         if (data.status.entities[i].ismoving) {
-                            self.players[self.id] = data.status.entities[i];
+                            self.players[self.id] = data.status.entities[i]; // Met à jour la position
                         }
 
-                        else if (data.status.explosions) {
+                        else if (data.status.explosions) { // Explosion
                             for (var i in data.status.explosions) {
-                                self.explosions = data.status.explosions;
+                                self.explosions = data.status.explosions; // Met à jour les explosions
                             }
-                            self.powerups = data.status.map;
+                            self.powerups = data.status.map; // Et les powerups
                         }
                     }
 
-                    else if (data.status.entities[i].name == "<Bomb>")
-                        self.bombs[i] = data.status.entities[i];
-
-                    else if (data.status.entities[i].name == "<other>")
-                        console.log("rien")
+                    else if (data.status.entities[i].name == "<Bomb>") // Bombe
+                        self.bombs[i] = data.status.entities[i]; // Met à jour les bombes
 
                 }
+                break;
 
         }
 

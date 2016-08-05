@@ -1,12 +1,12 @@
 // Variable(s) Globale(s) //
 
 var config = {
-    upKey: "z",
-    downKey: "s",
-    leftKey: "q",
-    rigthKey: "d",
-    plantKey: "o",
-    fuseKey: "p"
+    upKey: "Z",
+    downKey: "S",
+    leftKey: "Q",
+    rigthKey: "D",
+    plantKey: "O",
+    fuseKey: "P"
 }
 
 // --------------------- //
@@ -79,17 +79,9 @@ function main() {
             else if (fuseKey.isDown)   io.send_event("fuse");
 
             game.input.keyboard.onUpCallback = function (e) {
-                // These can be checked against Phaser.Keyboard.UP, for example.
-                console.log(e.keyCode);
-                io.send_event("stop");
+                if (Phaser.Keyboard[config.upKey] || Phaser.Keyboard[config.downKey] || Phaser.Keyboard[config.leftKey] || Phaser.Keyboard[config.rigthKey]) io.send_event("stop");
             };
 
-            /*if (
-                event.key == config.upKey ||
-                event.key == config.downKey ||
-                event.key == config.leftKey ||
-                event.key == config.rigthKey
-            )*/
         }
 
         function render() {
