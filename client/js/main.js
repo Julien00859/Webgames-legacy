@@ -1,4 +1,6 @@
-config = {
+// Variable(s) Globale(s) //
+
+var config = {
     upKey: "z",
     downKey: "s",
     leftKey: "q",
@@ -6,11 +8,6 @@ config = {
     plantKey: "o",
     fuseKey: "p"
 }
-
-// Variable(s) Globale(s) //
-
-var map = {}
-
 
 // --------------------- //
 
@@ -32,7 +29,10 @@ function main() {
 
     document.getElementById("select_game").addEventListener("submit", function(event){
         event.preventDefault();
-        var game = new Phaser.Game('game', {preload: preload, create: create, render: render});
+
+        var game = new Phaser.Game(800, 600, Phaser.auto, 'game', {preload: preload, create: create, update: update, render: render});
+
+        var upKey, rightKey, leftKey, downKey, plantKey, fuseKey;
 
         function preload() {
             game.load.image("beam", "images/beam.png");
@@ -60,6 +60,36 @@ function main() {
 
         function create() {
 
+            upKey = game.input.keyboard.addKey(Phaser.Keyboard[config.upKey]);
+            downKey = game.input.keyboard.addKey(Phaser.Keyboard[config.downKey]);
+            leftKey = game.input.keyboard.addKey(Phaser.Keyboard[config.leftKey]);
+            rightKey = game.input.keyboard.addKey(Phaser.Keyboard[config.rigthKey]);
+            plantKey = game.input.keyboard.addKey(Phaser.Keyboard[config.plantKey]);
+            fuseKey = game.input.keyboard.addKey(Phaser.Keyboard[config.fuseKey]);
+
+        }
+
+        function update() {
+
+            if      (upKey.isDown)     io.send_event("move", {"direction": "N"});
+            else if (downKey.isDown)   io.send_event("move", {"direction": "S"});
+            else if (leftKey.isDown)   io.send_event("move", {"direction": "W"});
+            else if (rightKey.isDown)  io.send_event("move", {"direction": "E"});
+            else if (plantKey.isDown)  io.send_event("plant");
+            else if (fuseKey.isDown)   io.send_event("fuse");
+
+            game.input.keyboard.onUpCallback = function (e) {
+                // These can be checked against Phaser.Keyboard.UP, for example.
+                console.log(e.keyCode);
+                io.send_event("stop");
+            };
+
+            /*if (
+                event.key == config.upKey ||
+                event.key == config.downKey ||
+                event.key == config.leftKey ||
+                event.key == config.rigthKey
+            )*/
         }
 
         function render() {
@@ -96,56 +126,28 @@ function main() {
                 game.add.sprite(bombs[bomb].position[0] * 40 - 20, bombs[bomb].position[1] * 40 - 20, "bomb", 40, 40);
             }
 
-                for (var explosion in explosions) {
-                    //  X
-                    for (var i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
-                        //console.log(i);
-                        //if (i <= 0) return;
-                        game.add.sprite(i * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_x", 40, 40);
-                    }
-
-                    // Y
-                    for (var i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
-                        //if (i <= 0) return;
-                        game.add.sprite(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp_y", 40, 40);
-                    }
-
-                    game.add.sprite(explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_c", 40, 40); // Center
-
-                    //for (var powerup in powerups) {
-                    //this.layer.drawImage(this.image[powerup], powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20, 40, 40);
-                    //setTimeout(this.layer.drawImage(this.images["floor"], explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20), 1000);
-                    //}
+            for (var explosion in explosions) {
+                //  X
+                for (var i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
+                    //console.log(i);
+                    //if (i <= 0) return;
+                    game.add.sprite(i * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_x", 40, 40);
                 }
 
+                // Y
+                for (var i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
+                    //if (i <= 0) return;
+                    game.add.sprite(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp_y", 40, 40);
+                }
+
+                game.add.sprite(explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_c", 40, 40); // Center
+
+                for (var powerup in powerups) {
+                    this.layer.drawImage(this.image[powerup], powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20, 40, 40);
+                }
             }
 
         }
-
-        var app = playground({
-
-            keydown: function(event) {
-
-                if      (event.key == config.upKey)     io.send_event("move", {"direction": "N"});
-                else if (event.key == config.downKey)   io.send_event("move", {"direction": "S"});
-                else if (event.key == config.leftKey)   io.send_event("move", {"direction": "W"});
-                else if (event.key == config.rigthKey)  io.send_event("move", {"direction": "E"});
-                else if (event.key == config.plantKey)  io.send_event("plant");
-                else if (event.key == config.fuseKey)   io.send_event("fuse");
-
-            },
-
-            keyup: function(event) {
-
-                if (
-                    event.key == config.upKey ||
-                    event.key == config.downKey ||
-                    event.key == config.leftKey ||
-                    event.key == config.rigthKey
-                ) io.send_event("stop");
-
-            },
-
 
         // ------------------------------------------------------------------------------------------------------------------ //
 
