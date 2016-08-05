@@ -58,7 +58,6 @@ function main() {
             game.load.image("P", "images/P.png", 40, 40);
             game.load.image("S", "images/S.png", 40, 40);
             game.load.image("H", "images/H.png", 40, 40);
-
         }
 
         function create() {
@@ -96,12 +95,12 @@ function main() {
             var explosions = io.explosions;
             var powerups = io.powerups;
 
-            for (var x in io.map) { // Rendu de la map à partir de l'Array 2D
-                for (var y in io.map[x]) {
+            for (var x in map) { // Rendu de la map à partir de l'Array 2D
+                for (var y in map[x]) {
                     //console.log(ligne, colonne);
-                    if (io.map[x][y] == "#") game.add.sprite(x * 40, y * 40, "rock");
-                    else if (io.map[x][y] == "&") game.add.sprite(x * 40, y * 40, "beam");
-                    else if (io.map[x][y] == " ") game.add.sprite(x * 40, y * 40, "floor");
+                    if (map[x][y] == "#") game.add.sprite(x * 40, y * 40, "rock");
+                    else if (map[x][y] == "&") game.add.sprite(x * 40, y * 40, "beam");
+                    else if (map[x][y] == " ") game.add.sprite(x * 40, y * 40, "floor");
                 }
             }
 
@@ -143,7 +142,7 @@ function main() {
                 game.add.sprite(explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_c"); // Center
 
                 for (var powerup in powerups) {
-                    this.layer.drawImage(this.image[powerup], powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20);
+                    game.add.sprite(powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20, powerup);
                 }
             }
 
