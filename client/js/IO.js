@@ -25,16 +25,16 @@ var IO = function IO(address, port, game, phaser) {
     }
 
     self.ws.onmessage = function(e) {
-        console.log("[ws message]");
+        //console.log("[ws message]");
         var data = JSON.parse(e.data);
-        console.log(data);
+        //console.log(data);
 
         switch(data.cmd) {
             case "connection_success":
                 self.id = data.id;
                 break;
             case "startup_status":
-                console.log(data.map);
+                //console.log(data.map);
                 self.map = data.map;
                 self.players = data.players;
                 //playground.render();

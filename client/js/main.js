@@ -30,11 +30,14 @@ function main() {
     document.getElementById("select_game").addEventListener("submit", function(event){
         event.preventDefault();
 
-        var game = new Phaser.Game(800, 600, Phaser.auto, 'game', {preload: preload, create: create, update: update, render: render});
+        var game = new Phaser.Game(19 * 40, 15 * 40, Phaser.auto, 'game', {preload: preload, create: create, update: update, render: render});
 
         var upKey, rightKey, leftKey, downKey, plantKey, fuseKey;
 
         function preload() {
+            game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+            game.scale.pageAlignHorizontally = true;
+            game.scale.pageAlignVertically = true;
             game.load.image("beam", "images/beam.png");
             game.load.image("rock", "images/rock.png");
             game.load.image("floor", "images/floor.png");
@@ -66,6 +69,7 @@ function main() {
             rightKey = game.input.keyboard.addKey(Phaser.Keyboard[config.rigthKey]);
             plantKey = game.input.keyboard.addKey(Phaser.Keyboard[config.plantKey]);
             fuseKey = game.input.keyboard.addKey(Phaser.Keyboard[config.fuseKey]);
+            game.physics.startSystem(Phaser.Physics.ARCADE);
 
         }
 
@@ -103,13 +107,17 @@ function main() {
 
             for (var player in Object.keys(players)) {
                 switch (players[Object.keys(players)[player]].direction) {
-                    case "N": game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_up" )
+                    case "N": var play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_up" )
+                        game.physics.enable(play, Phaser.Physics.ARCADE);
                         break;
-                    case "S": game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_down")
+                    case "S": var play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_down")
+                        game.physics.enable(play, Phaser.Physics.ARCADE);
                         break;
-                    case "E": game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_right")
+                    case "E": var play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_right")
+                        game.physics.enable(play, Phaser.Physics.ARCADE);
                         break;
-                    case "W": game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_left")
+                    case "W": var play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_left")
+                        game.physics.enable(play, Phaser.Physics.ARCADE);
                         break;
                 }
             }
