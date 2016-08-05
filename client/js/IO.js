@@ -37,7 +37,7 @@ var IO = function IO(address, port, game, playground) {
                 console.log(data.map);
                 self.map = data.map;
                 self.players = data.players;
-                playground.render();
+                //playground.render();
                 break;
             case "status":
 
