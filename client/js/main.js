@@ -46,15 +46,15 @@ function main() {
             game.load.image("p_2_left", "images/p_2_left.png");
             game.load.image("p_2_right", "images/p_2_right.png");
             game.load.image("p_2_up", "images/p_2_up.png");
-            game.load.image("bomb", "images/bomb.png");
-            game.load.image("exp_x", "images/exp_x.png");
-            game.load.image("exp_y", "images/exp_y.png");
-            game.load.image("exp_c", "images/exp_c.png");
-            game.load.image("B", "images/B.png");
-            game.load.image("M", "images/M.png");
-            game.load.image("P", "images/P.png");
-            game.load.image("S", "images/S.png");
-            game.load.image("H", "images/H.png");
+            game.load.image("bomb", "images/bomb.png", 40, 40);
+            game.load.image("exp_x", "images/exp_x.png", 40, 40);
+            game.load.image("exp_y", "images/exp_y.png", 40, 40);
+            game.load.image("exp_c", "images/exp_c.png", 40, 40);
+            game.load.image("B", "images/B.png", 40, 40);
+            game.load.image("M", "images/M.png", 40, 40);
+            game.load.image("P", "images/P.png", 40, 40);
+            game.load.image("S", "images/S.png", 40, 40);
+            game.load.image("H", "images/H.png", 40, 40);
 
         }
 
@@ -115,7 +115,7 @@ function main() {
             }
 
             for (var bomb in bombs) {
-                game.add.sprite(bombs[bomb].position[0] * 40 - 20, bombs[bomb].position[1] * 40 - 20, "bomb", 40, 40);
+                game.add.sprite(bombs[bomb].position[0] * 40 - 20, bombs[bomb].position[1] * 40 - 20, "bomb");
             }
 
             for (var explosion in explosions) {
@@ -123,19 +123,19 @@ function main() {
                 for (var i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
                     //console.log(i);
                     //if (i <= 0) return;
-                    game.add.sprite(i * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_x", 40, 40);
+                    game.add.sprite(i * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_x");
                 }
 
                 // Y
                 for (var i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
                     //if (i <= 0) return;
-                    game.add.sprite(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp_y", 40, 40);
+                    game.add.sprite(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp_y");
                 }
 
-                game.add.sprite(explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_c", 40, 40); // Center
+                game.add.sprite(explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_c"); // Center
 
                 for (var powerup in powerups) {
-                    this.layer.drawImage(this.image[powerup], powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20, 40, 40);
+                    this.layer.drawImage(this.image[powerup], powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20);
                 }
             }
 

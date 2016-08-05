@@ -1,4 +1,4 @@
-var IO = function IO(address, port, game, playground) {
+var IO = function IO(address, port, game, phaser) {
     var self = this;
 
     self.ws = new WebSocket("ws://" + address + ":" + port);
