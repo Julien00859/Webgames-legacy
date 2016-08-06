@@ -1,4 +1,4 @@
-from settings.game_settings import *
+from game_server.games.bomberman.settings import *
 from collections import deque
 
 class Entity:

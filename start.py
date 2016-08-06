@@ -1,4 +1,5 @@
-# Do not import this file
+#!./venv/bin/python
+
 if __name__ != "__main__":
     raise ImportError("This startup script may not provide any useful API")
 
@@ -7,13 +8,15 @@ from gzip import open as gzipopen
 from os import  getcwd, mkdir, sep, name as osname
 from os.path import basename, exists, isdir, isfile, join as pathjoin
 from shutil import copyfileobj
+from sqlite_handler.sqlite_handler import SQLiteHandler
 from time import strftime
+import json
 import logging
 import sqlite3
 import sys
 
-from server.web_server import start_server
-from settings.server_settings import *
+from game_server.server import start_server
+from game_server.settings import *
 
 
 class LogFile(object):
@@ -33,6 +36,15 @@ class LogFile(object):
 # Store message until the logging is ready
 LogEntry = namedtuple("LogEntry", ("lvl", "msg", "args", "kwargs"))
 tolog = []
+
+conn = sqlite3.connect("main.db")
+cur = conn.cursor()
+for name, count in cur.execute("select name, count from counters").fetchall():
+    if name == "log_id":
+        stored_log_id = count
+    elif name == "game_id":
+        stored_game_id = count
+conn.close()
 
 
 # Check if we must chroot
@@ -56,43 +68,47 @@ if CHROOT_TO_PROJECT_DIR:
 
 # Check for logs dir
 if not isdir("logs"):
-    tolog.append(LogEntry(lvl="WARNING", msg="Logs directory not found, creating a new one at %s%s%s%s", args=[basename(getcwd()), sep, "logs", sep], kwargs={}))
+    tolog.append(LogEntry(lvl="WARNING", msg="Logs directory not found, creating a new one at .%s%s%s%s%s", args=[sep, basename(getcwd()), sep, "logs", sep], kwargs={}))
     mkdir("logs")
 
-log_path = pathjoin("logs", LOG_FILE)  # Create a path to the log file
-
-# If the `keep_log` option is set to true, compress the `log_path` file and name
-# it after the date and time of the first entry of the log file
-# > latest.log => yyyy-mm-dd_hh-mm-ss.gz
-if KEEP_LOG:
-    if exists(log_path):
-        if not isfile(log_path):
-            raise OSError("LOG_FILE exists but isn't a correct file. Please check its value is the server settings.")
-
-        # Fetch the first line, get the date and time, join them with an "_"
-        # and finaly change ":" and "/" to "-"
-        datetime = "_".join(open(log_path, "r").readline().split(" ")[:2]).replace(":","-").replace("/","-")
-
-        tolog.append(LogEntry(lvl="INFO", msg="GZip previous log file \"%s\" to \"%s\"", args=[LOG_FILE, datetime + ".gz"], kwargs={}))
-
-        with open(log_path, 'rb') as f_in:
-            with gzipopen(pathjoin("logs", datetime + ".gz"), 'wb') as f_out:
-                copyfileobj(f_in, f_out)
-
-# File logging configuration
 logging.basicConfig(
-    filename=log_path,
-    level=getattr(logging, FILE_LEVEL),
-    format="{asctime} [{levelname}] <{name}> {message}",
+    level=getattr(logging, LOG_CONSOLE_LEVEL),
+    format="[{levelname}] <{name}> {message}",
     style="{",
-    datefmt="%Y/%m/%d %X",
-    filemode="w"
+    datefmt="%Y/%m/%d %X"
 )
-# Console logging configuration (same but skip the date/time)
-console = logging.StreamHandler()
-console.setLevel(getattr(logging, CONSOLE_LEVEL))
-console.setFormatter(logging.Formatter("[{levelname}] <{name}> {message}", style="{"))
-logging.getLogger("").addHandler(console)
+
+if LOG_TO_FILE:
+    log_path = pathjoin("logs", LOG_FILE_NAME)  # Create a path to the log file
+
+    # If the `keep_log` option is set to true, compress the `log_path` file and name
+    # it after the date and time of the first entry of the log file
+    # > latest.log => yyyy-mm-dd_hh-mm-ss.gz
+    if KEEP_LOG:
+        if exists(log_path):
+            if not isfile(log_path):
+                raise OSError("LOG_FILE exists but isn't a correct file. Please check its value is the server settings.")
+
+            # Fetch the first line, get the date and time, join them with an "_"
+            # and finaly change ":" and "/" to "-"
+            datetime = "_".join(open(log_path, "r").readline().split(" ")[:2]).replace(":","-").replace("/","-")
+
+            tolog.append(LogEntry(lvl="INFO", msg="GZip previous log file \"%s\" to \"%s\"", args=[LOG_FILE_NAME, datetime + ".gz"], kwargs={}))
+
+            with open(log_path, 'rb') as f_in:
+                with gzipopen(pathjoin("logs", datetime + ".gz"), 'wb') as f_out:
+                    copyfileobj(f_in, f_out)
+
+    file = logging.FileHandler(log_path, "w")
+    file.setLevel(getattr(logging, LOG_FILE_LEVEL))
+    file.setFormatter(logging.Formatter("{asctime} [{levelname}] <{name}> {message}", style="{"))
+    logging.getLogger("").addHandler(file)
+
+if LOG_TO_DB:
+    db = SQLiteHandler(pathjoin("logs", LOG_DB_NAME), stored_log_id)
+    db.setLevel(getattr(logging, LOG_DB_LEVEL))
+    db.setFormatter(logging.Formatter("{asctime} [{levelname}] <{name}> {message}", style="{"))
+    logging.getLogger("").addHandler(db)
 
 logging.info("Logging initialized")
 
@@ -100,36 +116,18 @@ logging.info("Logging initialized")
 for lvl, msg, args, kwargs in tolog:
     logging.log(getattr(logging, lvl), msg, *args, **kwargs)
 
-# If Database type is "sqlite" then check for database file to exists
-if DB_TYPE == "sqlite":
-    if exists(DB_SQLITE_FILE) and not isfile(DB_SQLITE_FILE):
-        raise OSError("DB_SQLITE_FILE exists but isn't a correct file. Please check its value is the server settings.")
-
-    # If not, creating a new one with a given schema
-    elif not exists(DB_SQLITE_FILE):
-        logging.warning("Database not found, creating a new one at %s", pathjoin(basename(getcwd()), DB_SQLITE_FILE))
-        conn = sqlite3.connect(DB_SQLITE_FILE)
-        cur = conn.cursor()
-        cur.executescript(open(pathjoin("settings", "schema.sql"), "r").read())
-        conn.commit()
-        conn.close()
-
 # Redirect stdout to logging
-sys.stdout = LogFile('sys.stdout')
+#sys.stdout = LogFile('sys.stdout')
 
 # Launch the server
 try:
-    start_server()
-    exitcode = 0
+    start_server(stored_game_id)
 
 except Exception as e:
-    logging.critical("Fatal unhandled error ! %s", repr(e), exec_info=e)
-    exitcode = 1
+    logging.critical("Fatal unhandled error ! %s", repr(e), exc_info=e)
 
-sys.stdout = sys.__stdout__
-sys.stderr = sys.__stderr__
-
-logging.info("Exiting with exit code %d", exitcode)
-logging.shutdown()
-
-sys.exit(exitcode)
+finally:
+    sys.stdout = sys.__stdout__
+    logging.info("Exiting")
+    logging.shutdown()
+    

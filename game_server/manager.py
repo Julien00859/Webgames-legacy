@@ -2,28 +2,28 @@ from binascii import hexlify
 from collections import deque
 from itertools import count
 from os import urandom
-from server.exceptions import *
-from settings.game_settings import *
-from settings.server_settings import *
 from threading import Thread, Timer, Event
 import json
 import logging
 import sqlite3
+
+from game_server.exceptions import *
+from game_server.settings import *
 
 logger = logging.getLogger(__name__)
 
 class Manager:
     """Handle clients, game queues, running games and events"""
 
-    def __init__(self, webserver):
+    def __init__(self, webserver, stored_game_id):
         self.webserver = webserver # The webserver to send messages to clients
         self.players = {} # A map of clients where the key is the ID given by the webserver
         self.games = {} # A map of games where the
-        self.gameid = count(1)
+        self.gameid = count(stored_game_id)
         self.queues = {}
         self.running = True
 
-    def connect(self, client: dict) -> str:
+    def connect(self, client) -> str:
         """Register a client and give him an auth token"""
 
         if not self.running:
@@ -40,6 +40,8 @@ class Manager:
             "token": hexlify(urandom(int(TOKEN_LENGTH / 2))).decode() # An auth token
         }
 
+        logger.info("Player ID %d registered to game manager", client["id"], extra={"playerid": client["id"]})
+
         return self.players[client["id"]]["token"]
 
 
@@ -55,17 +57,17 @@ class Manager:
 
         # If the client was in a queue, leave it
         if player["queue"] is not None:
-            logger.info("Player ID %d left his queue", client_id)
+            logger.info("Player ID %d left his queue", client_id, extra={"playerid": client_id})
             self.queues[player["queue"]].remove(client_id)
 
         # If the client was not in game or the game manager is stopping, remove him
         if player["gameid"] is None or not self.running:
-            logger.info("Player ID %d removed from game manager", client_id)
+            logger.info("Player ID %d removed from game manager", client_id, extra={"playerid": client_id})
             del self.players[client_id]
 
         # Otherwise kill him in that game (to keep the player mapping until the game stops)
         else:
-            logger.info("Player ID %d has been killed in game ID %d", client_id, player["gameid"])
+            logger.info("Player ID %d has been killed in game ID %d", client_id, player["gameid"], extra={"playerid": client_id, "gameid": player["gameid"]})
             self.games[player["gameid"]]["game"].kill(client_id)
             player["alive"] = False
 
@@ -100,7 +102,7 @@ class Manager:
         # Make the client join the queue
         self.queues[queue].append(client_id)
 
-        logger.info("Client ID %d joined queue %s [%d/%d]", client_id, queue, len(self.queues[queue]), PLAYERS_PER_GAME)
+        logger.info("Client ID %d joined queue %s [%d/%d]", client_id, queue, len(self.queues[queue]), PLAYERS_PER_GAME, extra={"playerid": client_id})
 
         # If the queue is full, start a new game
         if len(self.queues[queue]) >= PLAYERS_PER_GAME:
@@ -115,34 +117,38 @@ class Manager:
         # Get players from the queue
         players = [self.queues[queue].popleft() for n in range(PLAYERS_PER_GAME)]
 
-        logger.info("Starting game %s with ID %d and players %s", GAMES[queue]["gamefunc"].__name__, gid, str(players))
+        logger.info("Starting game %s with ID %d and players %s", GAMES[queue]["gamefunc"].__name__, gid, str(players), extra={"gameid": gid})
 
         # Init a new game and retrieve the startup message
         game = GAMES[queue]["gamefunc"](gid, players, **GAMES[queue]["initfunc"]())
         startup_status = json.dumps({"cmd": "startup_status", **game.get_startup_status()})
-        logger.debug("Game ID %d sent the following command: %s", gid, startup_status)
+        logger.debug("Game ID %d sent the following command: %s", gid, startup_status, extra={"gameid": gid})
 
         # Update the player mapping and send them the startup message
         for player in players:
             self.players[player]["queue"] = None
             self.players[player]["gameid"] = gid
-            if self.players[player]["alive"]:
-                self.webserver.send_message(self.players[player]["socket"], startup_status)
+            self.send_to_client(player, startup_status)
 
         # Update the game mapping with the game object and the thread
         self.games[gid] = {}
+        self.games[gid]["players"] = players
         self.games[gid]["game"] = game
         self.games[gid]["thread"] = Thread(
             target=self.game_handler,
-            args=(gid, game, players),
+            args=(gid, ),
             daemon=True
         )
 
         # Start the game
         self.games[gid]["thread"].start()
 
-    def game_handler(self, gid, game, players):
+    def game_handler(self, gid):
         """Handle a game, calling the "main" method each tick, retrieve the game status to send it to the players"""
+
+        game = self.games[gid]["game"]
+        players = self.games[gid]["players"]
+
         try:
             tick = Event()
 
@@ -157,16 +163,13 @@ class Manager:
                 # If something happened during this tick, send the status to the players
                 if status["didsmthhappen"]:
                     status_json = json.dumps({"cmd": "status", "status": status})
-                    logger.debug("Game ID %d sent the following command: %s", gid, status_json)
-
-                    for pid in players:
-                        if self.players[pid]["alive"]:
-                            self.webserver.send_message(self.players[pid]["socket"], status_json)
+                    logger.debug("Game ID %d sent the following command: %s", gid, status_json, extra={"gameid": gid})
+                    self.send_to_game(gid, status_json)
 
                 # If the game is over, exit main loop
                 if game.gameover:
                     if status["winner"] is not None:
-                        logger.info("Game ID %d has been won by Player ID %d", gid, status["winner"])
+                        logger.info("Game ID %d has been won by Player ID %d", gid, status["winner"], extra={"gameid": gid, "playerid": status["winner"]})
 
 
                     break
@@ -178,13 +181,11 @@ class Manager:
         except Exception as e:
 
             # If any exception occurs, stop the game without winner and log the exception
-            logger.exception(repr(e))
-            for pid in players:
-                if self.players[pid]["alive"]:
-                    self.webserver.send_message(self.players[pid]["socket"], json.dumps({"error": repr(e)}))
+            logger.exception(repr(e), extra={"gameid": gid})
+            self.send_to_game(gid, json.dumps({"error": repr(e)}))
 
         finally:
-            logger.info("Game ID %d is over", gid)
+            logger.info("Game ID %d is over", gid, extra={"gameid": gid})
 
             # Update the players mapping
             for pid in players:
@@ -211,7 +212,7 @@ class Manager:
         if event not in events:
             raise InvalidEvent("{} is not a valid event, valids one are: {}".format(event, ", ".join(events)))
 
-        logger.info("Player ID %d fired event \"%s\" with args %s to Game ID %d", client_id, event, kwargs, self.players[client_id]["gameid"])
+        logger.info("Player ID %d fired event \"%s\" with args %s to Game ID %d", client_id, event, kwargs, self.players[client_id]["gameid"], extra={"gameid": gid, "playerid": client_id})
         game.run_event(client_id, event, **kwargs)
 
     def safe_stop(self):
@@ -220,18 +221,36 @@ class Manager:
         logger.info("Stopping Game Manager")
 
         self.running = False
+
         for gid in self.games.copy():
             if gid in self.games:
                 try:
                     self.games[gid]["thread"].join()
                 except Exception as ex:
-                    logging.exception("An exception occured on closing Game ID %d", gid)
+                    logging.exception("An exception occured on closing Game ID %d", gid, extra={"gameid": gid})
 
         for pid in self.players.copy():
             if pid in self.players:
                 try:
                     self.disconnect(pid)
                 except Exception as ex:
-                    logging.exception("An exception occured on kicking Player ID %d", pid)
+                    logging.exception("An exception occured on kicking Player ID %d", pid, extra={"playerid": pid})
+
+        logger.info("Updating counter of games in main.db")
+        conn = sqlite3.connect("main.db")
+        conn.cursor().execute("update counters set count=%d where name='game_id'" % next(self.gameid)).close()
+        conn.commit()
+        conn.close()
 
         logger.info("All game terminated and all clients kicked")
+
+    def send_to_client(self, client_id: int, message: str) -> None:
+        if self.clients[client_id]["alive"]:
+            if type(self.clients[client_id]["socket"]) == "<class 'socket.socket'>":
+                self.clients[client_id]["socket"].send(message.encode())
+            else:
+                self.webserver.send_message(client_id, message)
+
+    def send_to_game(self, game_id, message):
+        for client_id in self.game[game_id]["players"]:
+            self.send_to_client(client_id, message)

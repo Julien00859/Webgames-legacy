@@ -1,11 +1,12 @@
 from collections import deque, defaultdict
-from game.entities import *
 from itertools import starmap
 from operator import itemgetter, add
 from os.path import join as pathjoin
 from random import random, choice
-from settings.game_settings import *
 import logging
+
+from game_server.games.bomberman.entities import *
+from game_server.games.bomberman.settings import *
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,7 @@ class Bomberman:
 
         # Ouvre le fichier map et fait correspondre la ligne à l'axe des ordonnées
         # et l'index dans une ligne à l'axe des absises (pour avoir self.map[x][y] comme en math)
-        with open(pathjoin("game", "maps", mapname), "r") as mapfile:
+        with open(pathjoin("game_server", "games", "bomberman", "maps", mapname), "r") as mapfile:
             self.map = list(zip_list(*[list(line) for line in mapfile.readlines()]))
 
         self.players = {}
@@ -125,7 +126,8 @@ class Bomberman:
                     "position": list(starmap(add, zip(self.players[player].position, map(lambda x: x / GAME_OFFSET_PER_POSITION, self.players[player].offset)))),
                     "direction": self.players[player].direction
                 } for player in self.players
-            }
+            },
+            "frequency": GAME_TICKS_PER_SECOND
         }
 
     def handle_players(self, status):

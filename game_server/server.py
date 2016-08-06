@@ -1,10 +1,11 @@
-from server.exceptions import *
-from server.game_manager import Manager
-from settings.server_settings import *
 from sys import exc_info
 from websocket_server import WebsocketServer
 import json
 import logging
+
+from game_server.exceptions import *
+from game_server.manager import Manager
+from game_server.settings import *
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def onmessage(client, server, message):
         logger.warning("Client ID %d generated error %s with message %s", client["id"], repr(e), message)
         server.send_message(client, json.dumps({"cmd": "error", "error": repr(e)}))
 
-def start_server():
+def start_server(stored_game_id):
     """Start both the Game Manager and the Web Server"""
 
     # Prepare the web server with above functions
@@ -62,7 +63,7 @@ def start_server():
     # Create a game manager
     logger.info("Init Game Manager")
     global manager
-    manager = Manager(server)
+    manager = Manager(server, stored_game_id)
 
     # Start the web server
     logger.info("Starting Server")
