@@ -1,6 +1,6 @@
 // Variable(s) Globale(s) //
 
-var config = {
+let config = {
     upKey: "Z",
     downKey: "S",
     leftKey: "Q",
@@ -30,9 +30,20 @@ function main() {
     document.getElementById("select_game").addEventListener("submit", function(event){
         event.preventDefault();
 
-        var game = new Phaser.Game(19 * 40, 15 * 40, Phaser.auto, 'game', {preload: preload, create: create, update: update, render: render});
+        class Player {
+          constructor(name, x, y, image) {
+            this.name = name;
+            this.x = x;
+            this.y = y;
+            this.image = image;
+          }
+        }
 
-        var upKey, rightKey, leftKey, downKey, plantKey, fuseKey;
+        let players_collection = [];
+
+        let game = new Phaser.Game(19 * 40, 15 * 40, Phaser.canvas, 'game', {preload: preload, create: create, update: update, render: render});
+
+        let upKey, rightKey, leftKey, downKey, plantKey, fuseKey;
 
         function preload() {
             game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -41,14 +52,14 @@ function main() {
             game.load.image("beam", "images/beam.png");
             game.load.image("rock", "images/rock.png");
             game.load.image("floor", "images/floor.png");
-            game.load.image("p_1_down", "images/p_1_down.png");
-            game.load.image("p_1_right", "images/p_1_right.png");
-            game.load.image("p_1_up", "images/p_1_up.png");
-            game.load.image("p_1_left", "images/p_1_left.png");
-            game.load.image("p_2_down", "images/p_2_down.png");
-            game.load.image("p_2_left", "images/p_2_left.png");
-            game.load.image("p_2_right", "images/p_2_right.png");
-            game.load.image("p_2_up", "images/p_2_up.png");
+            game.load.image("p_1_S", "images/p_1_S.png");
+            game.load.image("p_1_E", "images/p_1_E.png");
+            game.load.image("p_1_N", "images/p_1_N.png");
+            game.load.image("p_1_W", "images/p_1_W.png");
+            game.load.image("p_2_S", "images/p_2_S.png");
+            game.load.image("p_2_W", "images/p_2_W.png");
+            game.load.image("p_2_E", "images/p_2_E.png");
+            game.load.image("p_2_N", "images/p_2_N.png");
             game.load.image("bomb", "images/bomb.png", 40, 40);
             game.load.image("exp_x", "images/exp_x.png", 40, 40);
             game.load.image("exp_y", "images/exp_y.png", 40, 40);
@@ -74,6 +85,8 @@ function main() {
 
         function update() {
 
+            let players = io.players;
+
             if      (upKey.isDown)     io.send_event("move", {"direction": "N"});
             else if (downKey.isDown)   io.send_event("move", {"direction": "S"});
             else if (leftKey.isDown)   io.send_event("move", {"direction": "W"});
@@ -85,15 +98,18 @@ function main() {
                 if (Phaser.Keyboard[config.upKey] || Phaser.Keyboard[config.downKey] || Phaser.Keyboard[config.leftKey] || Phaser.Keyboard[config.rigthKey]) io.send_event("stop");
             };
 
+            for (let player in Object.keys(players)) {
+              players_collection[player] = new Player("player " + Object.keys(players), players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_" + players[Object.keys(players)[player]].direction)
+            }
+
         }
 
         function render() {
 
-            var map = io.map;
-            var players = io.players;
-            var bombs = io.bombs;
-            var explosions = io.explosions;
-            var powerups = io.powerups;
+            let map = io.map;
+            let bombs = io.bombs;
+            let explosions = io.explosions;
+            let powerups = io.powerups;
 
             for (var x in map) { // Rendu de la map à partir de l'Array 2D
                 for (var y in map[x]) {
@@ -104,28 +120,15 @@ function main() {
                 }
             }
 
-            for (var player in Object.keys(players)) {
-                switch (players[Object.keys(players)[player]].direction) {
-                    case "N": var play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_up" )
-                        game.physics.enable(play, Phaser.Physics.ARCADE);
-                        break;
-                    case "S": var play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_down")
-                        game.physics.enable(play, Phaser.Physics.ARCADE);
-                        break;
-                    case "E": var play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_right")
-                        game.physics.enable(play, Phaser.Physics.ARCADE);
-                        break;
-                    case "W": var play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_left")
-                        game.physics.enable(play, Phaser.Physics.ARCADE);
-                        break;
-                }
+            for (let player of players_collection) {
+              game.add.sprite(player.x, player.y, player.image);
             }
 
-            for (var bomb in bombs) {
+            for (let bomb in bombs) {
                 game.add.sprite(bombs[bomb].position[0] * 40 - 20, bombs[bomb].position[1] * 40 - 20, "bomb");
             }
 
-            for (var explosion in explosions) {
+            for (let explosion in explosions) {
                 //  X
                 for (var i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
                     //console.log(i);
@@ -134,14 +137,17 @@ function main() {
                 }
 
                 // Y
-                for (var i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
+                for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
                     //if (i <= 0) return;
                     game.add.sprite(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp_y");
                 }
 
                 game.add.sprite(explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_c"); // Center
+                exp_x.kill();
+                exp_y.kill();
+                exp_c.kill();
 
-                for (var powerup in powerups) {
+                for (let powerup in powerups) {
                     game.add.sprite(powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20, powerup);
                 }
             }
