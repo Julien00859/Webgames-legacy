@@ -1,0 +1,23 @@
+{
+  "name": "bomberman",
+  "version": "1.0.0",
+  "description": "bomberman http server",
+  "main": "http.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node http"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Julien00859/Bomberman.git"
+  },
+  "author": "",
+  "license": "",
+  "bugs": {
+    "url": "https://github.com/Julien00859/Bomberman/issues"
+  },
+  "homepage": "https://github.com/Julien00859/Bomberman#readme",
+  "dependencies": {
+    "express": "^4.14.0"
+  }
+}

@@ -10,3 +10,4 @@ wiki/
 .idea
 client/js/playground.js
 client/images
+node_modules
