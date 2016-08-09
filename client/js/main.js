@@ -130,7 +130,7 @@ function main() {
 
             for (let explosion in explosions) {
                 //  X
-                for (var i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
+                for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
                     //console.log(i);
                     //if (i <= 0) return;
                     game.add.sprite(i * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_x");
@@ -143,11 +143,12 @@ function main() {
                 }
 
                 game.add.sprite(explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_c"); // Center
-                exp_x.kill();
-                exp_y.kill();
-                exp_c.kill();
+                //exp_x.kill();
+                //exp_y.kill();
+                //exp_c.kill();
 
                 for (let powerup in powerups) {
+                    console.log(powerup);
                     game.add.sprite(powerups[powerup][0] * 40 - 20, powerups[powerup][1] * 40 - 20, powerup);
                 }
             }
