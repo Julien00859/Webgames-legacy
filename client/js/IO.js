@@ -31,6 +31,7 @@ class IO {
           switch(data.cmd) {
               case "connection_success":
                   this.id = data.id;
+                  console.log(this.id);
                   break;
               case "startup_status":
                   //console.log(data.map);

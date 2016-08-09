@@ -30,17 +30,6 @@ function main() {
     document.getElementById("select_game").addEventListener("submit", function(event){
         event.preventDefault();
 
-        class Player {
-          constructor(name, x, y, image) {
-            this.name = name;
-            this.x = x;
-            this.y = y;
-            this.image = image;
-          }
-        }
-
-        let players_collection = [];
-
         let game = new Phaser.Game(19 * 40, 15 * 40, Phaser.canvas, 'game', {preload: preload, create: create, update: update, render: render});
 
         let upKey, rightKey, leftKey, downKey, plantKey, fuseKey;
@@ -79,13 +68,13 @@ function main() {
             rightKey = game.input.keyboard.addKey(Phaser.Keyboard[config.rigthKey]);
             plantKey = game.input.keyboard.addKey(Phaser.Keyboard[config.plantKey]);
             fuseKey = game.input.keyboard.addKey(Phaser.Keyboard[config.fuseKey]);
+
             game.physics.startSystem(Phaser.Physics.ARCADE);
+
 
         }
 
         function update() {
-
-            let players = io.players;
 
             if      (upKey.isDown)     io.send_event("move", {"direction": "N"});
             else if (downKey.isDown)   io.send_event("move", {"direction": "S"});
@@ -98,21 +87,19 @@ function main() {
                 if (Phaser.Keyboard[config.upKey] || Phaser.Keyboard[config.downKey] || Phaser.Keyboard[config.leftKey] || Phaser.Keyboard[config.rigthKey]) io.send_event("stop");
             };
 
-            for (let player in Object.keys(players)) {
-              players_collection[player] = new Player("player " + Object.keys(players), players[Object.keys(players)[player]].position[0] * 40 - 20, players[Object.keys(players)[player]].position[1] * 40 - 20, "p_" + (parseInt(player) + 1) + "_" + players[Object.keys(players)[player]].direction)
-            }
 
         }
 
         function render() {
 
             let map = io.map;
+            let players = io.players;
             let bombs = io.bombs;
             let explosions = io.explosions;
             let powerups = io.powerups;
 
-            for (var x in map) { // Rendu de la map à partir de l'Array 2D
-                for (var y in map[x]) {
+            for (let x in map) { // Rendu de la map à partir de l'Array 2D
+                for (let y in map[x]) {
                     //console.log(ligne, colonne);
                     if (map[x][y] == "#") game.add.sprite(x * 40, y * 40, "rock");
                     else if (map[x][y] == "&") game.add.sprite(x * 40, y * 40, "beam");
@@ -120,9 +107,13 @@ function main() {
                 }
             }
 
-            for (let player of players_collection) {
-              game.add.sprite(player.x, player.y, player.image);
+            for (let player in Object.keys(players)) {
+              game.add.sprite(players[Object.keys(players)[player]].position[0] * 40 - 20,
+                              players[Object.keys(players)[player]].position[1] * 40 - 20,
+                              "p_" + (parseInt(player) + 1) + "_" + players[Object.keys(players)[player]].direction
+                            );
             }
+
 
             for (let bomb in bombs) {
                 game.add.sprite(bombs[bomb].position[0] * 40 - 20, bombs[bomb].position[1] * 40 - 20, "bomb");
@@ -131,15 +122,13 @@ function main() {
             for (let explosion in explosions) {
                 //  X
                 for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
-                    //console.log(i);
-                    //if (i <= 0) return;
-                    game.add.sprite(i * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_x");
+                    console.log(i);
+                    if (i > 0) game.add.sprite(i * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_x");
                 }
 
                 // Y
                 for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
-                    //if (i <= 0) return;
-                    game.add.sprite(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp_y");
+                    if (i > 0) game.add.sprite(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp_y");
                 }
 
                 game.add.sprite(explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_c"); // Center
