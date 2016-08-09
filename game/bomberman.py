@@ -214,7 +214,6 @@ class Bomberman:
                 # Met à jour le status, la carte et la liste des bombes
                 status.add_explosion(bomb)
                 self.map[bomb.position[0]][bomb.position[1]] = MAP_VOID
-                self.bombs.remove(bomb)
                 logger.info("Game ID %d: Bomb ID %d exploded at %s", self.gid, id(bomb), bomb.position)
 
                 # Calcule la déflagration
@@ -260,6 +259,8 @@ class Bomberman:
                             status.update_map(xpos, ypos, MAP_VOID)
                             logger.info("Game ID %d: Bomb ID %d blew up a powerup at [%d, %d]", self.gid, id(bomb), xpos, ypos)
                             break
+                        
+                self.bombs.remove(bomb)
 
             # Calcule le décplacement et met à jour le statut
             if bomb.ismoving:
