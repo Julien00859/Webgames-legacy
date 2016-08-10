@@ -4,6 +4,7 @@ from itertools import count
 from os import urandom
 from threading import Thread, Timer, Event
 import json
+import pickle
 import logging
 import sqlite3
 
@@ -220,7 +221,7 @@ class Manager:
     def safe_stop(self):
         """Disconnect all users and wait for all game the stop"""
 
-        logger.warning("Stopping Game Manager")
+        logger.info("Stopping Game Manager")
 
         self.running = False
 
@@ -237,6 +238,12 @@ class Manager:
                     self.disconnect(pid)
                 except Exception as ex:
                     logging.exception("An exception occured on kicking Player ID %d", pid, extra={"playerid": pid})  
+
+
+        # Save the stored_id
+        data = pickle.load(open("data", "rb"))
+        data["stored_ids"]["game"] = next(self.gameid)
+        pickle.dump(data, open("data", "wb"))
 
         logger.info("All game terminated and all clients kicked")
 

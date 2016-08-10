@@ -10,6 +10,8 @@ import sqlite3
 import ssl
 import urllib.parse
 
+root = logging.getLogger()
+root.setLevel(logging.NOTSET)
 logger = logging.getLogger(__name__)
 
 def term_handler(signum, _):
@@ -105,9 +107,11 @@ class MyHTTPHandler(SimpleHTTPRequestHandler):
 
         self.wfile.write(json.dumps(d).encode("utf-8"))
 
-def start(host, port, cert_path, key_path):
+def start(host, port, cert_path, key_path, queue):
 
     signal(SIGTERM, term_handler)
+
+    root.addHandler(QueueHandler(queue))
 
     logger.info("Auth server listening on https://%s:%d", host, port)
     httpd = HTTPServer((host, port), MyHTTPHandler)
@@ -115,5 +119,5 @@ def start(host, port, cert_path, key_path):
     try:
         httpd.serve_forever()
     except Exception as ex:
-        logger.exception("Auth server stopped working !")
+        logger.critical("Auth server stopped working !", exc_info=ex)
         exit(1)

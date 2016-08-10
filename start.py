@@ -6,7 +6,7 @@ if __name__ != "__main__":
 from collections import namedtuple
 from gzip import open as gzipopen
 from itertools import count
-from logging.handlers import QueueListener, QueueHandler
+from logging.handlers import QueueListener
 from multiprocessing import Process, Queue as mpQueue
 from os import  getcwd, mkdir, sep, getpid, name as osname
 from os.path import exists, isdir, isfile, join as pathjoin
@@ -91,6 +91,9 @@ class SQLiteHandler(logging.Handler, Thread):
         self.queue = thQueue()
         self.sentinel = object()
 
+        # Prevent the thread from blocking the exit
+        self.daemon = True
+
         # Start the thread
         self.start()
 
@@ -151,13 +154,13 @@ class SQLiteHandler(logging.Handler, Thread):
 
 
 def term_handler(signum, _):
-    logging.info("Recieved SIGTERM. Stopping servers...")
-    for subproc in servers:
-        logging.info("Sending SIGNTEM to %s", subproc)
-        subproc.terminate()
-        subproc.join()
+    logger.info("Recieved SIGTERM. Stopping servers...")
+    for server in servers:
+        logger.info("Sending SIGNTEM to %s", server)
+        server.terminate()
+        server.join()
 
-    logging.info("Done. Stopping QueueListener")
+    logger.info("Done. Stopping QueueListener")
     queue_listener.enqueue_sentinel()
     logging.shutdown()
 
@@ -212,14 +215,22 @@ if CHROOT_TO_PROJECT_DIR:
                               args=[osname],
                               kwargs={}))
 
-log_handlers = []
+# Init logging
+logger = logging.getLogger()
+logger.setLevel(logging.NOTSET)
+handlers = []
 
 # Config the console logging
 if LOG_TO_CONSOLE:
     console = logging.StreamHandler()
     console.setLevel(getattr(logging, LOG_CONSOLE_LEVEL))
     console.setFormatter(logging.Formatter("[{levelname}] <{name}> {message}", style="{"))
-    log_handlers.append(console)
+    logger.addHandler(console)
+    handlers.append(console)
+    tolog.append(LogEntry(lvl="INFO",
+                          msg="Console logging initialized",
+                          args=[],
+                          kwargs={}))
 
 # Check for logs dir
 if not isdir(LOG_DIR):
@@ -260,7 +271,12 @@ if LOG_TO_FILE:
     file = logging.FileHandler(pathjoin(LOG_DIR, LOG_FILE_NAME), "w")
     file.setLevel(getattr(logging, LOG_FILE_LEVEL))
     file.setFormatter(logging.Formatter("{asctime} [{levelname}] <{name}> {message}", style="{"))
-    log_handlers.append(file)
+    logger.addHandler(file)
+    handlers.append(file)
+    tolog.append(LogEntry(lvl="INFO",
+                          msg="File logging initialized",
+                          args=[],
+                          kwargs={}))
 
 # Config the db logging
 if LOG_TO_DB:
@@ -272,39 +288,46 @@ if LOG_TO_DB:
 
     db = SQLiteHandler(pathjoin(LOG_DIR, LOG_DB_NAME), data["stored_ids"]["log"])
     db.setLevel(getattr(logging, LOG_DB_LEVEL))
-    log_handlers.append(db)
+    logger.addHandler(db)
+    handlers.append(db)
+    tolog.append(LogEntry(lvl="INFO",
+                          msg="Database logging initialized",
+                          args=[],
+                          kwargs={}))
 
 
+# If no handler has been set, disable logging
+if not any([LOG_TO_CONSOLE, LOG_DB_LEVEL, LOG_TO_DB]):
+    logger.addHandler(logging.NullHandler)
 
-queue = mpQueue()
-
-queue_listener = QueueListener(queue, *log_handlers)
-queue_listener.start()
-queue_handler = QueueHandler(queue)
-logger = logging.getLogger("")
-logger.addHandler(queue_handler)
-
-logger.info("Logging initialized")
 
 # Logging is now initialized so we send all stored messages
 for lvl, msg, args, kwargs in tolog:
     logger.log(getattr(logging, lvl), msg, *args, **kwargs)
 
+queue = mpQueue()
+
+queue_listener = QueueListener(queue, *handlers, respect_handler_level=True)
+queue_listener.start()
+
+logger.info("QueueListener ready to handle sub-precesses log records")
+
+
 # Launch the servers
 servers = [
     Process(
         target=auth_server_start,
-        args=(AUTH_HOST, AUTH_PORT, SSL_CERT_PATH, SSL_KEY_PATH)
+        args=(AUTH_HOST, AUTH_PORT, SSL_CERT_PATH, SSL_KEY_PATH, queue)
     ),
     Process(
         target=game_server_start,
-        args=(WS_HOST, WS_PORT, data["stored_ids"]["game"])
+        args=(WS_HOST, WS_PORT, data["stored_ids"]["game"], queue)
     )
 ]
 
-for subproc in servers:
-    logger.info("Starting %s", subproc)
-    subproc.start()
+for server in servers:
+    logger.info("Starting %s", server)
+    server.start()
 
 
 signal(SIGTERM, term_handler)
