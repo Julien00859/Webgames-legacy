@@ -105,6 +105,7 @@ function main() {
             let explosions = io.explosions;
             let powerups = io.powerups;
             let rendered = false;
+            let mapChanging = [];
 
             if (map != {} || rendered == false) {
               for (let x in map) { // Rendu de la map à partir de l'Array 2D
@@ -167,7 +168,8 @@ function main() {
                       if (i > 0) {
                         console.log(i);
                         let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
-                        let sprite = game.add.sprite(i * 16, explosions[explosion].position[1] * 16, "grass", 1);
+                        mapChanging.push([i * 16 - 8, explosions[explosion].position[1] * 16 - 8])
+                        //let sprite = game.add.sprite(i * 16, explosions[explosion].position[1] * 16, "grass", 1);
                         //explo.animations.add('boom', [2, 9, 16, 23]);
                         //explo.animations.play('boom', 30, false, true);
 
@@ -183,7 +185,8 @@ function main() {
                   for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
                     if (i > 0) {
                       let explo = game.add.image(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
-                      let sprite = game.add.sprite(explosions[explosion].position[0] * 16, i * 16, "grass", 1);
+                      mapChanging.push([explosions[explosion].position[0] * 16 - 8, i * 16 - 8])
+                      //let sprite = game.add.sprite(explosions[explosion].position[0] * 16, i * 16, "grass", 1);
                       //let boom = exp.animations.add('boom', [3, 10, 17, 24]);
                       //exp.animations.play('boom', 30, false, true);
                     }
@@ -206,6 +209,12 @@ function main() {
                     delete explosions[explosion] // Supprime l'explosion
                   }, 3000)
               }
+            }
+
+            for (let position of mapChanging) {
+              console.log(mapChanging);
+              console.log(rendered);
+              let sprite = game.add.sprite(position[0], position[1], "grass", 1);
             }
 
         }
