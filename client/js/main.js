@@ -167,12 +167,15 @@ function main() {
             for (let explosion in explosions) {
                 //  X
                 for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
-                    console.log(i, "Bonjour !");
                     if (i > 0) {
-                      let explo = game.add.image(i * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp");
+                      console.log(i, "Bonjour !");
+                      let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
                       //explo.animations.add('boom', [2, 9, 16, 23]);
                       //explo.animations.play('boom', 30, false, true);
-                      game.time.events.add(1000, explo.kill());
+                      /*game.time.events.add(1000, afterExplo(), this);
+                      function afterExplo() {
+                        explo.kill();
+                      }*/
                     }
 
                     /*let explosionAnimation = explo.getFirstExists(false);
@@ -184,13 +187,13 @@ function main() {
                 // Y
                 for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
                   if (i > 0) {
-                    let explo = game.add.image(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp");
+                    let explo = game.add.image(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
                     //let boom = exp.animations.add('boom', [3, 10, 17, 24]);
                     //exp.animations.play('boom', 30, false, true);
-                    game.time.events.add(1000, explo.kill());
+
                   }
 
-                  /*let exp_c = game.add.sprite(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp");
+                  /*let exp_c = game.add.sprite(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
                   let boom = exp_c.animations.add('boom', [0, 7, 14, 21]);
                   exp_c.animations.play('boom', 30, false, true);*/
 
@@ -204,7 +207,7 @@ function main() {
 
                 /*for (let powerup in powerups) {
                     console.log(powerups);
-                    game.add.sprite(powerup[0] * 40 - 20, powerup[1] * 40 - 20, powerups[powerup]);
+                    game.add.sprite(powerup[0] * 16 - 8, powerup[1] * 16 - 8, powerups[powerup]);
                 }*/
             }
 
