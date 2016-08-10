@@ -80,19 +80,6 @@ function main() {
             fuseKey = game.input.keyboard.addKey(Phaser.Keyboard[config.fuseKey]);
 
             game.physics.startSystem(Phaser.Physics.ARCADE);
-
-            /*explo = game.add.group();
-            let explosionAnimation = explo.create(0, 0, "exp");
-            explosionAnimation.anchor.setTo(0.5, 0.5);
-            explosionAnimation.animations.add('boom');*/
-
-
-
-            //  An explosion pool
-            //explosions.forEach(setupInvader, this);
-            //floor.animations.add('kaboom');
-            //beam.animations.add('kaboom');
-            //rock.animations.add('kaboom');
         }
 
         function update() {
@@ -107,7 +94,6 @@ function main() {
             game.input.keyboard.onUpCallback = function (e) {
                 if (Phaser.Keyboard[config.upKey] || Phaser.Keyboard[config.downKey] || Phaser.Keyboard[config.leftKey] || Phaser.Keyboard[config.rigthKey]) io.send_event("stop");
             };
-
 
         }
 
@@ -161,7 +147,7 @@ function main() {
             for (let bomb in bombs) {
                 let bomb_animation = game.add.sprite(bombs[bomb].position[0] * 16 - 8, bombs[bomb].position[1] * 16 - 8, "bomb");
                 bomb_animation.animations.add('bomb', [0, 1, 2, 3, 4, 5], 10, true);
-                bomb_animation.animations.play('bomb', 30, true);
+                bomb_animation.animations.play('bomb', 10, true);
             }
 
             for (let explosion in explosions) {
