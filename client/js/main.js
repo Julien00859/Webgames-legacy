@@ -30,7 +30,7 @@ function main() {
     document.getElementById("select_game").addEventListener("submit", function(event){
         event.preventDefault();
 
-        let game = new Phaser.Game(19 * 40, 15 * 40, Phaser.canvas, 'game', {preload: preload, create: create, update: update, render: render});
+        let game = new Phaser.Game(19 * 16, 15 * 16, Phaser.canvas, 'game', {preload: preload, create: create, update: update, render: render});
 
         let upKey, rightKey, leftKey, downKey, plantKey, fuseKey;
 
@@ -40,7 +40,7 @@ function main() {
             game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
             game.scale.pageAlignHorizontally = true;
             game.scale.pageAlignVertically = true;
-            game.load.image("beam", "images/beam.png");
+            /*game.load.image("beam", "images/beam.png");
             game.load.image("rock", "images/rock.png");
             game.load.image("floor", "images/floor.png");
             game.load.image("p_1_S", "images/p_1_S.png");
@@ -60,7 +60,13 @@ function main() {
             game.load.image("P", "images/P.png");
             game.load.image("S", "images/S.png");
             game.load.image("H", "images/H.png");
-            game.load.spritesheet('exp', 'images/explode.png', 128, 128);
+            game.load.spritesheet('exp', 'images/eKD88.png', 32, 32);*/
+
+            game.load.spritesheet('grass', 'images/grass.png', 16, 16);
+            game.load.spritesheet('wall', 'images/wall.png', 16, 16);
+            game.load.spritesheet('player', 'images/player_spritesheet.png', 16, 16);
+            game.load.spritesheet('bomb', 'images/bomb_spritesheet.png', 16, 16);
+            game.load.image('exp', 'images/explosion.png');
 
         }
 
@@ -75,10 +81,10 @@ function main() {
 
             game.physics.startSystem(Phaser.Physics.ARCADE);
 
-            explo = game.add.group();
+            /*explo = game.add.group();
             let explosionAnimation = explo.create(0, 0, "exp");
             explosionAnimation.anchor.setTo(0.5, 0.5);
-            explosionAnimation.animations.add('boom');
+            explosionAnimation.animations.add('boom');*/
 
 
 
@@ -116,64 +122,90 @@ function main() {
             for (let x in map) { // Rendu de la map à partir de l'Array 2D
                 for (let y in map[x]) {
                     //console.log(ligne, colonne);
-                    if (map[x][y] == "#") game.add.image(x * 40, y * 40, "rock");
-                    else if (map[x][y] == "&") game.add.image(x * 40, y * 40, "beam");
-                    else if (map[x][y] == " ") game.add.image(x * 40, y * 40, "floor");
+                    if (map[x][y] == "#") {
+                      let sprite = game.add.sprite(x * 16, y * 16, "wall", 1);
+                    }
+                    else if (map[x][y] == "&") {
+                      let sprite = game.add.sprite(x * 16, y * 16, "wall", 3);
+                    }
+                    else if (map[x][y] == " ") {
+                      let sprite = game.add.image(x * 16, y * 16, "grass", 1);
+                    }
                 }
             }
 
             for (let player in Object.keys(players)) {
-              game.add.image(players[Object.keys(players)[player]].position[0] * 40 - 20,
-                              players[Object.keys(players)[player]].position[1] * 40 - 20,
-                              "p_" + (parseInt(player) + 1) + "_" + players[Object.keys(players)[player]].direction
+              let play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 16 - 8,
+                              players[Object.keys(players)[player]].position[1] * 16 - 8,
+                              'player'/*"p_" + (parseInt(player) + 1) + "_" + players[Object.keys(players)[player]].direction*/,
+                              1
                             );
+              switch(players[Object.keys(players)[player]].direction) {
+                case "S": play.animations.add("walking_down", [1, 2, 3], 10, true);
+                  play.animations.play('walking_down');
+                  break;
+                case "W": play.animations.add("walking_left", [4, 5, 6, 7], 10, true);
+                  play.animations.play('walking_left');
+                  break;
+                case "E": play.animations.add("walking_right", [4, 5, 6, 7], 10, true);
+                  play.animations.play('walking_right');
+                  break;
+                case "N": play.animations.add("walking_up", [0, 8, 9], 10, true);
+                  play.animations.play('walking_up');
+                  break;
+
+              }
             }
 
 
             for (let bomb in bombs) {
-                game.add.sprite(bombs[bomb].position[0] * 40 - 20, bombs[bomb].position[1] * 40 - 20, "bomb");
+                let bomb_animation = game.add.sprite(bombs[bomb].position[0] * 16 - 8, bombs[bomb].position[1] * 16 - 8, "bomb");
+                bomb_animation.animations.add('bomb', [0, 1, 2, 3, 4, 5], 10, true);
+                bomb_animation.animations.play('bomb', 30, true);
             }
 
             for (let explosion in explosions) {
                 //  X
                 for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
                     console.log(i, "Bonjour !");
-                    /*if (i > 0) {
-                      let explo = game.add.sprite(i * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp");
-                      let boom = explo.animations.add('boom');
-                      explo.animations.play('boom', 30, true);
-                    }*/
+                    if (i > 0) {
+                      let explo = game.add.image(i * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp");
+                      //explo.animations.add('boom', [2, 9, 16, 23]);
+                      //explo.animations.play('boom', 30, false, true);
+                      game.time.events.add(1000, explo.kill());
+                    }
 
-                    let explosionAnimation = explo.getFirstExists(false);
+                    /*let explosionAnimation = explo.getFirstExists(false);
                     explosionAnimation.reset(i * 40 - 20, explosions[explosion].position[1] * 40 - 20);
-                    explosionAnimation.play('boom', 30, false, true);
+                    explosionAnimation.play('boom', 30, false, true);*/
 
                 }
 
                 // Y
                 for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
-                  /*if (i > 0) {
-                    let exp = game.add.sprite(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp");
-                    let boom = exp.animations.add('boom');
-                    exp.animations.play('boom', 30, false);
-                  }*/
+                  if (i > 0) {
+                    let explo = game.add.image(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp");
+                    //let boom = exp.animations.add('boom', [3, 10, 17, 24]);
+                    //exp.animations.play('boom', 30, false, true);
+                    game.time.events.add(1000, explo.kill());
+                  }
 
-                  let explosionAnimation = explo.getFirstExists(false);
-                  explosionAnimation.reset(explosions[explosion].position[0] * 40 - 20, i * 40 - 20);
-                  explosionAnimation.play('boom', 30, false, true);
+                  /*let exp_c = game.add.sprite(explosions[explosion].position[0] * 40 - 20, i * 40 - 20, "exp");
+                  let boom = exp_c.animations.add('boom', [0, 7, 14, 21]);
+                  exp_c.animations.play('boom', 30, false, true);*/
 
                 }
 
-                //game.add.sprite(explosions[explosion].position[0] * 40 - 20, explosions[explosion].position[1] * 40 - 20, "exp_c"); // Center
+
                 //bomb.kill();
                 //exp.kill();
-                bombs = {};
-                explosions = {};
+                //bombs = {};
+                //explosions = {};
 
-                for (let powerup in powerups) {
+                /*for (let powerup in powerups) {
                     console.log(powerups);
                     game.add.sprite(powerup[0] * 40 - 20, powerup[1] * 40 - 20, powerups[powerup]);
-                }
+                }*/
             }
 
         }
