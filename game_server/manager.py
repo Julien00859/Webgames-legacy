@@ -8,7 +8,7 @@ import logging
 import sqlite3
 
 from game_server.exceptions import *
-from game_server.settings import *
+from settings import *
 
 logger = logging.getLogger(__name__)
 
@@ -149,13 +149,15 @@ class Manager:
         game = self.games[gid]["game"]
         players = self.games[gid]["players"]
 
+        frequency = game.get_startup_status()["frequency"]
+
         try:
             tick = Event()
 
             # Main loop stop when the game is over or when the game manager is closing
             while self.running:
                 # After the given time, the tick event is set and the loop.. loop :p
-                Timer(1 / GAME_TICKS_PER_SECOND, tick.set).start()
+                Timer(1 / frequency, tick.set).start()
 
                 # Call the main method of the game and retrieve a status
                 status = game.main()
@@ -218,7 +220,7 @@ class Manager:
     def safe_stop(self):
         """Disconnect all users and wait for all game the stop"""
 
-        logger.info("Stopping Game Manager")
+        logger.warning("Stopping Game Manager")
 
         self.running = False
 
@@ -234,23 +236,17 @@ class Manager:
                 try:
                     self.disconnect(pid)
                 except Exception as ex:
-                    logging.exception("An exception occured on kicking Player ID %d", pid, extra={"playerid": pid})
-
-        logger.info("Updating counter of games in main.db")
-        conn = sqlite3.connect("main.db")
-        conn.cursor().execute("update counters set count=%d where name='game_id'" % next(self.gameid)).close()
-        conn.commit()
-        conn.close()
+                    logging.exception("An exception occured on kicking Player ID %d", pid, extra={"playerid": pid})  
 
         logger.info("All game terminated and all clients kicked")
 
     def send_to_client(self, client_id: int, message: str) -> None:
-        if self.clients[client_id]["alive"]:
-            if type(self.clients[client_id]["socket"]) == "<class 'socket.socket'>":
-                self.clients[client_id]["socket"].send(message.encode())
+        if self.players[client_id]["alive"]:
+            if type(self.players[client_id]["socket"]) == "<class 'socket.socket'>":
+                self.players[client_id]["socket"].send(message.encode())
             else:
-                self.webserver.send_message(client_id, message)
+                self.webserver.send_message(self.players[client_id]["socket"], message)
 
     def send_to_game(self, game_id, message):
-        for client_id in self.game[game_id]["players"]:
+        for client_id in self.games[game_id]["players"]:
             self.send_to_client(client_id, message)

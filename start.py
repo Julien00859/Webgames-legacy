@@ -5,46 +5,189 @@ if __name__ != "__main__":
 
 from collections import namedtuple
 from gzip import open as gzipopen
-from os import  getcwd, mkdir, sep, name as osname
-from os.path import basename, exists, isdir, isfile, join as pathjoin
+from itertools import count
+from logging.handlers import QueueListener, QueueHandler
+from multiprocessing import Process, Queue as mpQueue
+from os import  getcwd, mkdir, sep, getpid, name as osname
+from os.path import exists, isdir, isfile, join as pathjoin
+from queue import Queue as thQueue
 from shutil import copyfileobj
-from sqlite_handler.sqlite_handler import SQLiteHandler
-from time import strftime
+from signal import signal, SIGTERM
+from threading import Thread
 import json
 import logging
+import pickle
 import sqlite3
 import sys
 
-from game_server.server import start_server
-from game_server.settings import *
+from auth_server.auth_server import start as auth_server_start
+from game_server.game_server import start as game_server_start
+from settings import *
+
+class SQLiteHandler(logging.Handler, Thread):
+    """Logging handler for the SQLite3 database"""
+
+    create_statement = """CREATE TABLE IF NOT EXISTS log (
+                              id int primary key,
+                              created real,
+                              exc_text text,
+                              filename text,
+                              funcName text,
+                              levelname text,
+                              levelno int,
+                              lineno int,
+                              module text,
+                              message text,
+                              name text,
+                              pathname text,
+                              playerid int,
+                              gameid int
+                        );"""
+
+    insert_statement = """INSERT INTO log (
+                              id,
+                              created,
+                              exc_text,
+                              filename,
+                              funcName,
+                              levelname,
+                              levelno,
+                              lineno,
+                              module,
+                              message,
+                              name,
+                              pathname,
+                              playerid,
+                              gameid
+                        )
+                        VALUES (
+                              :id,
+                              :created,
+                              :exc_text,
+                              :filename,
+                              :funcName,
+                              :levelname,
+                              :levelno,
+                              :lineno,
+                              :module,
+                              :message,
+                              :name,
+                              :pathname,
+                              :playerid,
+                              :gameid
+                        );"""
+
+    def __init__(self, database, stored_id):
+        logging.Handler.__init__(self)
+        Thread.__init__(self)
+
+        # Save the args
+        self.database = database
+
+        # Retrieve the ID
+        self.logid = count(stored_id)
+
+        # Create a queue with a sentinel
+        self.queue = thQueue()
+        self.sentinel = object()
+
+        # Start the thread
+        self.start()
+
+    # override logging.Handler.emit
+    def emit(self, record):
+        """Feed the queue with a record"""
+
+        if not hasattr(record, "message"):
+            record.message = self.format(record)
+
+        if not hasattr(record, "playerid"):
+            record.playerid = None
+
+        if not hasattr(record, "gameid"):
+            record.gameid = None
+
+        record.id = next(self.logid)
+
+        self.queue.put(record)
+
+    # override logging.Handler.close
+    def close(self):
+        """Feed the queue with the sentinel and wait for the thread to stop"""
+
+        self.queue.put(self.sentinel)
+        self.join()
+
+        # Save the stored_id
+        data = pickle.load(open("data", "rb"))
+        data["stored_ids"]["log"] = next(self.logid)
+        pickle.dump(data, open("data", "wb"))
+
+    def run(self):
+        """Consume the queue to insert the records in the database"""
+
+        # Connect to db and create the table if it doesn't exists
+        conn = sqlite3.connect(self.database)
+        cur = conn.cursor()
+        cur.execute(self.create_statement)
+
+        # Main loop
+        while True:
+            # Get a record or the sentinel
+            record = self.queue.get()
+
+            # If it's the sentinel, exit loop, commit and close db
+            if record is self.sentinel:
+                break
+
+            # Otherwise insert the record into the table
+            cur.execute(self.insert_statement, record.__dict__)
+            self.queue.task_done()
+
+        cur.close()
+        conn.commit()
+        conn.close()
+        self.queue.task_done()
 
 
-class LogFile(object):
-    """File-like object to log text using the `logging` module."""
+def term_handler(signum, _):
+    logging.info("Recieved SIGTERM. Stopping servers...")
+    for subproc in servers:
+        logging.info("Sending SIGNTEM to %s", subproc)
+        subproc.terminate()
+        subproc.join()
 
-    def __init__(self, name=None):
-        self.logger = logging.getLogger(name)
+    logging.info("Done. Stopping QueueListener")
+    queue_listener.enqueue_sentinel()
+    logging.shutdown()
 
-    def write(self, msg, level=logging.INFO):
-        if msg.strip():
-            self.logger.log(level, msg.strip())
-
-    def flush(self):
-        for handler in self.logger.handlers:
-            handler.flush()
+# =====================================================================================
 
 # Store message until the logging is ready
 LogEntry = namedtuple("LogEntry", ("lvl", "msg", "args", "kwargs"))
 tolog = []
 
-conn = sqlite3.connect("main.db")
-cur = conn.cursor()
-for name, count in cur.execute("select name, count from counters").fetchall():
-    if name == "log_id":
-        stored_log_id = count
-    elif name == "game_id":
-        stored_game_id = count
-conn.close()
+
+# Get the data
+if isfile("data"):
+    data = pickle.load(open("data", "rb"))
+else:
+    tolog.append(LogEntry(lvl="WARNING",
+                          msg="Data file not found, creating a new one at ./data",
+                          args=(),
+                          kwargs={}))
+    data = {
+        "stored_ids": {
+            "log": 1,
+            "game": 1
+        }
+    }
+    pickle.dump(data, open("data", "wb"))
+
+tolog.append(LogEntry(lvl="DEBUG", 
+                      msg="Stored datas are: %s",
+                      args=data,
+                      kwargs={}))
 
 
 # Check if we must chroot
@@ -53,81 +196,116 @@ if CHROOT_TO_PROJECT_DIR:
         from os import chroot
         try:
             chroot(getcwd())
-            tolog.append(LogEntry(lvl="INFO", msg="Chroot to %s", args=[getcwd()], kwargs={}))
+            tolog.append(LogEntry(lvl="INFO", 
+                                  msg="Chroot to %s",
+                                  args=[getcwd()],
+                                  kwargs={}))
 
         except PermissionError as e:
-            tolog.append(LogEntry(lvl="WARNING", msg="Couldn't chroot. %s", args=[str(e)], kwargs={}))
+            tolog.append(LogEntry(lvl="WARNING", 
+                                  msg="Couldn't chroot. %s", 
+                                  args=[str(e)], 
+                                  kwargs={}))
     else:
-        tolog.append(LogEntry(
-            lvl="WARNING",
-            msg="Chroot is not available for your system (\"%s\" instead of \"posix\"), please consider setting CHROOT_TO_PROJECT_DIR to False in your server settings",
-            args=[osname],
-            kwargs={})
-        )
-        
+        tolog.append(LogEntry(lvl="WARNING",
+                              msg="Chroot is not available for your system (\"%s\" instead of \"posix\"), please consider setting CHROOT_TO_PROJECT_DIR to False in your server settings",
+                              args=[osname],
+                              kwargs={}))
+
+log_handlers = []
+
+# Config the console logging
+if LOG_TO_CONSOLE:
+    console = logging.StreamHandler()
+    console.setLevel(getattr(logging, LOG_CONSOLE_LEVEL))
+    console.setFormatter(logging.Formatter("[{levelname}] <{name}> {message}", style="{"))
+    log_handlers.append(console)
 
 # Check for logs dir
-if not isdir("logs"):
-    tolog.append(LogEntry(lvl="WARNING", msg="Logs directory not found, creating a new one at .%s%s%s%s%s", args=[sep, basename(getcwd()), sep, "logs", sep], kwargs={}))
-    mkdir("logs")
+if not isdir(LOG_DIR):
+    tolog.append(LogEntry(lvl="WARNING",
+                          msg="Logs directory not found, creating a new one at .%s%s%s",
+                          args=[sep, LOG_DIR, sep],
+                          kwargs={}))
+    mkdir(LOG_DIR)
 
-logging.basicConfig(
-    level=getattr(logging, LOG_CONSOLE_LEVEL),
-    format="[{levelname}] <{name}> {message}",
-    style="{",
-    datefmt="%Y/%m/%d %X"
-)
-
+# File logging
 if LOG_TO_FILE:
-    log_path = pathjoin("logs", LOG_FILE_NAME)  # Create a path to the log file
 
-    # If the `keep_log` option is set to true, compress the `log_path` file and name
+    # If the `keep_log` option is set to true, compress the log file and name
     # it after the date and time of the first entry of the log file
     # > latest.log => yyyy-mm-dd_hh-mm-ss.gz
     if KEEP_LOG:
-        if exists(log_path):
-            if not isfile(log_path):
-                raise OSError("LOG_FILE exists but isn't a correct file. Please check its value is the server settings.")
+
+        # Get the log file
+        if exists(LOG_FILE_NAME):
+            if not isfile(LOG_FILE_NAME):
+                raise OSError("LOG_FILE_NAME exists but isn't a correct file. Please check its value is the server settings.")
 
             # Fetch the first line, get the date and time, join them with an "_"
             # and finaly change ":" and "/" to "-"
-            datetime = "_".join(open(log_path, "r").readline().split(" ")[:2]).replace(":","-").replace("/","-")
+            datetime = "_".join(open(LOG_FILE_NAME, "r").readline().split(" ")[:2]).replace(":","-").replace("/","-")
 
-            tolog.append(LogEntry(lvl="INFO", msg="GZip previous log file \"%s\" to \"%s\"", args=[LOG_FILE_NAME, datetime + ".gz"], kwargs={}))
+            tolog.append(LogEntry(lvl="INFO",
+                                  msg="GZip previous log file \"%s\" to \"%s\"",
+                                  args=[LOG_FILE_NAME, datetime + ".gz"],
+                                  kwargs={}))
 
-            with open(log_path, 'rb') as f_in:
-                with gzipopen(pathjoin("logs", datetime + ".gz"), 'wb') as f_out:
+            # Compress the log file to the new file
+            with open(LOG_FILE_NAME, 'rb') as f_in:
+                with gzipopen(pathjoin(LOG_DIR, datetime + ".gz"), 'wb') as f_out:
                     copyfileobj(f_in, f_out)
 
-    file = logging.FileHandler(log_path, "w")
+    # Config the file logging
+    file = logging.FileHandler(pathjoin(LOG_DIR, LOG_FILE_NAME), "w")
     file.setLevel(getattr(logging, LOG_FILE_LEVEL))
     file.setFormatter(logging.Formatter("{asctime} [{levelname}] <{name}> {message}", style="{"))
-    logging.getLogger("").addHandler(file)
+    log_handlers.append(file)
 
+# Config the db logging
 if LOG_TO_DB:
-    db = SQLiteHandler(pathjoin("logs", LOG_DB_NAME), stored_log_id)
-    db.setLevel(getattr(logging, LOG_DB_LEVEL))
-    db.setFormatter(logging.Formatter("{asctime} [{levelname}] <{name}> {message}", style="{"))
-    logging.getLogger("").addHandler(db)
+    if not isfile(pathjoin(LOG_DIR, LOG_DB_NAME)):
+        tolog.append(LogEntry(lvl="WARNING",
+                              msg="Logs database not found, creating a new one at .%s%s%s%s",
+                              args=[sep, LOG_DIR, sep, LOG_DB_NAME],
+                              kwargs={}))    
 
-logging.info("Logging initialized")
+    db = SQLiteHandler(pathjoin(LOG_DIR, LOG_DB_NAME), data["stored_ids"]["log"])
+    db.setLevel(getattr(logging, LOG_DB_LEVEL))
+    log_handlers.append(db)
+
+
+
+queue = mpQueue()
+
+queue_listener = QueueListener(queue, *log_handlers)
+queue_listener.start()
+queue_handler = QueueHandler(queue)
+logger = logging.getLogger("")
+logger.addHandler(queue_handler)
+
+logger.info("Logging initialized")
 
 # Logging is now initialized so we send all stored messages
 for lvl, msg, args, kwargs in tolog:
-    logging.log(getattr(logging, lvl), msg, *args, **kwargs)
+    logger.log(getattr(logging, lvl), msg, *args, **kwargs)
 
-# Redirect stdout to logging
-#sys.stdout = LogFile('sys.stdout')
+# Launch the servers
+servers = [
+    Process(
+        target=auth_server_start,
+        args=(AUTH_HOST, AUTH_PORT, SSL_CERT_PATH, SSL_KEY_PATH)
+    ),
+    Process(
+        target=game_server_start,
+        args=(WS_HOST, WS_PORT, data["stored_ids"]["game"])
+    )
+]
 
-# Launch the server
-try:
-    start_server(stored_game_id)
+for subproc in servers:
+    logger.info("Starting %s", subproc)
+    subproc.start()
 
-except Exception as e:
-    logging.critical("Fatal unhandled error ! %s", repr(e), exc_info=e)
 
-finally:
-    sys.stdout = sys.__stdout__
-    logging.info("Exiting")
-    logging.shutdown()
-    
+signal(SIGTERM, term_handler)
+logger.info("Server running on PID %d. Send SIGTERM (aka kill) to terminate.", getpid())

@@ -8,8 +8,14 @@ import game_server.games.bomberman.bomberman
 CHROOT_TO_PROJECT_DIR = False # Only available on Linux
 
 # Web Server
-HOST = "0.0.0.0"
-PORT = 28456
+WS_HOST = "localhost"
+WS_PORT = 28456
+
+# Auth Server
+AUTH_HOST = "localhost"
+AUTH_PORT = 28457
+SSL_KEY_PATH = "auth_server/key.pem"
+SSL_CERT_PATH = "auth_server/cert.pem"
 
 # Security
 TOKEN_LENGTH = 16
@@ -24,14 +30,16 @@ GAMES = {
 }
 
 # Log
+LOG_TO_CONSOLE = True
 LOG_CONSOLE_LEVEL = "INFO"
 
 LOG_TO_FILE = True
-KEEP_LOG = False
+KEEP_LOG = True
 LOG_FILE_NAME = "latest.log"
 LOG_FILE_LEVEL = "DEBUG"
-
 
 LOG_TO_DB = True
 LOG_DB_NAME = "log.db"
 LOG_DB_LEVEL = "DEBUG"
+
+LOG_DIR = "logs"

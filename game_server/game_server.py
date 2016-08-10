@@ -2,14 +2,22 @@ from sys import exc_info
 from websocket_server import WebsocketServer
 import json
 import logging
+from logging.handlers import QueueHandler
 
-from game_server.exceptions import *
 from game_server.manager import Manager
-from game_server.settings import *
+from game_server.exceptions import *
+from signal import signal, SIGTERM
+from sys import exit
 
 logger = logging.getLogger(__name__)
-
 manager = None
+
+
+def term_handler(signum, _):
+    logger.info("Recieved SIGTERM. Stopping")
+    manager.safe_stop()
+    exit(0)
+
 
 def onconnect(client, server):
     """Handle incoming connections"""
@@ -50,22 +58,26 @@ def onmessage(client, server, message):
         logger.warning("Client ID %d generated error %s with message %s", client["id"], repr(e), message)
         server.send_message(client, json.dumps({"cmd": "error", "error": repr(e)}))
 
-def start_server(stored_game_id):
+def start(host, port, stored_id):
     """Start both the Game Manager and the Web Server"""
 
+    signal(SIGTERM, term_handler)
+
+    logger.info("Init Web-Socket Server")
     # Prepare the web server with above functions
-    logger.info("Init Web Socket Server")
-    server = WebsocketServer(PORT, HOST)
+    server = WebsocketServer(port, host)
     server.set_fn_new_client(onconnect)
     server.set_fn_client_left(ondisconnect)
     server.set_fn_message_received(onmessage)
 
-    # Create a game manager
     logger.info("Init Game Manager")
     global manager
-    manager = Manager(server, stored_game_id)
+    manager = Manager(server, stored_id)
 
-    # Start the web server
-    logger.info("Starting Server")
-    server.run_forever()
-    manager.safe_stop()
+
+    logger.info("Web-Socket server listening on ws://%s:%d", host, port)
+    try:
+        server.run_forever()
+    except Exception as ex:
+        logger.exception("Web-Socket server stopped working !")
+        exit(1)
