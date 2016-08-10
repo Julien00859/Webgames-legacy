@@ -104,21 +104,26 @@ function main() {
             let bombs = io.bombs;
             let explosions = io.explosions;
             let powerups = io.powerups;
+            let rendered = false;
 
-            for (let x in map) { // Rendu de la map à partir de l'Array 2D
-                for (let y in map[x]) {
-                    //console.log(ligne, colonne);
-                    if (map[x][y] == "#") {
-                      let sprite = game.add.sprite(x * 16, y * 16, "wall", 1);
-                    }
-                    else if (map[x][y] == "&") {
-                      let sprite = game.add.sprite(x * 16, y * 16, "wall", 3);
-                    }
-                    else if (map[x][y] == " ") {
-                      let sprite = game.add.image(x * 16, y * 16, "grass", 1);
-                    }
-                }
+            if (map != {} || rendered == false) {
+              for (let x in map) { // Rendu de la map à partir de l'Array 2D
+                  for (let y in map[x]) {
+                      //console.log(ligne, colonne);
+                      if (map[x][y] == "#") {
+                        let sprite = game.add.sprite(x * 16, y * 16, "wall", 1);
+                      }
+                      else if (map[x][y] == "&") {
+                        let sprite = game.add.sprite(x * 16, y * 16, "wall", 3);
+                      }
+                      else if (map[x][y] == " ") {
+                        let sprite = game.add.image(x * 16, y * 16, "grass", 1);
+                      }
+                  }
+              }
+              rendered = true;
             }
+
 
             for (let player in Object.keys(players)) {
               let play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 16 - 8,
@@ -143,58 +148,64 @@ function main() {
               }
             }
 
+            if (bombs != {}) {
+              for (let bomb in bombs) {
+                  let bomb_animation = game.add.sprite(bombs[bomb].position[0] * 16 - 8, bombs[bomb].position[1] * 16 - 8, "bomb");
+                  bomb_animation.animations.add('bomb', [0, 1, 2, 3, 4, 5], 10, true);
+                  bomb_animation.animations.play('bomb', 10, true);
+                  setTimeout(function() {
+                    delete bombs[bomb] // Supprime la bombe
+                  }, 3000)
 
-            for (let bomb in bombs) {
-                let bomb_animation = game.add.sprite(bombs[bomb].position[0] * 16 - 8, bombs[bomb].position[1] * 16 - 8, "bomb");
-                bomb_animation.animations.add('bomb', [0, 1, 2, 3, 4, 5], 10, true);
-                bomb_animation.animations.play('bomb', 10, true);
+              }
             }
 
-            for (let explosion in explosions) {
-                //  X
-                for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
-                    if (i > 0) {
-                      console.log(i, "Bonjour !");
-                      let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
-                      //explo.animations.add('boom', [2, 9, 16, 23]);
-                      //explo.animations.play('boom', 30, false, true);
-                      /*game.time.events.add(1000, afterExplo(), this);
-                      function afterExplo() {
-                        explo.kill();
-                      }*/
-                    }
+            if (explosions != {}) {
+              for (let explosion in explosions) {
+                  //  X
+                  for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
+                      if (i > 0) {
+                        console.log(i);
+                        let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
+                        let sprite = game.add.sprite(i * 16, explosions[explosion].position[1] * 16, "grass", 1);
+                        //explo.animations.add('boom', [2, 9, 16, 23]);
+                        //explo.animations.play('boom', 30, false, true);
 
-                    /*let explosionAnimation = explo.getFirstExists(false);
-                    explosionAnimation.reset(i * 40 - 20, explosions[explosion].position[1] * 40 - 20);
-                    explosionAnimation.play('boom', 30, false, true);*/
+                      }
 
-                }
-
-                // Y
-                for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
-                  if (i > 0) {
-                    let explo = game.add.image(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
-                    //let boom = exp.animations.add('boom', [3, 10, 17, 24]);
-                    //exp.animations.play('boom', 30, false, true);
+                      /*let explosionAnimation = explo.getFirstExists(false);
+                      explosionAnimation.reset(i * 40 - 20, explosions[explosion].position[1] * 40 - 20);
+                      explosionAnimation.play('boom', 30, false, true);*/
 
                   }
 
-                  /*let exp_c = game.add.sprite(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
-                  let boom = exp_c.animations.add('boom', [0, 7, 14, 21]);
-                  exp_c.animations.play('boom', 30, false, true);*/
+                  // Y
+                  for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
+                    if (i > 0) {
+                      let explo = game.add.image(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
+                      let sprite = game.add.sprite(explosions[explosion].position[0] * 16, i * 16, "grass", 1);
+                      //let boom = exp.animations.add('boom', [3, 10, 17, 24]);
+                      //exp.animations.play('boom', 30, false, true);
+                    }
 
-                }
+                    /*let exp_c = game.add.sprite(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
+                    let boom = exp_c.animations.add('boom', [0, 7, 14, 21]);
+                    exp_c.animations.play('boom', 30, false, true);*/
+
+                  }
 
 
-                //bomb.kill();
-                //exp.kill();
-                //bombs = {};
-                //explosions = {};
+                  //bomb.kill();
+                  //exp.kill();
 
-                /*for (let powerup in powerups) {
-                    console.log(powerups);
-                    game.add.sprite(powerup[0] * 16 - 8, powerup[1] * 16 - 8, powerups[powerup]);
-                }*/
+                  /*for (let powerup in powerups) {
+                      console.log(powerups);
+                      game.add.sprite(powerup[0] * 16 - 8, powerup[1] * 16 - 8, powerups[powerup]);
+                  }*/
+                  setTimeout(function() {
+                    delete explosions[explosion] // Supprime l'explosion
+                  }, 3000)
+              }
             }
 
         }
