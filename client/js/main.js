@@ -211,11 +211,7 @@ function main() {
               }
             }
 
-            for (let position of mapChanging) {
-              console.log(mapChanging);
-              console.log(rendered);
-              let sprite = game.add.sprite(position[0], position[1], "grass", 1);
-            }
+            mapChanging.forEach(position => let sprite = game.add.sprite(position[0], position[1], "grass", 1));
 
         }
 
