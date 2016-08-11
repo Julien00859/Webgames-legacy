@@ -65,6 +65,7 @@ function main() {
             game.load.spritesheet('grass', 'images/grass.png', 16, 16);
             game.load.spritesheet('wall', 'images/wall.png', 16, 16);
             game.load.spritesheet('player', 'images/player_spritesheet.png', 16, 16);
+            game.load.spritesheet('player2', 'images/enemy_spritesheet.png', 16, 16);
             game.load.spritesheet('bomb', 'images/bomb_spritesheet.png', 16, 16);
             game.load.image('exp', 'images/explosion.png');
 
@@ -106,6 +107,7 @@ function main() {
             let powerups = io.powerups;
             let rendered = false;
             let mapChanging = [];
+            const delay = 3000;
 
             if (map != {} || rendered == false) {
               for (let x in map) { // Rendu de la map à partir de l'Array 2D
@@ -128,10 +130,11 @@ function main() {
 
             for (let player in Object.keys(players)) {
               let play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 16 - 8,
-                              players[Object.keys(players)[player]].position[1] * 16 - 8,
-                              'player'/*"p_" + (parseInt(player) + 1) + "_" + players[Object.keys(players)[player]].direction*/,
-                              1
-                            );
+                                          players[Object.keys(players)[player]].position[1] * 16 - 8,
+                                          'player' /*${(parseInt(player) + 1)}*/,
+                                          1
+                                        );
+
               switch(players[Object.keys(players)[player]].direction) {
                 case "S": play.animations.add("walking_down", [1, 2, 3], 10, true);
                   play.animations.play('walking_down');
@@ -145,7 +148,6 @@ function main() {
                 case "N": play.animations.add("walking_up", [0, 8, 9], 10, true);
                   play.animations.play('walking_up');
                   break;
-
               }
             }
 
@@ -156,7 +158,7 @@ function main() {
                   bomb_animation.animations.play('bomb', 10, true);
                   setTimeout(function() {
                     delete bombs[bomb] // Supprime la bombe
-                  }, 3000)
+                  }, delay)
 
               }
             }
@@ -165,7 +167,7 @@ function main() {
               for (let explosion in explosions) {
                   //  X
                   for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
-                      if (i > 0) {
+                      if (i > 0 || i < 18) {
                         console.log(i);
                         let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
                         mapChanging.push([i * 16 - 8, explosions[explosion].position[1] * 16 - 8])
@@ -207,11 +209,13 @@ function main() {
                   }*/
                   setTimeout(function() {
                     delete explosions[explosion] // Supprime l'explosion
-                  }, 3000)
+                  }, delay)
               }
             }
 
-            mapChanging.forEach(position => let sprite = game.add.sprite(position[0], position[1], "grass", 1));
+            mapChanging.forEach(position => {
+              game.add.sprite(position[0], position[1], "grass", 1)
+            });
 
         }
 
