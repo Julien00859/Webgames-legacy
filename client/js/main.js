@@ -40,34 +40,12 @@ function main() {
             game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
             game.scale.pageAlignHorizontally = true;
             game.scale.pageAlignVertically = true;
-            /*game.load.image("beam", "images/beam.png");
-            game.load.image("rock", "images/rock.png");
-            game.load.image("floor", "images/floor.png");
-            game.load.image("p_1_S", "images/p_1_S.png");
-            game.load.image("p_1_E", "images/p_1_E.png");
-            game.load.image("p_1_N", "images/p_1_N.png");
-            game.load.image("p_1_W", "images/p_1_W.png");
-            game.load.image("p_2_S", "images/p_2_S.png");
-            game.load.image("p_2_W", "images/p_2_W.png");
-            game.load.image("p_2_E", "images/p_2_E.png");
-            game.load.image("p_2_N", "images/p_2_N.png");
-            game.load.image("bomb", "images/bomb.png");
-            game.load.image("exp_x", "images/exp_x.png");
-            game.load.image("exp_y", "images/exp_y.png");
-            game.load.image("exp_c", "images/exp_c.png");
-            game.load.image("B", "images/B.png");
-            game.load.image("M", "images/M.png");
-            game.load.image("P", "images/P.png");
-            game.load.image("S", "images/S.png");
-            game.load.image("H", "images/H.png");
-            game.load.spritesheet('exp', 'images/eKD88.png', 32, 32);*/
 
-            game.load.spritesheet('grass', 'images/grass.png', 16, 16);
-            game.load.spritesheet('wall', 'images/wall.png', 16, 16);
-            game.load.spritesheet('player', 'images/player_spritesheet.png', 16, 16);
-            game.load.spritesheet('player2', 'images/enemy_spritesheet.png', 16, 16);
-            game.load.spritesheet('bomb', 'images/bomb_spritesheet.png', 16, 16);
-            game.load.image('exp', 'images/explosion.png');
+            game.load.spritesheet('map', 'images/sprite/map.png', 16, 16);
+            game.load.spritesheet('player', 'images/sprite/player1.png', 16, 16);
+            //game.load.spritesheet('player2', 'images/player2.png', 16, 16);
+            game.load.spritesheet('bomb', 'images/sprite/bomb.png', 16, 16);
+            game.load.spritesheet('exp', 'images/sprite/explo.png', 80, 80);
 
         }
 
@@ -113,13 +91,13 @@ function main() {
                   for (let y in map[x]) {
                       //console.log(ligne, colonne);
                       if (map[x][y] == "#") {
-                        let sprite = game.add.sprite(x * 16, y * 16, "wall", 1);
+                        let sprite = game.add.sprite(x * 16, y * 16, "map", 1);
                       }
                       else if (map[x][y] == "&") {
-                        let sprite = game.add.sprite(x * 16, y * 16, "wall", 3);
+                        let sprite = game.add.sprite(x * 16, y * 16, "map", 0);
                       }
                       else if (map[x][y] == " ") {
-                        let sprite = game.add.image(x * 16, y * 16, "grass", 1);
+                        let sprite = game.add.image(x * 16, y * 16, "map", 2);
                       }
                   }
               }
@@ -134,16 +112,16 @@ function main() {
                                         );
 
               switch(players[Object.keys(players)[player]].direction) {
-                case "S": play.animations.add("walking_down", [1, 2, 3], 10, true);
+                case "S": play.animations.add("walking_down", [7, 8, 9], 10, true);
                   play.animations.play('walking_down');
                   break;
-                case "W": play.animations.add("walking_left", [4, 5, 6, 7], 10, true);
+                case "W": play.animations.add("walking_left", [1, 2, 3], 10, true);
                   play.animations.play('walking_left');
                   break;
-                case "E": play.animations.add("walking_right", [4, 5, 6, 7], 10, true);
+                case "E": play.animations.add("walking_right", [1, 2, 3], 10, true);
                   play.animations.play('walking_right');
                   break;
-                case "N": play.animations.add("walking_up", [0, 8, 9], 10, true);
+                case "N": play.animations.add("walking_up", [4, 5, 6], 10, true);
                   play.animations.play('walking_up');
                   break;
               }
@@ -152,7 +130,7 @@ function main() {
             if (bombs != {}) {
               for (let bomb in bombs) {
                   let bomb_animation = game.add.sprite(bombs[bomb].position[0] * 16 - 8, bombs[bomb].position[1] * 16 - 8, "bomb");
-                  bomb_animation.animations.add('bomb', [0, 1, 2, 3, 4, 5], 10, true);
+                  bomb_animation.animations.add('bomb', [0, 1, 2], 10, true);
                   bomb_animation.animations.play('bomb', 10, true);
                   setTimeout(function() {
                     delete bombs[bomb] // Supprime la bombe
@@ -166,8 +144,7 @@ function main() {
                   //  X
                   for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
                       if (i > 0 || i < 18) {
-                        console.log(i);
-                        let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
+                        //let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
                         let index_x = Math.floor(i)
                         let index_y = Math.floor(explosions[explosion].position[1])
                         io.map[index_y][index_x] = "#"
@@ -183,7 +160,10 @@ function main() {
                   // Y
                   for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
                     if (i > 0) {
-                      let explo = game.add.image(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
+                      //let explo = game.add.image(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
+                      let exp_c = game.add.sprite(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
+                      exp_c.animations.add('boom', [0, 1, 2, 3]);
+                      exp_c.animations.play('boom', 30, false, true);
                       let index_x = Math.floor(explosions[explosion].position[0])
                       let index_y = Math.floor(i)
                       io.map[index_y][index_x] = "#"
@@ -193,9 +173,7 @@ function main() {
                       //exp.animations.play('boom', 30, false, true);
                     }
 
-                    /*let exp_c = game.add.sprite(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
-                    let boom = exp_c.animations.add('boom', [0, 7, 14, 21]);
-                    exp_c.animations.play('boom', 30, false, true);*/
+
 
                   }
 
