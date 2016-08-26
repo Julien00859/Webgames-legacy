@@ -170,7 +170,7 @@ function main() {
                         let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
                         let index_x = Math.floor(i)
                         let index_y = Math.floor(explosions[explosion].position[1])
-                        io.map[index_y][index_x] = [i, explosions[explosion].position[1]]
+                        io.map[index_y][index_x] = "#"
                         //mapChanging.push([i * 16 - 8, explosions[explosion].position[1] * 16 - 8])
                         //let sprite = game.add.sprite(i * 16, explosions[explosion].position[1] * 16, "grass", 1);
                         //explo.animations.add('boom', [2, 9, 16, 23]);
@@ -186,7 +186,7 @@ function main() {
                       let explo = game.add.image(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
                       let index_x = Math.floor(explosions[explosion].position[0])
                       let index_y = Math.floor(i)
-                      io.map[index_y][index_x] = [explosions[explosion].position[0], i]
+                      io.map[index_y][index_x] = "#"
                       //mapChanging.push([explosions[explosion].position[0] * 16 - 8, i * 16 - 8])
                       //let sprite = game.add.sprite(explosions[explosion].position[0] * 16, i * 16, "grass", 1);
                       //let boom = exp.animations.add('boom', [3, 10, 17, 24]);
