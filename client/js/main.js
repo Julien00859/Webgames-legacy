@@ -25,7 +25,7 @@ function main() {
         config.fuseKey = this.fuseKey.value;
     });
 
-    // ----a---------------------------------------------------------------------- //
+    // --------------------------------------------------------------------------- //
 
     document.getElementById("select_game").addEventListener("submit", function(event){
         event.preventDefault();
@@ -42,8 +42,8 @@ function main() {
             game.scale.pageAlignVertically = true;
 
             game.load.spritesheet('map', 'images/sprite/map.png', 16, 16);
-            game.load.spritesheet('player', 'images/sprite/player1.png', 16, 16);
-            //game.load.spritesheet('player2', 'images/player2.png', 16, 16);
+            game.load.spritesheet('player', 'images/sprite/player1.png', 18, 21);
+            //game.load.spritesheet('player2', 'images/player2.png', 17, 20);
             game.load.spritesheet('bomb', 'images/sprite/bomb.png', 16, 16);
             game.load.spritesheet('exp', 'images/sprite/explo.png', 80, 80);
 
@@ -83,8 +83,8 @@ function main() {
             let bombs = io.bombs;
             let explosions = io.explosions;
             let powerups = io.powerups;
-            let rendered = false;
-            let mapChanging = [];
+            //let rendered = false;
+            //let mapChanging = [];
             const delay = 3000;
 
               for (let x in map) { // Rendu de la map à partir de l'Array 2D
@@ -101,7 +101,7 @@ function main() {
                       }
                   }
               }
-              rendered = true;
+              //rendered = true;
 
 
             for (let player in Object.keys(players)) {
@@ -160,10 +160,6 @@ function main() {
                   // Y
                   for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
                     if (i > 0) {
-                      //let explo = game.add.image(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
-                      let exp_c = game.add.sprite(explosions[explosion].position[0] * 16 - 8, i * 16 - 8, "exp");
-                      exp_c.animations.add('boom', [0, 1, 2, 3]);
-                      exp_c.animations.play('boom', 30, false, true);
                       let index_x = Math.floor(explosions[explosion].position[0])
                       let index_y = Math.floor(i)
                       io.map[index_y][index_x] = "#"
@@ -172,11 +168,11 @@ function main() {
                       //let boom = exp.animations.add('boom', [3, 10, 17, 24]);
                       //exp.animations.play('boom', 30, false, true);
                     }
-
-
-
                   }
 
+                  let exp_c = game.add.sprite(explosions[explosion].position[0] * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
+                  exp_c.animations.add('boom', [0, 1, 2, 3]);
+                  exp_c.animations.play('boom', 30, false, true);
 
                   /*for (let powerup in powerups) {
                       console.log(powerups);

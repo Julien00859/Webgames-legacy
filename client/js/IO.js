@@ -34,10 +34,8 @@ class IO {
                   console.log(this.id);
                   break;
               case "startup_status":
-                  //console.log(data.map);
                   this.map = data.map;
                   this.players = data.players;
-                  //playground.render();
                   break;
               case "status":
 
