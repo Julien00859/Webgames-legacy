@@ -105,33 +105,33 @@ function main() {
 
 
             for (let player in Object.keys(players)) {
-              let play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 16 - 8,
-                                          players[Object.keys(players)[player]].position[1] * 16 - 8,
+              let play = game.add.sprite(players[Object.keys(players)[player]].position[0] * 18 - 9,
+                                          players[Object.keys(players)[player]].position[1] * 18 - 9,
                                           'player' /*${(parseInt(player) + 1)}*/,
                                           1
                                         );
 
-              switch(players[Object.keys(players)[player]].direction) {
-                case "S": play.animations.add("walking_down", [7, 8, 9], 10, true);
+              /*switch(players[Object.keys(players)[player]].direction) {
+                case "S": play.animations.add("walking_down", [6, 7, 8], 10, true);
                   play.animations.play('walking_down');
                   break;
-                case "W": play.animations.add("walking_left", [1, 2, 3], 10, true);
+                case "W": play.animations.add("walking_left", [0, 1, 2], 10, true);
                   play.animations.play('walking_left');
                   break;
-                case "E": play.animations.add("walking_right", [1, 2, 3], 10, true);
+                case "E": play.animations.add("walking_right", [0, 1, 2], 10, true);
                   play.animations.play('walking_right');
                   break;
-                case "N": play.animations.add("walking_up", [4, 5, 6], 10, true);
+                case "N": play.animations.add("walking_up", [3, 4, 5], 10, true);
                   play.animations.play('walking_up');
                   break;
-              }
+              }*/
             }
 
             if (bombs != {}) {
               for (let bomb in bombs) {
                   let bomb_animation = game.add.sprite(bombs[bomb].position[0] * 16 - 8, bombs[bomb].position[1] * 16 - 8, "bomb");
                   bomb_animation.animations.add('bomb', [0, 1, 2], 10, true);
-                  bomb_animation.animations.play('bomb', 10, true);
+                  bomb_animation.animations.play('bomb'/*, 10, true*/);
                   setTimeout(function() {
                     delete bombs[bomb] // Supprime la bombe
                   }, delay)
