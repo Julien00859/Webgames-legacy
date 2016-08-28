@@ -41,7 +41,7 @@ function main() {
             game.scale.pageAlignHorizontally = true;
             game.scale.pageAlignVertically = true;
 
-            game.load.spritesheet('map', 'images/sprite/map.png', 16, 16);
+            game.load.spritesheet('map', 'images/sprite/map_2.png', 16, 16);
             game.load.spritesheet('player', 'images/sprite/player1.png', 18, 21);
             //game.load.spritesheet('player2', 'images/player2.png', 17, 20);
             game.load.spritesheet('bomb', 'images/sprite/bomb.png', 16, 16);
@@ -94,10 +94,10 @@ function main() {
                         let sprite = game.add.sprite(x * 16, y * 16, "map", 1);
                       }
                       else if (map[x][y] == "&") {
-                        let sprite = game.add.sprite(x * 16, y * 16, "map", 0);
+                        let sprite = game.add.sprite(x * 16, y * 16, "map", 2);
                       }
                       else if (map[x][y] == " ") {
-                        let sprite = game.add.image(x * 16, y * 16, "map", 2);
+                        let sprite = game.add.image(x * 16, y * 16, "map", 0);
                       }
                   }
               }
@@ -141,13 +141,18 @@ function main() {
 
             if (explosions != {}) {
               for (let explosion in explosions) {
+
+                  let exp_c = game.add.sprite(explosions[explosion].position[0] * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
+                  exp_c.animations.add('boom', [0, 1, 2, 3]);
+                  exp_c.animations.play('boom', 30, false, true);
+
                   //  X
                   for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
                       if (i > 0 || i < 18) {
                         //let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
                         let index_x = Math.floor(i)
                         let index_y = Math.floor(explosions[explosion].position[1])
-                        io.map[index_y][index_x] = "#"
+                        io.map[index_y][index_x] = " "
                         //mapChanging.push([i * 16 - 8, explosions[explosion].position[1] * 16 - 8])
                         //let sprite = game.add.sprite(i * 16, explosions[explosion].position[1] * 16, "grass", 1);
                         //explo.animations.add('boom', [2, 9, 16, 23]);
@@ -169,11 +174,6 @@ function main() {
                       //exp.animations.play('boom', 30, false, true);
                     }
                   }
-
-                  let exp_c = game.add.sprite(explosions[explosion].position[0] * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
-                  exp_c.animations.add('boom', [0, 1, 2, 3]);
-                  exp_c.animations.play('boom', 30, false, true);
-
                   /*for (let powerup in powerups) {
                       console.log(powerups);
                       game.add.sprite(powerup[0] * 16 - 8, powerup[1] * 16 - 8, powerups[powerup]);
