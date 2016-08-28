@@ -36,6 +36,7 @@ class IO {
               case "startup_status":
                   this.map = data.map;
                   this.players = data.players;
+                  console.log(data.players)
                   break;
               case "status":
 
