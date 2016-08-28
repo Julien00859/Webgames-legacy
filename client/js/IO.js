@@ -7,7 +7,8 @@ class IO {
       this.bombs = {}
       this.explosions = {}
       this.powerups = {}
-      this.id;
+      this.id
+      this.ready = false
 
       this.ws.onopen = () => {
           console.log("[ws open]");
@@ -36,6 +37,7 @@ class IO {
               case "startup_status":
                   this.map = data.map;
                   this.players = data.players;
+                  this.ready = true
                   console.log(data.players)
                   break;
               case "status":
@@ -51,6 +53,7 @@ class IO {
                           else if (data.status.explosions) { // Explosion
                               for (var i in data.status.explosions) {
                                   this.explosions = data.status.explosions; // Met à jour les explosions
+                                  handleExplosion()
                               }
                               this.powerups = data.status.map; // Et les powerups
                           }
@@ -58,6 +61,7 @@ class IO {
 
                       else if (data.status.entities[i].name == "<Bomb>") // Bombe
                           this.bombs[i] = data.status.entities[i]; // Met à jour les bombes
+                          handleBomb()
 
                   }
                   break;

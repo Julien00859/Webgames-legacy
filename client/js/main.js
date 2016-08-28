@@ -9,6 +9,87 @@ let config = {
     fuseKey: "P"
 }
 
+let game
+let exp_c, bomb_animation
+
+function handleBomb() {
+
+  let bombs = io.bombs
+
+  if (bombs != {}) {
+    for (let bomb in bombs) {
+        //bomb_animation.x = bombs[bomb].position[0] * 16 - 8
+        //bomb_animation.y = bombs[bomb].position[1] * 16 - 8
+
+        bomb_animation = game.add.sprite(bombs[bomb].position[0] * 16 - 8, bombs[bomb].position[1] * 16 - 8, "bomb");
+        bomb_animation.animations.add('bomb');
+        bomb_animation.animations.play('bomb', 10, true);
+        /*setTimeout(function() {
+          delete bombs[bomb] // Supprime la bombe
+        }, delay)*/
+
+    }
+  }
+
+}
+
+function updateMap() {
+  //  X
+  for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
+      if (i > 1 || i < 18) {
+        //let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
+        let index_x = Math.floor(i)
+        let index_y = Math.floor(explosions[explosion].position[1])
+        io.map[index_y][index_x] = " "
+
+      }
+
+  }
+
+  // Y
+  for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
+    if (i > 1 || i < 14) {
+      let index_x = Math.floor(explosions[explosion].position[0])
+      let index_y = Math.floor(i)
+      io.map[index_y][index_x] = "#"
+    }
+  }
+}
+
+
+function handleExplosion() {
+
+    let explosions = io.explosions
+
+    if (explosions != {}) {
+      for (let explosion in explosions) {
+
+          //exp_c.x =  explosions[explosion].position[0] * 76.5 - 38.25
+          //exp_c.y =  explosions[explosion].position[1] * 80 - 40
+
+          exp_c = game.add.sprite(explosions[explosion].position[0] * 76.5 - 38.25, explosions[explosion].position[1] * 80 - 40, "exp");
+          exp_c.animations.add('boom');
+          exp_c.animations.play('boom', 30, false, true);
+
+          setTimeout(updateMap(), 1000);
+
+          /*setTimeout(function() {
+            delete explosions[explosion] // Supprime l'explosion
+          }, delay)*/
+      }
+    }
+
+}
+
+function handlePowerups() {
+
+  /*for (let powerup in powerups) {
+      console.log(powerups);
+      game.add.sprite(powerup[0] * 16 - 8, powerup[1] * 16 - 8, powerups[powerup]);
+  }*/
+  
+}
+
 // --------------------- //
 
 function main() {
@@ -30,11 +111,11 @@ function main() {
     document.getElementById("select_game").addEventListener("submit", function(event){
         event.preventDefault();
 
-        let game = new Phaser.Game(19 * 16, 15 * 16, Phaser.canvas, 'game', {preload: preload, create: create, update: update, render: render});
+        game = new Phaser.Game(19 * 16, 15 * 16, Phaser.canvas, 'game', {preload: preload, create: create, update: update, render: render});
 
         let upKey, rightKey, leftKey, downKey, plantKey, fuseKey;
 
-        let play, explo, exp_c, bomb_animation;
+        let play, explo;
 
         function preload() {
             game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -60,23 +141,13 @@ function main() {
 
             game.physics.startSystem(Phaser.Physics.ARCADE);
 
-            exp_c = game.add.sprite(150, 150, "exp");
-            exp_c.animations.add('boom');
-            exp_c.animations.play('boom', 30, false, true);
-
-            bomb_animation = game.add.sprite(48, 32, "bomb");
-            bomb_animation.animations.add('bomb');
-            bomb_animation.animations.play('bomb', 10, true);
-
-
-
         }
 
         function update() {
+          if (!io.ready)
+            return
 
           let players = io.players;
-          let bombs = io.bombs;
-          let explosions = io.explosions;
           let powerups = io.powerups;
           const delay = 3000;
 
@@ -94,11 +165,18 @@ function main() {
           };
 
           for (let player in Object.keys(players)) {
-            game.add.sprite(players[Object.keys(players)[player]].position[0] * 16 - 8,
-                                      players[Object.keys(players)[player]].position[1] * 16 - 8,
-                                      'player' /*${(parseInt(player) + 1)}*/,
-                                      1
-                                    );
+
+            if (players[Object.keys(players)[player]]) {
+              game.add.sprite(players[Object.keys(players)[player]].position[0] * 16 - 8,
+                                                                          players[Object.keys(players)[player]].position[1] * 16 - 8,
+                                                                          'player' /*${(parseInt(player) + 1)}*/,
+                                                                          1
+                                                                          );
+              game.physics.enable(players[Object.keys(players)[player]], Phaser.Physics.ARCADE);
+            }
+            else {
+              players[Object.keys(players)[player]].body.velocity.setTo(players[Object.keys(players)[player]].position[0] * 16 - 8, players[Object.keys(players)[player]].position[1] * 16 - 8)
+            }
             /*switch(players[Object.keys(players)[player]].direction) {
               case "S": play.animations.add("walking_down", [6, 7, 8], 10, true);
                 play.animations.play('walking_down');
@@ -115,58 +193,8 @@ function main() {
             }*/
           }
 
-
-          if (bombs != {}) {
-            for (let bomb in bombs) {
-                bomb_animation.x = bombs[bomb].position[0] * 16 - 8
-                bomb_animation.y = bombs[bomb].position[1] * 16 - 8
-                setTimeout(function() {
-                  delete bombs[bomb] // Supprime la bombe
-                }, delay)
-
-            }
-          }
-
-          if (explosions != {}) {
-            for (let explosion in explosions) {
-
-              exp_c.x =  explosions[explosion].position[0] * 76.5 - 38.25
-              exp_c.y =  explosions[explosion].position[1] * 80 - 40
-
-                //  X
-                for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
-                    if (i > 1 || i < 18) {
-                      //let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
-                      let index_x = Math.floor(i)
-                      let index_y = Math.floor(explosions[explosion].position[1])
-                      io.map[index_y][index_x] = " "
-
-                    }
-
-                }
-
-                // Y
-                for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
-                  if (i > 1 || i < 14) {
-                    let index_x = Math.floor(explosions[explosion].position[0])
-                    let index_y = Math.floor(i)
-                    io.map[index_y][index_x] = "#"
-                  }
-                }
-
-                /*for (let powerup in powerups) {
-                    console.log(powerups);
-                    game.add.sprite(powerup[0] * 16 - 8, powerup[1] * 16 - 8, powerups[powerup]);
-                }*/
-
-                setTimeout(function() {
-                  delete explosions[explosion] // Supprime l'explosion
-                }, delay)
-            }
-          }
-
-
         }
+
 
         function render() {
 
@@ -186,10 +214,6 @@ function main() {
                     }
                 }
             }
-
-
-
-
 
         }
 
