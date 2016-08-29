@@ -33,31 +33,8 @@ function handleBomb() {
 
 }
 
-function updateMap() {
-  //  X
-  for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
-      if (i > 1 || i < 18) {
-        //let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
-        let index_x = Math.floor(i)
-        let index_y = Math.floor(explosions[explosion].position[1])
-        io.map[index_y][index_x] = " "
-
-      }
-
-  }
-
-  // Y
-  for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
-    if (i > 1 || i < 14) {
-      let index_x = Math.floor(explosions[explosion].position[0])
-      let index_y = Math.floor(i)
-      io.map[index_y][index_x] = "#"
-    }
-  }
-}
-
-
 function handleExplosion() {
+    console.log("explosion...")
 
     let explosions = io.explosions
 
@@ -71,7 +48,28 @@ function handleExplosion() {
           exp_c.animations.add('boom');
           exp_c.animations.play('boom', 30, false, true);
 
-          setTimeout(updateMap(), 1000);
+          setTimeout(function() {
+            //  X
+            for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
+                if (i > 1 || i < 18) {
+                  //let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
+                  let index_x = Math.floor(i)
+                  let index_y = Math.floor(explosions[explosion].position[1])
+                  io.map[index_y][index_x] = " "
+
+                }
+
+            }
+
+            // Y
+            for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
+              if (i > 1 || i < 14) {
+                let index_x = Math.floor(explosions[explosion].position[0])
+                let index_y = Math.floor(i)
+                io.map[index_y][index_x] = "#"
+              }
+            }
+          }, 1000);
 
           /*setTimeout(function() {
             delete explosions[explosion] // Supprime l'explosion
@@ -87,7 +85,7 @@ function handlePowerups() {
       console.log(powerups);
       game.add.sprite(powerup[0] * 16 - 8, powerup[1] * 16 - 8, powerups[powerup]);
   }*/
-  
+
 }
 
 // --------------------- //
