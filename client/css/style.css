@@ -1,0 +1,68 @@
+* {
+    box-sizing: border-box;
+    font-family: Raleway;
+    font-size: 16px;
+}
+
+html {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    min-height: 100%;
+    background: linear-gradient(#F9BF3B, #EB9532);  
+}
+
+.wrapper {  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.game {
+    display: flex;
+}
+
+#game {
+	height: 5em;
+	border: 1px solid black;
+	width: calc(19 * 16px);
+	height:calc(15 * 16px);
+}
+
+input[type=text] {
+	width: 1em;
+}
+
+.config {
+    display: flex;
+    align-items: center;
+    border-radius: 5px;
+    background: #BDC3C7;
+    padding: 0 10px;
+}
+
+#config label {
+	display: inline-block;
+	width: 120px;
+}
+
+div {
+	margin: 0.5em;
+}
+
+input[type=submit] {
+    border: none;
+    background: none;
+    padding: 5px;
+    cursor: pointer;
+    color: #22A7F0;
+}
+
+input[type=submit]:hover {
+    background: #22A7F0;
+    color: #fff;
+    transition: all .2s linear;
+}

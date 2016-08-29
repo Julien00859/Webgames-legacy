@@ -34,12 +34,13 @@ function handleBomb() {
 }
 
 function handleExplosion() {
-    console.log("explosion...")
+    
 
     let explosions = io.explosions
 
     if (explosions != {}) {
       for (let explosion in explosions) {
+          console.log("explosion...")
 
           //exp_c.x =  explosions[explosion].position[0] * 76.5 - 38.25
           //exp_c.y =  explosions[explosion].position[1] * 80 - 40
@@ -66,7 +67,7 @@ function handleExplosion() {
               if (i > 1 || i < 14) {
                 let index_x = Math.floor(explosions[explosion].position[0])
                 let index_y = Math.floor(i)
-                io.map[index_y][index_x] = "#"
+                io.map[index_y][index_x] = " "
               }
             }
           }, 1000);

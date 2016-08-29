@@ -3,48 +3,37 @@
 <head>
     <meta charset="utf-8">
     <title>Bomberman</title>
-    <style>
-    	#game {
-    		height: 5em;
-    		border: 1px solid black;
-			width: calc(19 * 16px);
-			height:calc(15 * 16px);
-    	}
-    	input[type=text] {
-    		width: 1em;
-    	}
-    	#config label {
-    		display: inline-block;
-    		width: 120px;
-    	}
-    	div {
-    		margin: 0.5em;
-    	}
-    </style>
+    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
 <body onload="main()">
-	<div>
-	<form id="select_game">
-		<label for=game_name>Please select your game: </label>
-		<select name=game_name>
-			<option value="bomberman">Bomberman</option>
-		</select>
-		<input type=submit>
-	</form>
-	</div>
-    <div id="game"></div>
-    <div>
-    <form id="config">
-    	<label for="upKey">Up key:</label><input type="text" value="z" required maxlength=1 name="upKey"><br>
-    	<label for="downKey">Down key:</label><input type="text" value="s" required maxlength=1 name="downKey"><br>
-    	<label for="leftKey">Left key:</label><input type="text" value="q" required maxlength=1 name="leftKey"><br>
-    	<label for="rightKey">Right key:</label><input type="text" value="s" required maxlength=1 name="rigthKey"><br>
-    	<label for="plantKey">Plant bomb:</label><input type="text" value="o" required maxlength=1 name="plantKey"><br>
-    	<label for="fuseKey">Fuse bomb:</label><input type="text" value="p" required maxlength=1 name="fuseKey"><br>
-    	<input type="submit">
-    </form>
-    </div>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/2.6.1/phaser.min.js"></script>
+    <section class="wrapper">
+        <div>
+            <form id="select_game">
+                <label for=game_name>Please select your game: </label>
+                <select name=game_name>
+                    <option value="bomberman">Bomberman</option>
+                </select>
+                <input type=submit value="Jouer">
+            </form>
+        </div>
+        <section class=game>
+            <div id="game"></div>
+        <div class="config">
+            <form id="config">
+                <label for="upKey">Up key:</label><input type="text" value="z" required maxlength=1 name="upKey"><br>
+                <label for="downKey">Down key:</label><input type="text" value="s" required maxlength=1 name="downKey"><br>
+                <label for="leftKey">Left key:</label><input type="text" value="q" required maxlength=1 name="leftKey"><br>
+                <label for="rightKey">Right key:</label><input type="text" value="s" required maxlength=1 name="rigthKey"><br>
+                <label for="plantKey">Plant bomb:</label><input type="text" value="o" required maxlength=1 name="plantKey"><br>
+                <label for="fuseKey">Fuse bomb:</label><input type="text" value="p" required maxlength=1 name="fuseKey"><br>
+                <input type="submit">
+            </form>
+        </div>
+        </section>
+        
+    </section>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/2.6.2/phaser.js"></script>
 	<script src="js/IO.js"></script>
 	<script src="js/main.js"></script>
 </body>
