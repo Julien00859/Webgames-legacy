@@ -8,6 +8,7 @@ class IO {
       this.explosions = {}
       this.powerups = {}
       this.id
+      this.winner
       this.ready = false
 
       this.ws.onopen = () => {
@@ -37,12 +38,15 @@ class IO {
               case "startup_status":
                   this.map = data.map;
                   this.players = data.players;
-                  this.ready = true
                   console.log(data.players)
+                  this.ready = true
                   break;
               case "status":
 
-                  if (data.status.winner) console.log("Le joueur " + data.status.winner + " a gagné !"); // Gagné
+                  if (data.status.winner) {
+                    console.log("Le joueur " + data.status.winner + " a gagné !"); // Gagné
+                    this.winner = data.status.winner
+                  }
 
                   for (var i in data.status.entities) {
                       if (data.status.entities[i].name == "<Player>") { // Joueur ?
