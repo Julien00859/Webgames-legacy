@@ -1,3 +1,54 @@
+let plays = [];
+
+class Player {
+	constructor(id, x, y, pos){
+		this.sprite = null
+		this.id = id
+		this.x = x
+		this.y = y
+		this.position = pos
+
+		this.create = this.create.bind(this)
+		this.update = this.update.bind(this)
+
+		this.create
+	}
+
+	create() {
+		console.log('creating user...')
+		this.sprite = game.add.sprite(this.x, this.y, 'player', 1)
+
+		this.sprite.frame = 6;
+
+		this.sprite.animations.add("walking_down", [6, 7, 8], 10, true);
+		this.sprite.animations.add("walking_left", [0, 1, 2], 10, true);
+		this.sprite.animations.add("walking_right", [0, 1, 2], 10, true);
+		this.sprite.animations.add("walking_up", [3, 4, 5], 10, true);
+
+		game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
+	}
+
+	update() {
+		this.sprite.body.velocity.setTo(this.x, this.y)
+
+		switch(this.pos) {
+			case "S":
+				this.sprite.animations.play('walking_down');
+				break;
+			case "W":
+				this.sprite.animations.play('walking_left');
+				break;
+			case "E":
+				this.sprite.animations.play('walking_right');
+				break;
+			case "N":
+				this.sprite.animations.play('walking_up');
+				break;
+		}
+
+	}
+}
+
 let playState = {
 
 	create: function() {
@@ -8,8 +59,9 @@ let playState = {
 	    rightKey = game.input.keyboard.addKey(Phaser.Keyboard[config.rigthKey]);
 	    plantKey = game.input.keyboard.addKey(Phaser.Keyboard[config.plantKey]);
 	    fuseKey = game.input.keyboard.addKey(Phaser.Keyboard[config.fuseKey]);
-	    
+
 	    let map = io.map;
+			let players = io.players;
 
 	    for (let x in map) { // Rendu de la map à partir de l'Array 2D
 	        for (let y in map[x]) {
@@ -25,6 +77,12 @@ let playState = {
 	            }
 	        }
 	    }
+
+			for (let player in Object.keys(players)) {
+
+					plays.push(new Player(players[Object.keys(players)[player]], players[Object.keys(players)[player]].position[0] * 16 - 8, players[Object.keys(players)[player]].position[1] * 16 - 8, players[Object.keys(players)[player]].direction))
+
+			}
 	},
 
 	update: function() {
@@ -46,34 +104,18 @@ let playState = {
           if (Phaser.Keyboard[config.upKey] || Phaser.Keyboard[config.downKey] || Phaser.Keyboard[config.leftKey] || Phaser.Keyboard[config.rigthKey]) io.send_event("stop");
       };
 
-      for (let player in Object.keys(players)) {
+			for (let player in Object.keys(players)) {
 
-        if (players[Object.keys(players)[player]]) {
-          game.add.sprite(players[Object.keys(players)[player]].position[0] * 16 - 8,
-                                                                      players[Object.keys(players)[player]].position[1] * 16 - 8,
-                                                                      'player' /*${(parseInt(player) + 1)}*/,
-                                                                      1
-                                                                      );
-          game.physics.enable(players[Object.keys(players)[player]], Phaser.Physics.ARCADE);
-        }
-        else {
-          players[Object.keys(players)[player]].body.velocity.setTo(players[Object.keys(players)[player]].position[0] * 16 - 8, players[Object.keys(players)[player]].position[1] * 16 - 8)
-        }
-        /*switch(players[Object.keys(players)[player]].direction) {
-          case "S": play.animations.add("walking_down", [6, 7, 8], 10, true);
-            play.animations.play('walking_down');
-            break;
-          case "W": play.animations.add("walking_left", [0, 1, 2], 10, true);
-            play.animations.play('walking_left');
-            break;
-          case "E": play.animations.add("walking_right", [0, 1, 2], 10, true);
-            play.animations.play('walking_right');
-            break;
-          case "N": play.animations.add("walking_up", [3, 4, 5], 10, true);
-            play.animations.play('walking_up');
-            break;
-        }*/
-      }
+					for (let el of plays) {
+						if (players[Object.keys(players)[player]] == el.id) {
+							el.x = players[Object.keys(players)[player]].position[0] * 16 - 8
+							el.y = players[Object.keys(players)[player]].position[1] * 16 - 8
+							el.pos = players[Object.keys(players)[player]].direction
+							el.update()
+						}
+					}
+
+			}
 
     }
 }
@@ -99,7 +141,7 @@ function handleBomb() {
 }
 
 function handleExplosion() {
-    
+
     let explosions = io.explosions
 
     if (explosions != {}) {
