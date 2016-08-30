@@ -228,11 +228,18 @@ function handleExplosion() {
 }
 
 function handlePowerups() {
+    
+    let pwp;
+    let powerups = io.powerups;
 
-    /*for (let powerup in powerups) {
+    for (let powerup in powerups) {
       console.log(powerups);
-      game.add.sprite(powerup[0] * 16 - 8, powerup[1] * 16 - 8, powerups[powerup]);
-  }*/
+      pwp = game.add.sprite(powerup[0] * 16, powerup[1] * 16, powerups[powerup]);
+    }
+    
+    plays.forEach((p) => {
+        removePowerup(p.sprite, pwp)
+    }) 
 
 }
 
@@ -240,10 +247,19 @@ function removePlayer(player, explosion) {
     console.log(player, explosion)
     console.log('kill')
     
-    var boundsPlayer = player.getBounds();
-    var boundsExplosion = explosion.getBounds();
+    let boundsPlayer = player.getBounds();
+    let boundsExplosion = explosion.getBounds();
 
     if (Phaser.Rectangle.intersects(boundsPlayer, boundsExplosion)) {
         player.kill()
+    }
+}
+
+function removePowerup(player, powerup) {
+    let boundsPlayer = player.getBounds();
+    let boundsPowerup = powerup.getBounds();
+    
+    if (Phaser.Rectangle.intersects(boundsPlayer, boundsPowerup)) {
+        powerup.kill()
     }
 }

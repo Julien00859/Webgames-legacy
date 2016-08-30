@@ -61,6 +61,7 @@ class IO {
                                   handleExplosion()
                               }
                               this.powerups = data.status.map; // Et les powerups
+                              handlePowerups()
                           }
                       }
 

@@ -19,6 +19,12 @@ let loadState = {
 		game.load.spritesheet('exp_x_gauche', 'images/sprite/exp_x_gauche.png', 16, 16);
 		game.load.spritesheet('exp_y_bas', 'images/sprite/exp_y_bas.png', 16, 16);
 		game.load.spritesheet('exp_y_haut', 'images/sprite/exp_y_haut.png', 16, 16);
+        
+        game.load.image('H', 'images/H.png');
+        game.load.image('M', 'images/M.png');
+        game.load.image('P', 'images/P.png');
+        game.load.image('B', 'images/B.png');
+        game.load.image('S', 'images/S.png');
 
 	},
 
