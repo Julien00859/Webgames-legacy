@@ -38,7 +38,7 @@ class IO {
               case "startup_status":
                   this.map = data.map;
                   this.players = data.players;
-                  console.log(data.players)
+                  console.log(data)
                   this.ready = true
                   break;
               case "status":
@@ -49,9 +49,10 @@ class IO {
                   }
 
                   for (var i in data.status.entities) {
+                      console.log(data)
                       if (data.status.entities[i].name == "<Player>") { // Joueur ?
                           if (data.status.entities[i].ismoving) {
-                              this.players[this.id] = data.status.entities[i]; // Met à jour la position
+                              this.players[i] = data.status.entities[i]; // Met à jour la position 
                           }
 
                           else if (data.status.explosions) { // Explosion

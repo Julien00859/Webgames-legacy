@@ -219,6 +219,14 @@ function handleExplosion() {
           }, 1000);
 
       }
+
+	  	let exp_Array = ["exp_c", "exp_y", "exp_x"]
+
+	    for (let play of plays) {
+	      for (let exp_el of exp_Array) {
+	        game.physics.arcade.overlap(play, exp_el, removePlayer, null, this)
+	      }
+	    }
     }
 
 }
@@ -230,4 +238,8 @@ function handlePowerups() {
       game.add.sprite(powerup[0] * 16 - 8, powerup[1] * 16 - 8, powerups[powerup]);
   }*/
 
+}
+
+function removePlayer(player, explosion) {
+  player.kill()
 }
