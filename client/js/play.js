@@ -6,12 +6,14 @@ class Player {
 		this.id = id
 		this.x = x
 		this.y = y
-		this.position = pos
+		this.pos = pos
+
+		this.last = {x: x, y: y}
 
 		this.create = this.create.bind(this)
 		this.update = this.update.bind(this)
 
-		this.create
+		this.create()
 	}
 
 	create() {
@@ -20,30 +22,41 @@ class Player {
 
 		this.sprite.frame = 6;
 
-		this.sprite.animations.add("walking_down", [6, 7, 8], 10, true);
-		this.sprite.animations.add("walking_left", [0, 1, 2], 10, true);
-		this.sprite.animations.add("walking_right", [0, 1, 2], 10, true);
-		this.sprite.animations.add("walking_up", [3, 4, 5], 10, true);
+		//this.sprite.animations.add("walking_down", [6, 7, 8], 10, true);
+		//this.sprite.animations.add("walking_left", [0, 1, 2], 10, true);
+		//this.sprite.animations.add("walking_right", [0, 1, 2], 10, true);
+		//this.sprite.animations.add("walking_up", [3, 4, 5], 10, true);
 
 		game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
 	}
 
 	update() {
-		this.sprite.body.velocity.setTo(this.x, this.y)
+		if (!this.sprite)
+			return
 
-		switch(this.pos) {
-			case "S":
-				this.sprite.animations.play('walking_down');
-				break;
-			case "W":
-				this.sprite.animations.play('walking_left');
-				break;
-			case "E":
-				this.sprite.animations.play('walking_right');
-				break;
-			case "N":
-				this.sprite.animations.play('walking_up');
-				break;
+		if (this.x !== this.last.x || this.y !== this.last.y) {
+
+			this.sprite.x = this.x
+			this.sprite.y = this.y
+
+			/*switch(this.pos) {
+				case "S":
+					this.sprite.animations.play('walking_down');
+					break;
+				case "W":
+					this.sprite.animations.play('walking_left');
+					break;
+				case "E":
+					this.sprite.animations.play('walking_right');
+					break;
+				case "N":
+					this.sprite.animations.play('walking_up');
+					break;
+			}*/
+
+			this.last.x = this.x
+			this.last.y = this.y
+
 		}
 
 	}
@@ -61,7 +74,7 @@ let playState = {
 	    fuseKey = game.input.keyboard.addKey(Phaser.Keyboard[config.fuseKey]);
 
 	    let map = io.map;
-			let players = io.players;
+		let players = io.players;
 
 	    for (let x in map) { // Rendu de la map à partir de l'Array 2D
 	        for (let y in map[x]) {
@@ -78,11 +91,9 @@ let playState = {
 	        }
 	    }
 
-			for (let player in Object.keys(players)) {
-
-					plays.push(new Player(players[Object.keys(players)[player]], players[Object.keys(players)[player]].position[0] * 16 - 8, players[Object.keys(players)[player]].position[1] * 16 - 8, players[Object.keys(players)[player]].direction))
-
-			}
+		for (let player in players) {
+			plays.push(new Player(player, players[player].position[0] * 16 - 8, players[player].position[1] * 16 - 8, players[player].direction))
+		}
 	},
 
 	update: function() {
@@ -104,18 +115,18 @@ let playState = {
           if (Phaser.Keyboard[config.upKey] || Phaser.Keyboard[config.downKey] || Phaser.Keyboard[config.leftKey] || Phaser.Keyboard[config.rigthKey]) io.send_event("stop");
       };
 
-			for (let player in Object.keys(players)) {
+		for (let player in players) {
 
-					for (let el of plays) {
-						if (players[Object.keys(players)[player]] == el.id) {
-							el.x = players[Object.keys(players)[player]].position[0] * 16 - 8
-							el.y = players[Object.keys(players)[player]].position[1] * 16 - 8
-							el.pos = players[Object.keys(players)[player]].direction
-							el.update()
-						}
-					}
-
+			for (let el of plays) {
+				if (player == el.id) {
+					el.x = players[player].position[0] * 16 - 8
+					el.y = players[player].position[1] * 16 - 8
+					el.pos = players[player].direction
+					el.update()
+				}
 			}
+
+		}
 
     }
 }
@@ -131,7 +142,7 @@ function handleBomb() {
 
         bomb_animation = game.add.sprite(bombs[bomb].position[0] * 16 - 8, bombs[bomb].position[1] * 16 - 8, "bomb");
         bomb_animation.animations.add('bomb');
-        bomb_animation.animations.play('bomb', 10, false, true);
+        bomb_animation.animations.play('bomb', 10);
         /*setTimeout(function() {
           delete bombs[bomb] // Supprime la bombe
         }, delay)*/
@@ -158,23 +169,34 @@ function handleExplosion() {
           setTimeout(function() {
             //  X
             for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
-                if (i > 1 || i < 18) {
-                  //let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
-                  let index_x = Math.floor(i)
-                  let index_y = Math.floor(explosions[explosion].position[1])
-                  io.map[index_y][index_x] = " "
+				//if (i < 1 || i > 18)
 
+                if (i >= 1 || i <= 18) {
+					console.log(i, i >= 1)
+                  	//let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
+                  	let index_x = Math.floor(i)
+                  	let index_y = Math.floor(explosions[explosion].position[1])
+				  	//console.log(index_x, index_y)
+					if (index_x >= 1 || index_x <= 18) {
+						let sprite = game.add.image(index_x * 16, index_y * 16, "map", 0);
+					}
+                  	//io.map[index_y][index_x] = " "
                 }
-
             }
 
             // Y
             for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
-              if (i > 1 || i < 14) {
-                let index_x = Math.floor(explosions[explosion].position[0])
-                let index_y = Math.floor(i)
-                io.map[index_y][index_x] = " "
-              }
+				//if (i < 1 || i > 14)
+
+	          	if (i >= 1 || i <= 14) {
+		            let index_x = Math.floor(explosions[explosion].position[0])
+		            let index_y = Math.floor(i)
+					//console.log(index_x, index_y)
+					if (index_y >= 1 || index_y <= 14) {
+						let sprite = game.add.image(index_x * 16, index_y * 16, "map", 0);
+					}
+		            //io.map[index_y][index_x] = " "
+	          	}
             }
           }, 1000);
 
