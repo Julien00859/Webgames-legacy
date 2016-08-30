@@ -219,7 +219,8 @@ function handleExplosion() {
         
         plays.forEach((p) => {
             exp_Array.forEach((e) => {
-                game.physics.arcade.overlap(p, e, removePlayer, null, this)
+                //game.physics.arcade.overlap(p, e, removePlayer, null, this)
+                removePlayer(p.sprite, e)
             })
         })
     }
@@ -236,5 +237,13 @@ function handlePowerups() {
 }
 
 function removePlayer(player, explosion) {
-    player.kill()
+    console.log(player, explosion)
+    console.log('kill')
+    
+    var boundsPlayer = player.getBounds();
+    var boundsExplosion = explosion.getBounds();
+
+    if (Phaser.Rectangle.intersects(boundsPlayer, boundsExplosion)) {
+        player.kill()
+    }
 }
