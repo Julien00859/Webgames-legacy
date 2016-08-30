@@ -49,15 +49,15 @@ class IO {
                   }
 
                   for (var i in data.status.entities) {
-                      console.log(data)
                       if (data.status.entities[i].name == "<Player>") { // Joueur ?
                           if (data.status.entities[i].ismoving) {
-                              this.players[i] = data.status.entities[i]; // Met à jour la position 
+                              this.players[i] = data.status.entities[i]; // Met à jour la position
                           }
 
                           else if (data.status.explosions) { // Explosion
                               for (var i in data.status.explosions) {
                                   this.explosions = data.status.explosions; // Met à jour les explosions
+                                  console.log("IO: explosion")
                                   handleExplosion()
                               }
                               this.powerups = data.status.map; // Et les powerups
