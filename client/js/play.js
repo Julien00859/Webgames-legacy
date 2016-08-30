@@ -143,9 +143,6 @@ function handleBomb() {
         bomb_animation = game.add.sprite(bombs[bomb].position[0] * 16 - 8, bombs[bomb].position[1] * 16 - 8, "bomb");
         bomb_animation.animations.add('bomb');
         bomb_animation.animations.play('bomb', 10);
-        /*setTimeout(function() {
-          delete bombs[bomb] // Supprime la bombe
-        }, delay)*/
     }
   }
 
@@ -159,50 +156,68 @@ function handleExplosion() {
       for (let explosion in explosions) {
           console.log("explosion...")
 
-          //exp_c.x =  explosions[explosion].position[0] * 76.5 - 38.25
-          //exp_c.y =  explosions[explosion].position[1] * 80 - 40
+		  /* EXPLOSION -- ANIMATION */
+		  // C
+		  exp_c = game.add.sprite(explosions[explosion].position[0] * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp_c");
+		  exp_c.animations.add('boom');
+		  exp_c.animations.play('boom', 5, false, true);
+		  // X
+		  for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
 
-          exp_c = game.add.sprite(explosions[explosion].position[0] * 76.5 - 38.25, explosions[explosion].position[1] * 80 - 40, "exp");
+			  if (i >= 1 && i <= 18) {
+				  let index_x = Math.floor(i)
+				  let index_y = Math.floor(explosions[explosion].position[1])
+
+	            exp_x = game.add.sprite(index_x * 16, index_y * 16, "exp_x");
+	            exp_x.animations.add('boom');
+	            exp_x.animations.play('boom', 5, false, true);
+			  }
+		  }
+
+		  // Y
+		  for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
+
+			  if (i >= 1 && i <= 14) {
+				  let index_x = Math.floor(explosions[explosion].position[0])
+				  let index_y = Math.floor(i)
+
+  	            exp_y = game.add.sprite(index_x * 16, index_y * 16, "exp_y");
+  	            exp_y.animations.add('boom');
+  	            exp_y.animations.play('boom', 5, false, true);
+
+			  }
+		  }
+
+          /*exp_c = game.add.sprite(explosions[explosion].position[0] * 76.5 - 38.25, explosions[explosion].position[1] * 80 - 40, "exp");
           exp_c.animations.add('boom');
-          exp_c.animations.play('boom', 5, false, true);
+          exp_c.animations.play('boom', 5, false, true);*/
 
+		  /* EXPLOSION -- MODIF DE LA MAP */
           setTimeout(function() {
             //  X
             for (let i = explosions[explosion].position[0] - explosions[explosion].radius; i <= explosions[explosion].position[0] + explosions[explosion].radius; i++) {
-				//if (i < 1 || i > 18)
 
-                if (i >= 1 || i <= 18) {
+                if (i >= 1 && i <= 18) {
 					console.log(i, i >= 1)
-                  	//let explo = game.add.image(i * 16 - 8, explosions[explosion].position[1] * 16 - 8, "exp");
                   	let index_x = Math.floor(i)
                   	let index_y = Math.floor(explosions[explosion].position[1])
 				  	//console.log(index_x, index_y)
-					if (index_x >= 1 || index_x <= 18) {
-						let sprite = game.add.image(index_x * 16, index_y * 16, "map", 0);
-					}
-                  	//io.map[index_y][index_x] = " "
+					let sprite = game.add.image(index_x * 16, index_y * 16, "map", 0);
                 }
             }
 
             // Y
             for (let i = explosions[explosion].position[1] - explosions[explosion].radius; i <= explosions[explosion].position[1] + explosions[explosion].radius; i++) {
-				//if (i < 1 || i > 14)
 
-	          	if (i >= 1 || i <= 14) {
+	          	if (i >= 1 && i <= 14) {
 		            let index_x = Math.floor(explosions[explosion].position[0])
 		            let index_y = Math.floor(i)
 					//console.log(index_x, index_y)
-					if (index_y >= 1 || index_y <= 14) {
-						let sprite = game.add.image(index_x * 16, index_y * 16, "map", 0);
-					}
-		            //io.map[index_y][index_x] = " "
+					let sprite = game.add.image(index_x * 16, index_y * 16, "map", 0);
 	          	}
             }
           }, 1000);
 
-          /*setTimeout(function() {
-            delete explosions[explosion] // Supprime l'explosion
-          }, delay)*/
       }
     }
 
