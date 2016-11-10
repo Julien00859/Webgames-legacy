@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class Manager:
     """Handle clients, game queues, running games and events"""
 
-    def __init__(self, webserver):
+    def __init__(self, webserver, stored_game_id):
         self.webserver = webserver # The webserver to send messages to clients
         self.players = {} # A map of clients where the key is the ID given by the webserver
         self.games = {} # A map of games where the
@@ -242,7 +242,7 @@ class Manager:
 
 
         # Save the stored_id
-        session.query(StoredId).filter(StoredId.name == "gameid").value = next(self.gameid)
+        session.query(StoredId).filter(StoredId.name == "gameid").one().storedid = next(self.gameid)
         session.commit()
 
         logger.info("All game terminated and all clients kicked")

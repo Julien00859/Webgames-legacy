@@ -60,7 +60,7 @@ def onmessage(client, server, message):
         logger.warning("Client ID %d generated error %s with message %s", client["id"], repr(e), message)
         server.send_message(client, json.dumps({"cmd": "error", "error": repr(e)}))
 
-def start(host, port, queue):
+def start(host, port, stored_id, queue):
     """Start both the Game Manager and the Web Server"""
 
     signal(SIGTERM, term_handler)

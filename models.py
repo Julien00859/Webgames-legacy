@@ -11,7 +11,7 @@ class Log(Base):
 	__tablename__ = "log"
 	id = Column(Integer, primary_key=True)
 	created = Column(Numeric, nullable=False)
-	exc_text = Column(String, nullable=False)
+	exc_text = Column(String, nullable=True)
 	filename = Column(String, nullable=False)
 	levelname = Column(String, nullable=False)
 	levelno = Column(Integer, nullable=False)
@@ -36,7 +36,7 @@ class Log(Base):
 class StoredId(Base):
 	__tablename__ = "storedid"
 	name = Column(String, primary_key=True)
-	value = Column(Integer, nullable=False)
+	storedid = Column(Integer, nullable=False)
 
 engine = create_engine(DB_URI)
 session = sessionmaker(bind=engine)()
