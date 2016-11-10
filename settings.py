@@ -1,4 +1,4 @@
-from os import listdir
+from os import listdir, environ
 from os.path import join as pathjoin
 from random import choice
 
@@ -14,10 +14,8 @@ WS_PORT = 28456
 # Auth Server
 AUTH_HOST = "localhost"
 AUTH_PORT = 28457
-SSL_KEY_PATH = "auth_server/key.pem"
-SSL_CERT_PATH = "auth_server/cert.pem"
-
-# Security
+SSL_KEY_PATH = environ["KEYPATH"] 
+SSL_CERT_PATH = environ["CERTPATH"]
 TOKEN_LENGTH = 16
 
 # Game Manager
@@ -29,7 +27,13 @@ GAMES = {
     }
 }
 
+# Database
+DB_URI = "sqlite:///main.db"
+
 # Log
+LOG_STDOUT = True
+LOG_STDERR = False
+
 LOG_TO_CONSOLE = True
 LOG_CONSOLE_LEVEL = "INFO"
 
@@ -39,7 +43,6 @@ LOG_FILE_NAME = "latest.log"
 LOG_FILE_LEVEL = "DEBUG"
 
 LOG_TO_DB = True
-LOG_DB_NAME = "log.db"
 LOG_DB_LEVEL = "DEBUG"
 
 LOG_DIR = "logs"

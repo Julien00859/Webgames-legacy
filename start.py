@@ -1,7 +1,5 @@
 #!./venv/bin/python
 
-if __name__ != "__main__":
-    raise ImportError("This startup script may not provide any useful API")
 
 from collections import namedtuple
 from gzip import open as gzipopen
@@ -13,144 +11,57 @@ from os.path import exists, isdir, isfile, join as pathjoin
 from queue import Queue as thQueue
 from shutil import copyfileobj
 from signal import signal, SIGTERM
+from sqlalchemy import create_engine
 from threading import Thread
 import json
 import logging
-import pickle
-import sqlite3
 import sys
 
 from auth_server.auth_server import start as auth_server_start
 from game_server.game_server import start as game_server_start
 from settings import *
+import models
 
-class SQLiteHandler(logging.Handler, Thread):
-    """Logging handler for the SQLite3 database"""
 
-    create_statement = """CREATE TABLE IF NOT EXISTS log (
-                              id int primary key,
-                              created real,
-                              exc_text text,
-                              filename text,
-                              funcName text,
-                              levelname text,
-                              levelno int,
-                              lineno int,
-                              module text,
-                              message text,
-                              name text,
-                              pathname text,
-                              playerid int,
-                              gameid int
-                        );"""
-
-    insert_statement = """INSERT INTO log (
-                              id,
-                              created,
-                              exc_text,
-                              filename,
-                              funcName,
-                              levelname,
-                              levelno,
-                              lineno,
-                              module,
-                              message,
-                              name,
-                              pathname,
-                              playerid,
-                              gameid
-                        )
-                        VALUES (
-                              :id,
-                              :created,
-                              :exc_text,
-                              :filename,
-                              :funcName,
-                              :levelname,
-                              :levelno,
-                              :lineno,
-                              :module,
-                              :message,
-                              :name,
-                              :pathname,
-                              :playerid,
-                              :gameid
-                        );"""
-
-    def __init__(self, database, stored_id):
-        logging.Handler.__init__(self)
-        Thread.__init__(self)
-
-        # Save the args
-        self.database = database
-
-        # Retrieve the ID
-        self.logid = count(stored_id)
-
-        # Create a queue with a sentinel
-        self.queue = thQueue()
-        self.sentinel = object()
-
-        # Prevent the thread from blocking the exit
-        self.daemon = True
-
-        # Start the thread
-        self.start()
-
-    # override logging.Handler.emit
+class SQLAlchemyHandler(logging.Handler):
     def emit(self, record):
-        """Feed the queue with a record"""
-
         if not hasattr(record, "message"):
             record.message = self.format(record)
-
         if not hasattr(record, "playerid"):
             record.playerid = None
-
         if not hasattr(record, "gameid"):
             record.gameid = None
 
-        record.id = next(self.logid)
+        models.session.add(models.Log(
+            created=record.created,
+            exc_text=record.exc_text,
+            filename=record.filename,
+            levelname=record.levelname,
+            levelno=record.levelno,
+            lineno=record.lineno,
+            module=record.module,
+            message=record.message,
+            pathname=record.pathname,
+            playerid=record.playerid,
+            gameid=record.gameid
+        ))
 
-        self.queue.put(record)
 
-    # override logging.Handler.close
-    def close(self):
-        """Feed the queue with the sentinel and wait for the thread to stop"""
+class StreamToLogger(object):
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+    """
+    def __init__(self, logger, log_level=logging.INFO):
+        self.logger = logger
+        self.log_level = log_level
+        self.linebuf = ''
+ 
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
 
-        self.queue.put(self.sentinel)
-        self.join()
-
-        # Save the stored_id
-        data = pickle.load(open("data", "rb"))
-        data["stored_ids"]["log"] = next(self.logid)
-        pickle.dump(data, open("data", "wb"))
-
-    def run(self):
-        """Consume the queue to insert the records in the database"""
-
-        # Connect to db and create the table if it doesn't exists
-        conn = sqlite3.connect(self.database)
-        cur = conn.cursor()
-        cur.execute(self.create_statement)
-
-        # Main loop
-        while True:
-            # Get a record or the sentinel
-            record = self.queue.get()
-
-            # If it's the sentinel, exit loop, commit and close db
-            if record is self.sentinel:
-                break
-
-            # Otherwise insert the record into the table
-            cur.execute(self.insert_statement, record.__dict__)
-            self.queue.task_done()
-
-        cur.close()
-        conn.commit()
-        conn.close()
-        self.queue.task_done()
+    def flush(self):
+        pass
 
 
 def term_handler(signum, _):
@@ -171,26 +82,6 @@ LogEntry = namedtuple("LogEntry", ("lvl", "msg", "args", "kwargs"))
 tolog = []
 
 
-# Get the data
-if isfile("data"):
-    data = pickle.load(open("data", "rb"))
-else:
-    tolog.append(LogEntry(lvl="WARNING",
-                          msg="Data file not found, creating a new one at ./data",
-                          args=(),
-                          kwargs={}))
-    data = {
-        "stored_ids": {
-            "log": 1,
-            "game": 1
-        }
-    }
-    pickle.dump(data, open("data", "wb"))
-
-tolog.append(LogEntry(lvl="DEBUG", 
-                      msg="Stored datas are: %s",
-                      args=data,
-                      kwargs={}))
 
 
 # Check if we must chroot
@@ -280,13 +171,7 @@ if LOG_TO_FILE:
 
 # Config the db logging
 if LOG_TO_DB:
-    if not isfile(pathjoin(LOG_DIR, LOG_DB_NAME)):
-        tolog.append(LogEntry(lvl="WARNING",
-                              msg="Logs database not found, creating a new one at .%s%s%s%s",
-                              args=[sep, LOG_DIR, sep, LOG_DB_NAME],
-                              kwargs={}))    
-
-    db = SQLiteHandler(pathjoin(LOG_DIR, LOG_DB_NAME), data["stored_ids"]["log"])
+    db = SQLAlchemyHandler()
     db.setLevel(getattr(logging, LOG_DB_LEVEL))
     logger.addHandler(db)
     handlers.append(db)
@@ -297,13 +182,20 @@ if LOG_TO_DB:
 
 
 # If no handler has been set, disable logging
-if not any([LOG_TO_CONSOLE, LOG_DB_LEVEL, LOG_TO_DB]):
+if not any([LOG_TO_CONSOLE, LOG_TO_FILE, LOG_TO_DB]):
     logger.addHandler(logging.NullHandler)
 
 
 # Logging is now initialized so we send all stored messages
 for lvl, msg, args, kwargs in tolog:
     logger.log(getattr(logging, lvl), msg, *args, **kwargs)
+
+
+if LOG_STDOUT:
+    sys.stdout = StreamToLogger(logging.getLogger("stdout"))
+
+if LOG_STDERR:
+    sys.stderr = StreamToLogger(logging.getLogger("stderr"))
 
 queue = mpQueue()
 
@@ -312,6 +204,7 @@ queue_listener.start()
 
 logger.info("QueueListener ready to handle sub-precesses log records")
 
+gameid = models.session.query(models.StoredId).filter(models.StoredId.name == "gameid").value
 
 # Launch the servers
 servers = [
@@ -321,7 +214,7 @@ servers = [
     ),
     Process(
         target=game_server_start,
-        args=(WS_HOST, WS_PORT, data["stored_ids"]["game"], queue)
+        args=(WS_HOST, WS_PORT, gameid, queue)
     )
 ]
 
