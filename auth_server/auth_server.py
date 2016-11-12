@@ -111,6 +111,8 @@ def start(host, port, cert_path, key_path, queue):
 
     signal(SIGTERM, term_handler)
 
+    for handler in root.handlers.copy():
+        root.removeHandler(handler)
     root.addHandler(QueueHandler(queue))
 
     logger.info("Auth server listening on https://%s:%d", host, port)

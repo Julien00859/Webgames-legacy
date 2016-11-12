@@ -11,6 +11,7 @@ from sys import exit
 
 root = logging.getLogger()
 root.setLevel(logging.NOTSET)
+
 logger = logging.getLogger(__name__)
 manager = None
 
@@ -56,7 +57,7 @@ def onmessage(client, server, message):
             manager.join_queue(client["id"], dictmsg["queue"])
 
     # Syntax, Grammatical or Semantic Error
-except (json.decoder.JSONDecodeError, AssertionError, GameServerException) as e:
+    except (json.decoder.JSONDecodeError, AssertionError, GameServerException) as e:
         logger.warning("Client ID %d generated error %s with message %s", client["id"], repr(e), message)
         server.send_message(client, json.dumps({"cmd": "error", "error": repr(e)}))
 
@@ -65,7 +66,10 @@ def start(host, port, stored_id, queue):
 
     signal(SIGTERM, term_handler)
 
-    logger.addHandler(QueueHandler(queue))
+    for handler in root.handlers.copy():
+        root.removeHandler(handler)
+
+    root.addHandler(QueueHandler(queue))
 
     logger.info("Init Web-Socket Server")
     # Prepare the web server with above functions
