@@ -8,7 +8,7 @@ import pickle
 import logging
 import sqlite3
 
-from game_server.exceptions import *
+from exceptions import *
 from models import session, StoredId
 from settings import *
 
@@ -212,8 +212,7 @@ class Manager:
             raise NotInGame("The player must be in game to send an event")
 
         game = self.games[player["gameid"]]["game"]
-        events = game.get_events()
-        if event not in events:
+        if event not in game.events:
             raise InvalidEvent("{} is not a valid event, valids one are: {}".format(event, ", ".join(events)))
 
         logger.info("Player ID %d fired event \"%s\" with args %s to Game ID %d", client_id, event, kwargs, self.players[client_id]["gameid"], extra={"gameid": gid, "playerid": client_id})
@@ -238,7 +237,7 @@ class Manager:
                 try:
                     self.disconnect(pid)
                 except Exception as ex:
-                    logging.exception("An exception occured on kicking Player ID %d", pid, extra={"playerid": pid})  
+                    logging.exception("An exception occured on kicking Player ID %d", pid, extra={"playerid": pid})
 
 
         # Save the stored_id

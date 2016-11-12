@@ -117,6 +117,7 @@ class Bomberman:
         self.bombs = []
         self.gameover = False
         self.tickno = 0
+        self.get_events = lambda: ["die", "move", "stop", "plant", "fuse"]
 
     def get_startup_status(self):
         return {
@@ -462,5 +463,3 @@ class Bomberman:
     def run_event(self, pid, event, **kwargs):
         getattr(self.players[pid], event)(**kwargs)
 
-    def get_events(self):
-        return [attr for attr in dir(Player) if not attr.startswith("__")]

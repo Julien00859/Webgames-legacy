@@ -3,3 +3,4 @@ logs/
 venv/
 *.pyc
 data
+main.db

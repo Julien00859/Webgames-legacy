@@ -205,7 +205,6 @@ queue_listener.start()
 logger.info("QueueListener ready to handle sub-precesses log records")
 
 gameid = models.session.query(models.StoredId).filter(models.StoredId.name == "gameid").one().storedid
-logger.debug(gameid)
 
 # Launch the servers
 servers = [

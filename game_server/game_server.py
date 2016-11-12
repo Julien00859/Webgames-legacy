@@ -5,7 +5,7 @@ import logging
 from logging.handlers import QueueHandler
 
 from game_server.manager import Manager
-from game_server.exceptions import *
+from exceptions import *
 from signal import signal, SIGTERM
 from sys import exit
 
@@ -56,7 +56,7 @@ def onmessage(client, server, message):
             manager.join_queue(client["id"], dictmsg["queue"])
 
     # Syntax, Grammatical or Semantic Error
-    except (json.decoder.JSONDecodeError, AssertionError, ProjectException) as e:
+except (json.decoder.JSONDecodeError, AssertionError, GameServerException) as e:
         logger.warning("Client ID %d generated error %s with message %s", client["id"], repr(e), message)
         server.send_message(client, json.dumps({"cmd": "error", "error": repr(e)}))
 

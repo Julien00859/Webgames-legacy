@@ -3,6 +3,7 @@ from os.path import join as pathjoin
 from random import choice
 
 import game_server.games.bomberman.bomberman
+import game_server.games.robotwar.robotwar
 
 # OS
 CHROOT_TO_PROJECT_DIR = False # Only available on Linux
@@ -24,11 +25,15 @@ GAMES = {
     "bomberman": {
         "gamefunc": game_server.games.bomberman.bomberman.Bomberman,
         "initfunc": (lambda: {"mapname": choice(listdir(pathjoin("game_server", "games", "bomberman", "maps")))})
+    },
+    "robotwar": {
+    	"gamefun": game_server.games.robotwar.robotwar.RobotWar,
+    	"initfunc": (lambda: {"sizex": 1920, "sizey": 1080})
     }
 }
 
 # Database
-DB_URI = "sqlite:///main.db"
+DB_URI = environ["DBURI"]
 
 # Log
 LOG_STDOUT = True
