@@ -1,32 +1,44 @@
-class ProjectException(BaseException):
+class WebGames(BaseException):
     pass
 
-class AlreadyRegistered(ProjectException):
+class AuthServerException(WebGames):
 	pass
 
-class ClientAlive(ProjectException):
+class GameServerException(WebGames):
 	pass
 
-class InGame(ProjectException):
+class ManagerException(GameServerException):
 	pass
 
-class InvalidEvent(ProjectException):
+class AlreadyRegistered(ManagerException):
 	pass
 
-class InvalidMessage(ProjectException):
+class ClientAlive(ManagerException):
 	pass
 
-class InvalidQueue(ProjectException):
+class InGame(ManagerException):
 	pass
 
-class InvalidToken(ProjectException):
+class InvalidEvent(ManagerException):
 	pass
 
-class NotInGame(ProjectException):
+class InvalidMessage(ManagerException):
 	pass
 
-class NotRegistered(ProjectException):
+class InvalidQueue(ManagerException):
 	pass
 
-class ServerStopping(ProjectException):
+class InvalidToken(ManagerException):
+	pass
+
+class NotInGame(ManagerException):
+	pass
+
+class NotRegistered(ManagerException):
+	pass
+
+class ServerStopping(ManagerException):
+	pass
+
+class GameException(GameServerException):
 	pass
