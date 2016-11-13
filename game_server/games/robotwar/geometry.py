@@ -57,9 +57,9 @@ class Vector:
                      begin.y + sin(self.direction) * self.length)
 
 class Rectangle:
-    def __init__(self, p1: Point, p2: Point, radius=0):
-        self.p1 = Point(min(p1.x, p2.x) - radius, min(p1.y, p2.y) - radius)
-        self.p2 = Point(max(p1.x, p2.x) + radius, max(p1.y, p2.y) + radius)
+    def __init__(self, p1: Point, p2: Point):
+        self.p1 = Point(min(p1.x, p2.x), min(p1.y, p2.y))
+        self.p2 = Point(max(p1.x, p2.x), max(p1.y, p2.y))
 
     def __str__(self) -> str:
         return "([{}:{}, {}:{}])".format(self.p1.x, self.p2.x, self.p1.y, self.p2.y)

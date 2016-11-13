@@ -1,5 +1,5 @@
 class WebGames(BaseException):
-    pass
+	pass
 
 class AuthServerException(WebGames):
 	pass

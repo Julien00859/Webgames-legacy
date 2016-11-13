@@ -2,17 +2,13 @@ import random
 from itertools import count
 import logging
 import math
+from time import time
+
+from game_server.games.robotwar.settings import *
+from game_server.games.robotwar.entities import *
 
 logger = logging.getLogger(__name__)
 
-try:
-    from game_server.games.robotwar.settings import *
-    from game_server.games.robotwar.entities import *
-except ImportError:
-    from settings import *
-    from entities import *
-    logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.DEBUG)
 
 
 class Status:
@@ -21,7 +17,7 @@ class Status:
         self.didsmthhappen = False
         self.tickno = tickno
 
-    def add_robot(self, robot_id: int, robot: Robot):
+    def update_robots(self, robot_id: int, robot: Robot):
         self.didsmthhappen = True
         if "robot" not in self.__dict__:
             self.robot = {}
@@ -34,17 +30,7 @@ class Status:
             "isMoving": robot.is_moving
         }
 
-    def add_hit(self, shooter_id: int, victim_id: int) -> None:
-        self.didsmthhappen = True
-        if "hits" not in self.__dict__:
-            self.hits = []
-
-        self.hits.append({
-            "shooter_id": shooter_id,
-            "victim_id": victim_id
-        })
-
-    def add_bullet(self, bullet: Bullet) -> None:
+    def update_bullets(self, bullet: Bullet) -> None:
         self.didsmthhappen = True
         if "bullets" not in self.__dict__:
             self.bullets = {}
@@ -55,6 +41,10 @@ class Status:
             "speed": bullet.speed,
             "isAlive": bullet.is_alive
         }
+
+    def set_winner(self, robot_id: int) -> None:
+        self.didsmthhappen = True
+        self.winner = robot_id
 
 
     def getdict(self) -> dict:
@@ -76,13 +66,14 @@ class RobotWar:
         and each player is placed at a randomly chosen position
         """
 
-        self.get_events = lambda: ["die", "move", "stop", "shoot", "stop_shooting"]
+        self.get_events = lambda: ["die", "event_shoot", "event_stop_shooting", "event_move", "event_stop_moving", "event_rotate"]
 
         self.gameid = gameid
         self.sizex = sizex
         self.sizey = sizey
         self.robots = {}
         self.tickno = count()
+        self.bullets = []
 
                 
         length = math.ceil(math.sqrt(len(players)))
@@ -131,33 +122,31 @@ class RobotWar:
     def handle_robots(self, status: Status) -> None:
         for robot_id, robot in self.robots.items():
             if robot.is_moving:
-                if robot.move(self.sizex, self.sizey, [other_robot for other_robot in self.robots.values() if other_robot != robot]):
+                if robot.move(self.sizex, self.sizey, [other_robot for other_robot in self.robots.values() if other_robot != robot]) > 0:
                     logger.debug("Game ID %d: Player ID %d moved to %s", self.gameid, robot_id, robot.position)
+                    Status.update_robot(robot_id, robot)
+
                 else:
                     logger.debug("Game ID %d: Player ID %d could not move", self.gameid, robot_id)
 
+            if robot.is_shooting and robot.last_attack + robot.attack_speed > (now = time()):
+                robot.last_attack = now
+                self.bullets.append(Bullet(robot))
+
     def handle_bullets(self, status: Status) -> None:
-        pass
+        for bullet in self.bullets.copy():
+            robot_hit = bullet.move()
+            if not bullet.is_alive:
+                self.bullets.remove(bullet)
+
+            if robot_hit is not None:
+                status.update_robots(robot_hit)
+
+            status.update_bullets(bullet)
 
     def check_gameover(self, status: Status) -> None:
-        pass
-
-                        
-if __name__ == "__main__":
-    jeu = RobotWar(0, [50, 51, 52, 53], 1920, 1080)
-    jeu.robots[50].position.x = 400
-    jeu.robots[50].position.y = 450
-    jeu.robots[51].position.x = 445
-    jeu.robots[51].position.y = 445
-    jeu.robots[50].direction = 0
-    jeu.robots[50].is_moving = True
-
-    for robot_id, robot in jeu.robots.items():
-        logger.debug("Robot %d %s", robot_id, repr(robot.position))
-
-    while True:
-        toeval = input("> ")
-        if toeval == "quit":
-            break
-        elif toeval != "":
-            eval(toeval)
+        robots_alive = [robot_id for robot_id, robot in self.robots.items() if robot.is_alive]
+        if len(robots_alive) == 1:
+            status.set_winner(robots_alive[0])
+        elif len(robots_alive) == 0:
+            status.set_winner(None)
