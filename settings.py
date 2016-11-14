@@ -27,7 +27,7 @@ GAMES = {
         "initfunc": (lambda: {"mapname": choice(listdir(pathjoin("game_server", "games", "bomberman", "maps")))})
     },
     "robotwar": {
-    	"gamefun": game_server.games.robotwar.robotwar.RobotWar,
+    	"gamefunc": game_server.games.robotwar.robotwar.RobotWar,
     	"initfunc": (lambda: {"sizex": 1920, "sizey": 1080})
     }
 }
@@ -36,7 +36,7 @@ GAMES = {
 DB_URI = environ["DBURI"]
 
 # Log
-LOG_STDOUT = True
+LOG_STDOUT = False
 LOG_STDERR = False
 
 LOG_TO_CONSOLE = True

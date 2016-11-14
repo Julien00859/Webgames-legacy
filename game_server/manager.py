@@ -9,8 +9,10 @@ import logging
 import sqlite3
 
 from exceptions import *
-from models import session, StoredId
+from models import StoredId
 from settings import *
+
+from game_server.game_server import session
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ class Manager:
         self.players = {} # A map of clients where the key is the ID given by the webserver
         self.games = {} # A map of games where the
         self.gameid = count(stored_game_id)
-        self.queues = {}
+        self.queues = {queue: deque() for queue in GAMES.keys()}
         self.running = True
 
     def connect(self, client) -> str:
@@ -96,10 +98,6 @@ class Manager:
 
         # Update the client mapping
         player["queue"] = queue
-
-        # If the queue isn't in the mapping, create a new one
-        if queue not in self.queues:
-            self.queues[queue] = deque()
 
         # Make the client join the queue
         self.queues[queue].append(client_id)
@@ -212,10 +210,10 @@ class Manager:
             raise NotInGame("The player must be in game to send an event")
 
         game = self.games[player["gameid"]]["game"]
-        if event not in game.events:
+        if event not in game.get_events():
             raise InvalidEvent("{} is not a valid event, valids one are: {}".format(event, ", ".join(events)))
 
-        logger.info("Player ID %d fired event \"%s\" with args %s to Game ID %d", client_id, event, kwargs, self.players[client_id]["gameid"], extra={"gameid": gid, "playerid": client_id})
+        logger.debug("Player ID %d fired event \"%s\" with kwargs %s to Game ID %d", client_id, event, kwargs, self.players[client_id]["gameid"], extra={"gameid": player["gameid"], "playerid": client_id})
         game.run_event(client_id, event, **kwargs)
 
     def safe_stop(self):

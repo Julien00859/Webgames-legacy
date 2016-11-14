@@ -22,8 +22,8 @@ class Status:
         if "robot" not in self.__dict__:
             self.robot = {}
 
-        self.robot[robot_id] = {
-            "position": robot.position,
+        self.robot[str(robot_id)] = {
+            "position": [robot.position.x, robot.position.y],
             "direction": robot.direction,
             "isAlive": robot.is_alive,
             "isShooting": robot.is_shooting,
@@ -35,9 +35,9 @@ class Status:
         if "bullets" not in self.__dict__:
             self.bullets = {}
 
-        self.bullets[id(bullet)] = {
-            "position": bullet.position,
-            "direction": bullet.position,
+        self.bullets[str(id(bullet))] = {
+            "position": [bullet.position.x, bullet.position.y],
+            "direction": bullet.direction,
             "speed": bullet.speed,
             "isAlive": bullet.is_alive
         }
@@ -74,6 +74,7 @@ class RobotWar:
         self.robots = {}
         self.tickno = count()
         self.bullets = []
+        self.gameover = False
 
                 
         length = math.ceil(math.sqrt(len(players)))
@@ -98,13 +99,17 @@ class RobotWar:
         d = {
             "size": [self.sizex, self.sizey],
             "robots": {},
-            "robot_size": Robot.size
+            "robot_size": Robot.size,
+            "frequency": 20
         }
-        for robot in self.robots:
-            d["robots"][robot] = {
-                "position": robot.position,
+        for robot_id, robot in self.robots.items():
+            d["robots"][str(robot_id)] = {
+                "position": [robot.position.x, robot.position.y],
                 "direction": robot.direction,
-                "health": robot.health
+                "health": robot.health,
+                "isMoving": robot.is_moving,
+                "isShooting": robot.is_shooting,
+                "isAlive": robot.is_alive
             }
 
         return d
@@ -124,14 +129,16 @@ class RobotWar:
             if robot.is_moving:
                 if robot.move(self.sizex, self.sizey, [other_robot for other_robot in self.robots.values() if other_robot != robot]) > 0:
                     logger.debug("Game ID %d: Player ID %d moved to %s", self.gameid, robot_id, robot.position)
-                    Status.update_robot(robot_id, robot)
+                    status.update_robots(robot_id, robot)
 
                 else:
                     logger.debug("Game ID %d: Player ID %d could not move", self.gameid, robot_id)
 
-            if robot.is_shooting and robot.last_attack + robot.attack_speed > (now = time()):
-                robot.last_attack = now
-                self.bullets.append(Bullet(robot))
+            if robot.is_shooting:
+                now = time()
+                if robot.last_attack + robot.attack_speed > now:
+                    robot.last_attack = now
+                    self.bullets.append(Bullet(robot))
 
     def handle_bullets(self, status: Status) -> None:
         for bullet in self.bullets.copy():
@@ -148,5 +155,10 @@ class RobotWar:
         robots_alive = [robot_id for robot_id, robot in self.robots.items() if robot.is_alive]
         if len(robots_alive) == 1:
             status.set_winner(robots_alive[0])
+            self.gameover = True
         elif len(robots_alive) == 0:
             status.set_winner(None)
+            self.gameover = True
+
+    def kill(self, robot_id):
+        self.robots[robot_id].die()

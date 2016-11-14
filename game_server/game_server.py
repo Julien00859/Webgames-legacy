@@ -1,9 +1,13 @@
+
+
 from sys import exc_info
 from websocket_server import WebsocketServer
 import json
 import logging
 from logging.handlers import QueueHandler
 
+from models import Session as DBSession
+session = DBSession()
 from game_server.manager import Manager
 from exceptions import *
 from signal import signal, SIGTERM
@@ -14,6 +18,7 @@ root.setLevel(logging.NOTSET)
 
 logger = logging.getLogger(__name__)
 manager = None
+
 
 
 def term_handler(signum, _):
@@ -40,26 +45,29 @@ def onmessage(client, server, message):
     """Handle incoming messages"""
 
     logger.debug("Message from client ID %d: %s", client["id"], message)
-    try:
-        dictmsg = json.loads(message)  # Try to parse the message
+    if message == "PING":
+        server.send_message(client, "PONG")
+    else:
+        try:
+            dictmsg = json.loads(message)  # Try to parse the message
 
-        assert isinstance(dictmsg, dict)
-        assert "cmd" in dictmsg
+            assert isinstance(dictmsg, dict)
+            assert "cmd" in dictmsg
 
-        # Client want to send an event
-        if dictmsg["cmd"] == "event":
-            assert "event" in dictmsg and "kwargs" in dictmsg
-            manager.send_event(client["id"], dictmsg["event"], **dictmsg["kwargs"])
+            # Client want to send an event
+            if dictmsg["cmd"] == "event":
+                assert "event" in dictmsg and "kwargs" in dictmsg
+                manager.send_event(client["id"], dictmsg["event"], **dictmsg["kwargs"])
 
-        # Client want to join a queue
-        elif dictmsg["cmd"] == "join_queue":
-            assert "queue" in dictmsg
-            manager.join_queue(client["id"], dictmsg["queue"])
+            # Client want to join a queue
+            elif dictmsg["cmd"] == "join_queue":
+                assert "queue" in dictmsg
+                manager.join_queue(client["id"], dictmsg["queue"])
 
-    # Syntax, Grammatical or Semantic Error
-    except (json.decoder.JSONDecodeError, AssertionError, GameServerException) as e:
-        logger.warning("Client ID %d generated error %s with message %s", client["id"], repr(e), message)
-        server.send_message(client, json.dumps({"cmd": "error", "error": repr(e)}))
+        # Syntax, Grammatical or Semantic Error
+        except (json.decoder.JSONDecodeError, AssertionError, GameServerException) as e:
+            logger.warning("Client ID %d generated error %s with message %s", client["id"], repr(e), message)
+            server.send_message(client, json.dumps({"cmd": "error", "error": repr(e)}))
 
 def start(host, port, stored_id, queue):
     """Start both the Game Manager and the Web Server"""

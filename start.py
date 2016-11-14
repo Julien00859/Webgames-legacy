@@ -11,7 +11,6 @@ from os.path import exists, isdir, isfile, join as pathjoin
 from queue import Queue as thQueue
 from shutil import copyfileobj
 from signal import signal, SIGTERM
-from sqlalchemy import create_engine
 from threading import Thread
 import json
 import logging
@@ -24,6 +23,10 @@ import models
 
 
 class SQLAlchemyHandler(logging.Handler):
+    def __init__(self, dbsession):
+        super().__init__()
+        self.dbsession = dbsession
+
     def emit(self, record):
         if not hasattr(record, "message"):
             record.message = self.format(record)
@@ -32,7 +35,7 @@ class SQLAlchemyHandler(logging.Handler):
         if not hasattr(record, "gameid"):
             record.gameid = None
 
-        models.session.add(models.Log(
+        self.dbsession.add(models.Log(
             created=record.created,
             exc_text=record.exc_text,
             filename=record.filename,
@@ -45,23 +48,6 @@ class SQLAlchemyHandler(logging.Handler):
             playerid=record.playerid,
             gameid=record.gameid
         ))
-
-
-class StreamToLogger(object):
-    """
-    Fake file-like stream object that redirects writes to a logger instance.
-    """
-    def __init__(self, logger, log_level=logging.INFO):
-        self.logger = logger
-        self.log_level = log_level
-        self.linebuf = ''
- 
-    def write(self, buf):
-        for line in buf.rstrip().splitlines():
-            self.logger.log(self.log_level, line.rstrip())
-
-    def flush(self):
-        pass
 
 
 def term_handler(signum, _):
@@ -77,11 +63,12 @@ def term_handler(signum, _):
 
 # =====================================================================================
 
+
+session = models.Session()
+
 # Store message until the logging is ready
 LogEntry = namedtuple("LogEntry", ("lvl", "msg", "args", "kwargs"))
 tolog = []
-
-
 
 
 # Check if we must chroot
@@ -171,7 +158,7 @@ if LOG_TO_FILE:
 
 # Config the db logging
 if LOG_TO_DB:
-    db = SQLAlchemyHandler()
+    db = SQLAlchemyHandler(session)
     db.setLevel(getattr(logging, LOG_DB_LEVEL))
     logger.addHandler(db)
     handlers.append(db)
@@ -191,12 +178,6 @@ for lvl, msg, args, kwargs in tolog:
     logger.log(getattr(logging, lvl), msg, *args, **kwargs)
 
 
-if LOG_STDOUT:
-    sys.stdout = StreamToLogger(logging.getLogger("stdout"))
-
-if LOG_STDERR:
-    sys.stderr = StreamToLogger(logging.getLogger("stderr"))
-
 queue = mpQueue()
 
 queue_listener = QueueListener(queue, *handlers, respect_handler_level=True)
@@ -204,7 +185,7 @@ queue_listener.start()
 
 logger.info("QueueListener ready to handle sub-precesses log records")
 
-gameid = models.session.query(models.StoredId).filter(models.StoredId.name == "gameid").one().storedid
+gameid = session.query(models.StoredId).filter(models.StoredId.name == "gameid").one().storedid
 
 # Launch the servers
 servers = [

@@ -51,14 +51,12 @@ class Entity:
 
         return sqrt((posx - self.position.x) ** 2 + (posy - self.position.y) ** 2)
 
-    def check_move(self, blocking_entities: list) -> Entity:
+    def check_move(self, blocking_entities: list) -> object:
 
         # Compute the destination
         dest = Vector(self.direction, self.speed)(self.position)
 
         for entity in blocking_entities:
-            logger.debug("Quick position check %s in %s", entity.position, rect)
-
             # Compute a rectangle containing both the current entity and the destination 
             rect = Rectangle(self.position, dest)
             rect.p1.x -= self.size / 2
@@ -66,6 +64,7 @@ class Entity:
             rect.p2.x += self.size / 2
             rect.p2.y += self.size / 2
 
+            logger.debug("Quick position check %s in %s", entity.position, rect)
             if entity.position in rect:
                 logger.debug("Deep position check for same values")
 
@@ -112,40 +111,36 @@ class Robot(Entity):
         self.is_alive = True
         self.is_moving = False
         self.is_shooting = False
-
-    def check_if_alive(self, func):
-        def wrapped(self, *args, **kwargs):
-            if not self.is_alive:
-                raise IsDead("Dead player cannot shoot")
-            func(*args, **kwargs)
-        return wrapped
-
-    def check_valid_angle(self, func):
-        def wrapped(self, *args, **kwargs):
-            if (direction < 0 or direction > PI * 2):
-                raise GameValueError("'direction' should be between 0 and 2*pi")
-    
-    @self.check_if_alive
+ 
     def event_shoot(self, *args, **kwargs) -> None:
+        if not self.is_alive:
+            raise IsDead("Dead player cannot shoot")
         self.is_shooting = True
 
-    @self.check_if_alive        
     def event_stop_shooting(self, *args, **kwargs) -> None:
+        if not self.is_alive:
+            raise IsDead("Dead player cannot shoot")
         self.is_shooting = False
 
-    @self.check_if_alive
-    @self.check_valid_angle
     def event_move(self, direction: float, *args, **kwargs) -> None:
+        if not self.is_alive:
+            raise IsDead("Dead player cannot shoot")
+
+        if not (0 <= direction <= 2 * PI):
+            raise GameValueError("'direction' value must be between 0 and 2 * PI")
         self.direction = direction
         self.is_moving = True
 
-    @self.check_if_alive
     def event_stop_moving(self, *args, **kwargs) -> None:
+        if not self.is_alive:
+            raise IsDead("Dead player cannot shoot")
         self.is_moving = False
 
-    @self.check_if_alive
-    @self.check_valid_angle
     def event_rotate(self, angle: float, *args, **kwargs) -> None:
+        if not self.is_alive:
+            raise IsDead("Dead player cannot shoot")
+        if not (0 <= direction <= 2 * PI):
+            raise GameValueError("'direction' value must be between 0 and 2 * PI")
         self.turret_angle = angle
 
 
@@ -176,10 +171,11 @@ class Bullet(Entity):
             dest = Vector(self.direction, self.speed)(self.position)
 
             # If there is no robot in the battlefield or no robot was hit by the buller
-            if robots is None or (robot = self.check_move(robots)) is None:
-
+            robot = self.check_move([] if robots is None else robots)
+            if robot is None:
                 # If the moved bullet hit a wall
-                if (dist_traveled = super().move(max_x, max_y)) != self.speed:
+                dist_traveled = super().move(max_x, max_y)
+                if dist_traveled != self.speed:
                     self.wall_hit += 1
                     if (self.position.x == 0 or self.position.x == sizex):
                         self.direction -= 2 * (self.direction - PI / 2)

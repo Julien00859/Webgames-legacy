@@ -34,9 +34,9 @@ class Log(Base):
 
 
 class StoredId(Base):
-	__tablename__ = "storedid"
+	__tablename__ = "storedid"	
 	name = Column(String, primary_key=True)
 	storedid = Column(Integer, nullable=False)
 
 engine = create_engine(DB_URI)
-session = sessionmaker(bind=engine)()
+Session = sessionmaker(bind=engine)
