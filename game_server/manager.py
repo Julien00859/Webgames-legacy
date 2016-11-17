@@ -121,7 +121,7 @@ class Manager:
 
         # Init a new game and retrieve the startup message
         game = GAMES[queue]["gamefunc"](gid, players, **GAMES[queue]["initfunc"]())
-        startup_status = json.dumps({"cmd": "startup_status", **game.get_startup_status()})
+        startup_status = json.dumps({"cmd": "startup_status", "startup_status": game.get_startup_status()})
         logger.debug("Game ID %d sent the following command: %s", gid, startup_status, extra={"gameid": gid})
 
         # Update the player mapping and send them the startup message

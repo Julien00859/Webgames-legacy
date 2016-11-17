@@ -25,6 +25,7 @@ class Status:
         self.robot[str(robot_id)] = {
             "position": [robot.position.x, robot.position.y],
             "direction": robot.direction,
+            "size": robot.size,
             "isAlive": robot.is_alive,
             "isShooting": robot.is_shooting,
             "isMoving": robot.is_moving
@@ -99,7 +100,6 @@ class RobotWar:
         d = {
             "size": [self.sizex, self.sizey],
             "robots": {},
-            "robot_size": Robot.size,
             "frequency": 20
         }
         for robot_id, robot in self.robots.items():
@@ -107,6 +107,7 @@ class RobotWar:
                 "position": [robot.position.x, robot.position.y],
                 "direction": robot.direction,
                 "health": robot.health,
+                "size": robot.size,
                 "isMoving": robot.is_moving,
                 "isShooting": robot.is_shooting,
                 "isAlive": robot.is_alive

@@ -1,137 +1,91 @@
 var socket;
-var client_id;
-var token;
-var robot_size;
-var robots = {};
-var bullets = {};
-var size;
+var render_interval;
+var canvas;
 
-var keys = {
-	right: {
-		char: "d",
-		pressed: false,
-		angle: 0
-	},
-	up: {
-		char: "z",
-		pressed: false,
-		angle: Math.PI / 2
-	},
-	left: {
-		char: "q",
-		pressed: false,
-		angle: Math.PI
-	},
-	down: {
-		char: "s",
-		pressed: false,
-		angle: Math.PI / 2 * 3
-	}
+var keysdown = new Set();
+var keymap = {
+	moveUp: "z",
+	moveLeft: "q",
+	moveDown: "s",
+	moveRight: "d"
+};
+var angles = {
+	moveRight: 0,
+	moveUp: Math.PI / 2,
+	moveLeft: Math.PI,
+	moveDown: Math.PI / 2 * 3
 }
 
 function init() {
-	socket = new WebSocket("ws://localhost:28456")
-	socket.onopen = function() {
-		console.log("Connected");
-		socket.send(JSON.stringify({cmd: "join_queue", queue: "robotwar"}));
-	}
-	socket.onclose = function() {
-		disableKeys();
-		console.log("Disconnected");
-	}
-	socket.onmessage = function(message) {
-		console.log(message);
-		data = JSON.parse(message.data);
-		switch(data.cmd) {
-			case "connection_success":
-				token = data.token;
-				client_id = data.id;
-				break;
-
-			case "startup_status":
-				ableKeys();
-				robot_size = data.robot_size;
-				robots = data.robots
-				size = data.size
-				break;
-
-			case "status":
-				if ("robots" in data) {
-					for (var robot in data.robots) {
-						if (data.robots[robot].isAlive)
-							self.robots[robot] = data.robots[robot];
-						else
-							delete self.robots[robot]
-					}
-				}
-				if ("bullets" in data) {
-					for (var bullet in data.bullets) {
-						if (data.bullet.isAlive)
-							self.bullets[bullet] = data.bullets[bullet];
-						else
-							delete self.bullets[bullet];
-					}
-				}
-				break;
+	socket = new IO("ws://localhost:28456", "robotwar", bluePrint => {
+		canvas = document.getElementById("canvas");
+		canvas.width = bluePrint.get("size")[0];
+		canvas.height = bluePrint.get("size")[1];
+		render_interval = setInterval(render, 1000)
+	});
+	document.body.addEventListener("keydown", event => {
+		let char = event.char || event.key
+		if (_.chain(keymap).values().contains(char)) {
+			if (! keysdown.has(char) ) {
+				keysdown.add(char);
+				update_movement();
+			}	
 		}
-		socket.onerror = function(message) {
-			console.log(message);
+	});
+	document.body.addEventListener("keyup", event => {
+		let char = event.char || event.key
+		if (keysdown.has(char)) {
+			keysdown.delete(char);
+			update_movement();
 		}
-		socket.sendEvent = function(event, kwargs) {
-			this.send(JSON.stringify({cmd: "event", event: event, kwargs: (kwargs != void 0) ? kwargs : {}}))
-		}
-	}
+	})
 }
 
-function get_keys(event, pressed) {
-	if (event.char == keys.up.char1)
-		keys.up.pressed = pressed;
-	else if (event.char == keys.left.char)
-		keys.left.pressed = pressed;
-	else if (event.char == keys.down.char)
-		keys.down.pressed = pressed;
-	else if (event.char == keys.right.char)
-		keys.right.pressed = pressed;
-}
-
-function sign(x) {
-	return x / Math.abs(x)
-}
 
 function update_movement() {
 	var point = {x:0, y:0};
-	Object.keys(keys).filter(function(k) {
-		return keys[k].pressed;
-	}).map(function(k) {
-		return keys[k].angle;
-	}).forEach(function(a) {
-		point.x += Math.cos(a);
-		point.y += Math.sin(a);
-	});
-	if (point.x == 0 && point.y ==0) {
+
+	console.log(keysdown)
+	_.chain(keymap).pairs().each(pair => console.log(pair)).filter(
+		pair => pair[0].includes("move") && keysdown.has(pair[1])
+	).map(
+		pair => angles[pair[0]]
+	).each(
+		angle => {
+			point.x += Math.cos(angle);
+			point.y += Math.sin(angle);
+		}
+	)
+
+	if (point.x == 0 && point.y == 0) {
 		socket.sendEvent("event_stop_moving", {})
 	} else if (point.x == 0) {
-		socket.sendEvent("event_move", {direction: point.y * sign(point.y)});
+		socket.sendEvent("event_move", {direction: (point.y > 0) ? angles["moveUp"] : angles["moveDown"]});
 	} else if (point.y == 0) {
-		socket.sendEvent("event_move", {direction: point.x * sign(point.x)});
+		socket.sendEvent("event_move", {direction: (point.x > 0) ? angles["moveRight"] : angles["moveLeft"]});
 	} else {
-		if (sign(point.x) == sign(point.y)) {
-			socket.sendEvent("event_move", {direction: Math.atan(point.y / point.x) * sign(point.x)});
-		} else {
-			socket.sendEvent("event_move", {direction: Math.atan(point.y / point.x) * sign(point.x)});
-		}
+		socket.sendEvent("event_move", {direction: Math.atan(point.y / point.x) + (point.x < 0) ? Math.PI : 0});
 	}
 }
 
-function ableKeys() {
-	document.body.addEventListener("keydown", function(event){
-		console.log("Event!");
-		get_keys(event, true)
-		update_movement()
-	});
-	document.body.addEventListener("keyup", function(event){
-		console.log("Event!");
-		get_keys(event, false)
-		update_movement()
-	});
+function render() {
+	var bluePrint = socket.getBluePrint();
+
+	var ctx = canvas.getContext("2d");
+
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	for (let [robot_id, robot] of bluePrint.get("robots").entries()) {
+		ctx.beginPath();
+		ctx.lineWidth="2";
+		ctx.arc(robot.get("position")[0], robot.get("position")[1], robot.get("size"), 0, 2 * Math.PI)
+		ctx.fillStyle = (robot_id == socket.id) ? "green" : "red";
+		ctx.fill();
+		ctx.beginPath();
+		ctx.lineWidth="5";
+		ctx.fillStyle = "white";
+		ctx.moveTo(robot.get("position")[0], robot.get("position")[1])
+		ctx.lineTo(robot.get("position")[0] + Math.cos(robot.get("direction")) * robot.get("size"), 
+			       robot.get("position")[1] + Math.sin(robot.get("direction")) * robot.get("size"));
+		ctx.fill();
+	}
 }
