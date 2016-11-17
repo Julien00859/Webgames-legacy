@@ -19,10 +19,10 @@ class Status:
 
     def update_robots(self, robot_id: int, robot: Robot):
         self.didsmthhappen = True
-        if "robot" not in self.__dict__:
-            self.robot = {}
+        if "robots" not in self.__dict__:
+            self.robots = {}
 
-        self.robot[str(robot_id)] = {
+        self.robots[str(robot_id)] = {
             "position": [robot.position.x, robot.position.y],
             "direction": robot.direction,
             "size": robot.size,

@@ -71,7 +71,14 @@ class IO {
 function objectToMap(object, map) {
 	for (let pair of _.pairs(object)) {
 		if (_.isObject(pair[1]) && !_.isArray(pair[1])) {
-			map.set(pair[0], objectToMap(pair[1], map.has(pair[0]) ? map.get(pair[0]) : new Map()));
+			let nextMap;
+			if (map.has(pair[0])) {
+				nextMap = map.get(pair[0]);
+			} else {
+				nextMap = new Map();
+				map.set(pair[0], nextMap)
+			}
+			objectToMap(pair[1], nextMap);
 		} else {
 			map.set(pair[0], pair[1]);
 		}

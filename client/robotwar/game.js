@@ -45,8 +45,7 @@ function init() {
 function update_movement() {
 	var point = {x:0, y:0};
 
-	console.log(keysdown)
-	_.chain(keymap).pairs().each(pair => console.log(pair)).filter(
+	_.chain(keymap).pairs().filter(
 		pair => pair[0].includes("move") && keysdown.has(pair[1])
 	).map(
 		pair => angles[pair[0]]
@@ -76,16 +75,19 @@ function render() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	for (let [robot_id, robot] of bluePrint.get("robots").entries()) {
 		ctx.beginPath();
-		ctx.lineWidth="2";
 		ctx.arc(robot.get("position")[0], robot.get("position")[1], robot.get("size"), 0, 2 * Math.PI)
 		ctx.fillStyle = (robot_id == socket.id) ? "green" : "red";
 		ctx.fill();
 		ctx.beginPath();
-		ctx.lineWidth="5";
-		ctx.fillStyle = "white";
+		ctx.lineWidth = "1";
+		ctx.arc(robot.get("position")[0], robot.get("position")[1], robot.get("size"), 0, 2 * Math.PI)
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.lineWidth = "5";
+		ctx.strokeStyle = '#000000';
 		ctx.moveTo(robot.get("position")[0], robot.get("position")[1])
-		ctx.lineTo(robot.get("position")[0] + Math.cos(robot.get("direction")) * robot.get("size"), 
-			       robot.get("position")[1] + Math.sin(robot.get("direction")) * robot.get("size"));
-		ctx.fill();
+		ctx.lineTo(robot.get("position")[0] + Math.cos(robot.get("direction")) * robot.get("size") * 1.2, 
+			       robot.get("position")[1] + Math.sin(robot.get("direction")) * robot.get("size") * 1.2);
+		ctx.stroke();
 	}
 }
