@@ -211,7 +211,7 @@ class Manager:
 
         game = self.games[player["gameid"]]["game"]
         if event not in game.get_events():
-            raise InvalidEvent("{} is not a valid event, valids one are: {}".format(event, ", ".join(events)))
+            raise InvalidEvent("{} is not a valid event, valids one are: {}".format(event, ", ".join(game.get_events())))
 
         logger.debug("Player ID %d fired event \"%s\" with kwargs %s to Game ID %d", client_id, event, kwargs, self.players[client_id]["gameid"], extra={"gameid": player["gameid"], "playerid": client_id})
         game.run_event(client_id, event, **kwargs)

@@ -25,6 +25,7 @@ class Status:
         self.robots[str(robot_id)] = {
             "position": [robot.position.x, robot.position.y],
             "direction": robot.direction,
+            "turretAngle": robot.turret_angle,
             "size": robot.size,
             "isAlive": robot.is_alive,
             "isShooting": robot.is_shooting,
@@ -106,6 +107,7 @@ class RobotWar:
             d["robots"][str(robot_id)] = {
                 "position": [robot.position.x, robot.position.y],
                 "direction": robot.direction,
+                "turretAngle": robot.turret_angle,
                 "health": robot.health,
                 "size": robot.size,
                 "isMoving": robot.is_moving,
@@ -140,6 +142,10 @@ class RobotWar:
                 if robot.last_attack + robot.attack_speed > now:
                     robot.last_attack = now
                     self.bullets.append(Bullet(robot))
+
+            if robot.turret_angle_updated:
+                robot.turret_angle_updated = False
+                status.update_robots(robot_id, robot)
 
     def handle_bullets(self, status: Status) -> None:
         for bullet in self.bullets.copy():

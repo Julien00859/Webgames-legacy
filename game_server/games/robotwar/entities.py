@@ -104,6 +104,7 @@ class Robot(Entity):
     size = 20
     def __init__(self, position: list):
         super().__init__(position, 0, ROBOT_SPEED)
+        self.turret_angle_updated = False
         self.turret_angle = 0
         self.health = 10
         self.attack_speed = ROBOT_ATTACK_SPEED
@@ -126,7 +127,7 @@ class Robot(Entity):
         if not self.is_alive:
             raise IsDead("Dead player cannot shoot")
 
-        if not (0 <= direction <= 2 * PI):
+        if not (-2 * PI <= direction <= 2 * PI):
             raise GameValueError("'direction' value must be between 0 and 2 * PI")
         self.direction = direction
         self.is_moving = True
@@ -139,8 +140,9 @@ class Robot(Entity):
     def event_rotate(self, angle: float, *args, **kwargs) -> None:
         if not self.is_alive:
             raise IsDead("Dead player cannot shoot")
-        if not (0 <= direction <= 2 * PI):
+        if not (-2 * PI <= angle <= 2 * PI):
             raise GameValueError("'direction' value must be between 0 and 2 * PI")
+        self.turret_angle_updated = True
         self.turret_angle = angle
 
 
@@ -161,7 +163,9 @@ class Robot(Entity):
 class Bullet(Entity):
     size = 2
     def __init__(self, shooter: Robot):
-        super().__init__(shooter.position, shooter.turret_angle, BULLET_SPEED)
+        cannon_x = shooter.position[0] + cos(shooter.turret_angle) * shooter.size * 1.2
+        cannon_y = shooter.position[1] + sin(shooter.turret_angle) * shooter.size * 1.2
+        super().__init__([cannon_x, cannon_y], shooter.turret_angle, BULLET_SPEED)
         self.shooter = shooter
         self.wall_hit = 0
 
