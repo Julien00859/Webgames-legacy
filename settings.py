@@ -28,7 +28,7 @@ GAMES = {
     },
     "robotwar": {
     	"gamefunc": game_server.games.robotwar.robotwar.RobotWar,
-    	"initfunc": (lambda: {"sizex": 1920, "sizey": 1080})
+    	"initfunc": (lambda: {"sizex": 1500, "sizey": 700})
     }
 }
 
@@ -45,9 +45,9 @@ LOG_CONSOLE_LEVEL = "INFO"
 LOG_TO_FILE = True
 KEEP_LOG = True
 LOG_FILE_NAME = "latest.log"
-LOG_FILE_LEVEL = "DEBUG"
+LOG_FILE_LEVEL = "INFO"
 
 LOG_TO_DB = True
-LOG_DB_LEVEL = "DEBUG"
+LOG_DB_LEVEL = "INFO"
 
 LOG_DIR = "logs"
