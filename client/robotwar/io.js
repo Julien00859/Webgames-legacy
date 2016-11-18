@@ -1,10 +1,10 @@
 class IO {
-	constructor(address, queueToJoin, callback) {
+	constructor(address, queueToJoin, callbacks) {
 		this.id = undefined;
 		this.token = undefined;
 		this.bluePrint = new Map();
 		this.queueToJoin = queueToJoin;
-		this.callback = callback;
+		this.callbacks = callbacks;
 
 		this._ws = new WebSocket(address);
 		this._ws.io = this;
@@ -26,15 +26,27 @@ class IO {
 				this.io.id = data.id;
 				this.io.token = data.token;
 				this.io.joinQueue(this.io.queueToJoin);
+				if ("onconnectionsuccess" in this.io.callbacks) {
+					this.io.callbacks.connectionsuccess(data);
+				}
 				break
 
 			case "startup_status":
 				objectToMap(data.startup_status, this.io.bluePrint);
-				this.io.callback(this.io.bluePrint)
+				if ("onstartupstatus" in this.io.callbacks) {
+					this.io.callbacks.onstartupstatus(data);
+				}
 				break;
 
 			case "status":
 				objectToMap(data.status, this.io.bluePrint);
+				if ("onstatus" in this.io.callbacks) {
+					this.io.callbacks.onstatus(data);
+				}
+				break;
+
+			case "error":
+				alert(data.error);
 				break;
 
 
