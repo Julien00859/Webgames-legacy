@@ -13,11 +13,13 @@ WS_HOST = "localhost"
 WS_PORT = 28456
 
 # Auth Server
-AUTH_HOST = "localhost"
-AUTH_PORT = 28457
-SSL_KEY_PATH = environ["KEYPATH"] 
-SSL_CERT_PATH = environ["CERTPATH"]
-TOKEN_LENGTH = 16
+START_AUTH_SERVER = False
+if START_AUTH_SERVER:
+    AUTH_HOST = "localhost"
+    AUTH_PORT = 28457
+    SSL_KEY_PATH = environ["KEYPATH"] 
+    SSL_CERT_PATH = environ["CERTPATH"]
+    TOKEN_LENGTH = 16
 
 # Game Manager
 PLAYERS_PER_GAME = 2
@@ -28,7 +30,7 @@ GAMES = {
     },
     "robotwar": {
     	"gamefunc": game_server.games.robotwar.robotwar.RobotWar,
-    	"initfunc": (lambda: {"sizex": 1500, "sizey": 700})
+    	"initfunc": (lambda: {"size_x": 1500, "size_y": 700})
     }
 }
 
@@ -36,9 +38,6 @@ GAMES = {
 DB_URI = environ["DBURI"]
 
 # Log
-LOG_STDOUT = False
-LOG_STDERR = False
-
 LOG_TO_CONSOLE = True
 LOG_CONSOLE_LEVEL = "INFO"
 

@@ -6,6 +6,7 @@ from time import time
 
 from game_server.games.robotwar.settings import *
 from game_server.games.robotwar.entities import *
+from game_server.games.robotwar.geometry import *
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ class Status:
         return self.__dict__
 
 class RobotWar:
-    def __init__(self, gameid: int, players: list, sizex: int, sizey: int):
+    def __init__(self, gameid: int, players: list, size_x: int, size_y: int):
         """
         For a given number of players, we split the map like that:
         __________  _________ _________
@@ -71,8 +72,7 @@ class RobotWar:
         self.get_events = lambda: ["die", "event_shoot", "event_stop_shooting", "event_move", "event_stop_moving", "event_rotate"]
 
         self.gameid = gameid
-        self.sizex = sizex
-        self.sizey = sizey
+        self.battlefield = RectRange(Point(0, 0), Point(size_x, size_y))
         self.robots = {}
         self.tickno = count()
         self.bullets = []
@@ -84,13 +84,15 @@ class RobotWar:
         
         ceils = []
         for ceil in range(surface):
-            posx = random.randrange(int(sizex / length * (ceil % 3)) - Robot.size / 2, 
-                                    int(sizex / length * (ceil % 3 + 1)) - Robot.size / 2)
+            spawnpoint = Point(random.randrange(int(size_x / length * (ceil % length)) - Robot.size / 2, 
+                                                int(size_x / length * (ceil % length + 1)) - Robot.size / 2),
+                               random.randrange(int(size_y / length * (ceil // length)) - Robot.size / 2, 
+                                                int(size_y / length * (ceil // length + 1)) - Robot.size / 2))
 
-            posy = random.randrange(int(sizey / length * (ceil // 3)) - Robot.size / 2, 
-                                    int(sizey / length * (ceil // 3 + 1)) - Robot.size / 2)
 
-            ceils.append([posx, posy])
+            if spawnpoint not in self.battlefield:
+                logger.warn("Spawnpoint %s in not in the battefield %s !", spawnpoint, self.battefield)
+            ceils.append(spawnpoint)
                         
         for player in players:
             ceil = random.choice(ceils)
@@ -99,7 +101,7 @@ class RobotWar:
 
     def get_startup_status(self) -> dict:
         d = {
-            "size": [self.sizex, self.sizey],
+            "size": [self.battlefield.max.x, self.battlefield.max.y],
             "robots": {},
             "frequency": 20
         }
@@ -130,7 +132,7 @@ class RobotWar:
     def handle_robots(self, status: Status) -> None:
         for robot_id, robot in self.robots.items():
             if robot.is_moving:
-                if robot.move(self.sizex, self.sizey, [other_robot for other_robot in self.robots.values() if other_robot != robot]) > 0:
+                if robot.move(self.battlefield.max.x, self.battlefield.max.y, [other_robot for other_robot in self.robots.values() if other_robot != robot]) > 0:
                     logger.debug("Game ID %d: Player ID %d moved to %s", self.gameid, robot_id, robot.position)
                     status.update_robots(robot_id, robot)
 
@@ -139,9 +141,11 @@ class RobotWar:
 
             if robot.is_shooting:
                 now = time()
-                if robot.last_attack + robot.attack_speed > now:
+                if robot.last_attack + robot.attack_speed < now:
+                    logger.info("pan")
                     robot.last_attack = now
                     self.bullets.append(Bullet(robot))
+                    status.update_bullets(self.bullets[-1])
 
             if robot.turret_angle_updated:
                 robot.turret_angle_updated = False
@@ -149,7 +153,7 @@ class RobotWar:
 
     def handle_bullets(self, status: Status) -> None:
         for bullet in self.bullets.copy():
-            robot_hit = bullet.move()
+            robot_hit = bullet.move(self.battlefield.max.x, self.battlefield.max.y)
             if not bullet.is_alive:
                 self.bullets.remove(bullet)
 

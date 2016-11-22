@@ -20,8 +20,10 @@ class GameTypeError(GameException):
 
 class Entity:
     size = 0
-    def __init__(self, position: list, direction: float, speed: float):
-        self.position = Point(*position)
+    radius = lambda self: self.size / 2
+
+    def __init__(self, position: Point, direction: float, speed: float):
+        self.position = position
         self.direction = direction
         self.speed = speed
         self.is_alive = True
@@ -29,80 +31,73 @@ class Entity:
 
 
     def move(self, max_x: int, max_y: int) -> int:
-        posx = self.position.x
-        posy = self.position.y
+        origin = Point(self.position.x, self.position.y)
 
-        dest_x = self.position.x + cos(self.direction) * self.speed
-        dest_y = self.position.y + sin(self.direction) * self.speed
+        destination = Point(self.position.x + cos(self.direction) * self.speed,
+                            self.position.y + sin(self.direction) * self.speed)
 
-        if dest_x - self.size / 2 < 0:
-            self.position.x = self.size / 2
-        elif dest_x + self.size / 2 > max_x:
-            self.position.x = max_x - self.size / 2
+        battlefield = RectRange(Point(0, 0), Point(max_x, max_y), -self.radius())
+
+        if destination in battlefield:
+            self.position = destination
+
         else:
-            self.position.x = dest_x
+            if destination.x < self.radius():
+                self.position.x = self.radius()
+            elif destination.x > max_x - self.radius():
+                self.position.x = max_x - self.radius()
 
-        if dest_y - self.size / 2 < 0:
-            self.position.y = self.size / 2
-        elif dest_y + self.size / 2 > max_y:
-            self.position.y = max_y - self.size / 2
-        else:
-            self.position.y = dest_y
+            if destination.y < self.radius():
+                self.position.y = self.radius()
+            elif destination.y > max_y - self.radius():
+                self.position.y = max_y - self.radius()
 
-        return sqrt((posx - self.position.x) ** 2 + (posy - self.position.y) ** 2)
 
-    def check_move(self, blocking_entities: list) -> object:
+        return sqrt((origin.x - self.position.x) ** 2 + (origin.y - self.position.y) ** 2)
 
-        # Compute the destination
-        dest = Vector(self.direction, self.speed)(self.position)
+    def check_move(self, entities: list) -> object:
+        origin = Cercle(self.position, self.size / 2)
+        movement = Vector(self.direction, self.speed)
+        destination = Cercle(movement(origin.center), origin.radius)
 
-        for entity in blocking_entities:
-            # Compute a rectangle containing both the current entity and the destination 
-            rect = Rectangle(self.position, dest)
-            rect.p1.x -= self.size / 2
-            rect.p1.y -= self.size / 2
-            rect.p2.x += self.size / 2
-            rect.p2.y += self.size / 2
+        rectangle = RectRange(origin.center, destination.center, origin.radius)
 
-            logger.debug("Quick position check %s in %s", entity.position, rect)
-            if entity.position in rect:
-                logger.debug("Deep position check for same values")
+        vector_left = Vector(self.direction - PI / 4, self.size / 2)
+        vector_right = Vector(self.direction + PI / 4, self.size / 2)
 
-                # Compute a vector for my left and right hand
-                v_left = Vector(self.direction - PI / 4, self.size / 2)
-                v_right = Vector(self.direction + PI / 4, self.size / 2)
+        line_left = Line(vector_left(origin.center), vector_left(destination.center))
+        line_right = Line(vector_right(origin.center), vector_right(destination.center))
 
-                # Compute the two lines for my left and right hand to move to the destination
-                l_left = Line(v_left(self.position), v_left(dest))
-                l_right = Line(v_right(self.position), v_right(dest))
+        for entity in entities:
+            other = Cercle(entity.position, entity.size / 2)
 
-                # Update the vectors to fit the size of the other robot
-                v_left.lenght = entity.size / 2
-                v_right.lenght = entity.size / 2
+            vector_right.length = other.radius
+            vector_left.length = other.radius
 
-                # Compute the left and right hand of the other robot
-                h_left = v_left(entity.position)
-                h_right = v_right(entity.position)
+            other_left = vector_left(other.center)
+            other_right = vector_right(other.center)
 
-                # Block if one of the hand of the other robot is in the "corridor" between l_left and l_right
-                if not ((l_left < h_left and l_left < h_right and l_right < h_left and l_right < h_right) or (
-                         l_left > h_left and l_left > h_right and l_right > h_left and l_right > h_right)):
-                    logger.debug("Blocked by %s", repr(other_robot.position))
+            if destination.inter(other):
+                return entity
+
+            if other_left in rectangle or other_right in rectangle:
+                if all(map(lambda point: point < line_left and point < line_right, [other_left, other_right])) or \
+                   all(map(lambda point: point > line_left and point > line_right, [other_left, other_right])):
+                   continue
+                else:
                     return entity
 
         return None
 
 
-
     def die(self, **kwargs) -> None:
         self.is_alive = False
         self.is_moving = False
-        self.is_shooting = False
 
 
 class Robot(Entity):
     size = 20
-    def __init__(self, position: list):
+    def __init__(self, position: Point):
         super().__init__(position, 0, ROBOT_SPEED)
         self.turret_angle_updated = False
         self.turret_angle = 0
@@ -148,7 +143,8 @@ class Robot(Entity):
 
     def hit(self) -> None:
         if not self.is_alive:
-            raise IsDead("Dead player cannot be hit again")
+            logger.warn("Player hit while dead")
+            return
             
         self.health -= 1
         if self.health <= 0:
@@ -158,14 +154,18 @@ class Robot(Entity):
     def move(self, max_x, max_y, other_robots=None) -> int:
         if other_robots is None or self.check_move(other_robots) is None:
             return super().move(max_x, max_y)
+        return 0
+
+    def die(self) -> None:
+        super().die()
+        self.is_shooting = False
 
 
 class Bullet(Entity):
     size = 2
     def __init__(self, shooter: Robot):
-        cannon_x = shooter.position[0] + cos(shooter.turret_angle) * shooter.size * 1.2
-        cannon_y = shooter.position[1] + sin(shooter.turret_angle) * shooter.size * 1.2
-        super().__init__([cannon_x, cannon_y], shooter.turret_angle, BULLET_SPEED)
+        canon = Vector(shooter.turret_angle, shooter.size * 0.6)(shooter.position)
+        super().__init__(canon, shooter.turret_angle, BULLET_SPEED)
         self.shooter = shooter
         self.wall_hit = 0
 
@@ -174,24 +174,29 @@ class Bullet(Entity):
         if self.is_alive:
             dest = Vector(self.direction, self.speed)(self.position)
 
-            # If there is no robot in the battlefield or no robot was hit by the buller
-            robot = self.check_move([] if robots is None else robots)
+            robot = self.check_move(robots) if robots is not None else None
             if robot is None:
-                # If the moved bullet hit a wall
-                dist_traveled = super().move(max_x, max_y)
-                if dist_traveled != self.speed:
-                    self.wall_hit += 1
-                    if (self.position.x == 0 or self.position.x == sizex):
-                        self.direction -= 2 * (self.direction - PI / 2)
+                speed = self.speed
+                distances = []
+                while True:
+                    distances.append(super().move(max_x, max_y))
+                    if sum(distances) < speed * 0.9:
+                        self.speed -= distances[-1]
+                        self.wall_hit += 1
+                        if (self.position.x == self.radius() or self.position.x == max_x - self.radius()):
+                            self.direction -= 2 * (self.direction - PI / 2)
 
-                    elif (self.position.y == 0 or self.position.y == sizey):
-                        self.direction = -self.direction
+                        else:
+                            self.direction = -self.direction
 
-                    self.speed -= dist_traveled
-                    super().move(max_x, max_y)
-                    self.speed += dist_traveled
+                        logger.info("sum: %d, speed: %d", sum(distances), speed)
+
+                    else:
+                        self.speed = speed
+                        break
 
             else:
+                logger.info("Hit!")
                 self.die()
                 robot.hit()
                 return robot
@@ -199,6 +204,8 @@ class Bullet(Entity):
             self.speed -= BULLET_FRICTION * (self.wall_hit + 1)
             if self.speed <= 0:
                 self.die()
+        else:
+            logger.warn("Dead bullet tried to move")
 
         return None
 

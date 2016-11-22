@@ -188,16 +188,11 @@ logger.info("QueueListener ready to handle sub-precesses log records")
 gameid = session.query(models.StoredId).filter(models.StoredId.name == "gameid").one().storedid
 
 # Launch the servers
-servers = [
-    Process(
-        target=auth_server_start,
-        args=(AUTH_HOST, AUTH_PORT, SSL_CERT_PATH, SSL_KEY_PATH, queue)
-    ),
-    Process(
-        target=game_server_start,
-        args=(WS_HOST, WS_PORT, gameid, queue)
-    )
-]
+servers = []
+if START_AUTH_SERVER:
+    server.append(Process(target=auth_server_start, args=(AUTH_HOST, AUTH_PORT, SSL_CERT_PATH, SSL_KEY_PATH, queue)))
+
+servers.append(Process(target=game_server_start, args=(WS_HOST, WS_PORT, gameid, queue)))
 
 for server in servers:
     logger.info("Starting %s", server)
