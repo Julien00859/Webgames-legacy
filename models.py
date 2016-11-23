@@ -40,3 +40,10 @@ class StoredId(Base):
 
 engine = create_engine(DB_URI)
 Session = sessionmaker(bind=engine)
+
+if __name__ == "__main__":
+	session = Session()
+	Base.metadata.create_all(engine)
+	gid = StoredId(name="gameid", storedid=0)
+	session.add(gid)
+	session.commit()
