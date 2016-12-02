@@ -1,5 +1,5 @@
 from game_server.games.robotwar.settings import *
-from game_server.games.robotwar.geometry import *
+from utils.geometry import *
 from exceptions import GameException
 
 from math import pi as PI, sin, cos, sqrt
