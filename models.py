@@ -21,6 +21,7 @@ class Log(Base):
 	pathname = Column(String, nullable=False)
 	playerid = Column(Integer, nullable=True)
 	gameid = Column(Integer, nullable=True)
+	tickno = Column(Integer, nullable=True)
 
 	def __repr__(self):
 		return "<Log({})>".format(
