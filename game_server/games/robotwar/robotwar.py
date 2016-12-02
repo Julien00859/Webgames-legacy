@@ -3,7 +3,10 @@ from itertools import count
 import logging
 import math
 from time import time
+import json
+from collections import Iterable
 
+import game_server.interfaces
 from game_server.games.robotwar.settings import *
 from game_server.games.robotwar.entities import *
 from game_server.games.robotwar.geometry import *
@@ -11,17 +14,23 @@ from game_server.games.robotwar.geometry import *
 logger = logging.getLogger(__name__)
 
 
-
-class Status:
+class Status(game_server.interfaces.Status):
     """Garde une trace de ce qu'il s'est passé durant un tour"""
+    robots = {}
+    bullets = {}
+    battlefield = {}
+
     def __init__(self, tickno: int):
-        self.didsmthhappen = False
         self.tickno = tickno
+
+    def set_battlefield_size(self, battlefield: RectRange) -> None:
+        self.battlefield_size = {
+            "x": battlefield.max.x,
+            "y": battlefield.max.y
+        }
 
     def update_robots(self, robot_id: int, robot: Robot):
         self.didsmthhappen = True
-        if "robots" not in self.__dict__:
-            self.robots = {}
 
         self.robots[str(robot_id)] = {
             "position": [robot.position.x, robot.position.y],
@@ -35,8 +44,6 @@ class Status:
 
     def update_bullets(self, bullet: Bullet) -> None:
         self.didsmthhappen = True
-        if "bullets" not in self.__dict__:
-            self.bullets = {}
 
         self.bullets[str(id(bullet))] = {
             "position": [bullet.position.x, bullet.position.y],
@@ -45,16 +52,30 @@ class Status:
             "isAlive": bullet.is_alive
         }
 
-    def set_winner(self, robot_id: int) -> None:
+    def set_winners(self, winners: list) -> None:
         self.didsmthhappen = True
-        self.winner = robot_id
+        self.winners = winners
 
 
-    def getdict(self) -> dict:
-        return self.__dict__
+    def tojson(self) -> str:
+        return json.dumps({key: value for key, value in self.__dict__.items() if key != "didsmthhappen"})
 
-class RobotWar:
-    def __init__(self, gameid: int, players: list, size_x: int, size_y: int):
+    def __str__(self) -> str:
+        return "<robotwar.Status#{}>".format(self.tickno) 
+
+class RobotWar(game_server.interfaces.Game):
+    get_events = lambda _: ["die", "event_shoot", "event_stop_shooting", "event_move", "event_stop_moving", "event_rotate"]
+    bullets = []
+    battlefield = object()
+    frequency = 20
+
+    def __init__(self, gameid: int, players: list):
+        self.gameid = gameid
+        self.bullets = []
+        for player_id in players:
+            self.players[player_id] = object()
+
+    def start(self, sizex: int, sizey: int) -> Status:
         """
         For a given number of players, we split the map like that:
         __________  _________ _________
@@ -69,65 +90,38 @@ class RobotWar:
         and each player is placed at a randomly chosen position
         """
 
-        self.get_events = lambda: ["die", "event_shoot", "event_stop_shooting", "event_move", "event_stop_moving", "event_rotate"]
+        tickno = next(self.tickgen)
+        status = Status(tickno)
 
-        self.gameid = gameid
-        self.battlefield = RectRange(Point(0, 0), Point(size_x, size_y))
-        self.robots = {}
-        self.tickno = count()
-        self.bullets = []
-        self.gameover = False
-
+        self.battlefield = RectRange(Point(0, 0), Point(sizex, sizey))
+        status.set_battlefield_size(self.battlefield)
                 
-        length = math.ceil(math.sqrt(len(players)))
+        length = math.ceil(math.sqrt(len(self.players)))
         surface = length ** 2
         
         ceils = []
         for ceil in range(surface):
-            spawnpoint = Point(random.randrange(int(size_x / length * (ceil % length)) - Robot.size / 2, 
-                                                int(size_x / length * (ceil % length + 1)) - Robot.size / 2),
-                               random.randrange(int(size_y / length * (ceil // length)) - Robot.size / 2, 
-                                                int(size_y / length * (ceil // length + 1)) - Robot.size / 2))
+            spawnpoint = Point(random.randrange(int(sizex / length * (ceil % length)) - Robot.size / 2, 
+                                                int(sizex / length * (ceil % length + 1)) - Robot.size / 2),
+                               random.randrange(int(sizey / length * (ceil // length)) - Robot.size / 2, 
+                                                int(sizey / length * (ceil // length + 1)) - Robot.size / 2))
 
-
-            if spawnpoint not in self.battlefield:
-                logger.warn("Spawnpoint %s in not in the battefield %s !", spawnpoint, self.battefield)
             ceils.append(spawnpoint)
                         
-        for player in players:
+        for player_id in self.players:
             ceil = random.choice(ceils)
             ceils.remove(ceil)
-            self.robots[player] = Robot(ceil)
+            self.players[player_id] = Robot(ceil)
+            status.update_robots(self.players[player_id])
 
-    def get_startup_status(self) -> dict:
-        d = {
-            "size": [self.battlefield.max.x, self.battlefield.max.y],
-            "robots": {},
-            "frequency": 20
-        }
-        for robot_id, robot in self.robots.items():
-            d["robots"][str(robot_id)] = {
-                "position": [robot.position.x, robot.position.y],
-                "direction": robot.direction,
-                "turretAngle": robot.turret_angle,
-                "health": robot.health,
-                "size": robot.size,
-                "isMoving": robot.is_moving,
-                "isShooting": robot.is_shooting,
-                "isAlive": robot.is_alive
-            }
+        return status
 
-        return d
-
-    def run_event(self, robot_id: int, event: str, **kwargs) -> None:
-        getattr(self.robots[robot_id], event)(**kwargs)
-
-    def main(self) -> dict:
-        status = Status(next(self.tickno))
+    def play(self, *args, **kwargs) -> Status:
+        status = Status(next(self.tickgen))
         self.handle_robots(status)
         self.handle_bullets(status)
         self.check_gameover(status)
-        return status.getdict()
+        return status
 
     def handle_robots(self, status: Status) -> None:
         for robot_id, robot in self.robots.items():
@@ -164,12 +158,15 @@ class RobotWar:
 
     def check_gameover(self, status: Status) -> None:
         robots_alive = [robot_id for robot_id, robot in self.robots.items() if robot.is_alive]
-        if len(robots_alive) == 1:
-            status.set_winner(robots_alive[0])
-            self.gameover = True
-        elif len(robots_alive) == 0:
-            status.set_winner(None)
-            self.gameover = True
+        if len(robots_alive) <= 1:
+            status.set_winner(robots_alive)
+            self.is_over = True
+
+    def run_event(self, robot_id: int, event: str, **kwargs) -> None:
+        getattr(self.robots[robot_id], event)(**kwargs)
 
     def kill(self, robot_id):
         self.robots[robot_id].die()
+
+    def __str__(self) -> str:
+        return "<robotwar.RobotWar#{}".format(self.gameid)

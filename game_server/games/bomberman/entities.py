@@ -54,13 +54,13 @@ class Bomb(Entity):
         super().__init__(master.position.copy(), BOMB_SPEED)
         self.master = master
         self.power = master.power
-        self.fuseTime = BOMB_FUSE_TIME
+        self.fuse_time = BOMB_FUSE_TIME
         self.exploded = False
 
     def countdown(self):
         if not self.exploded:
-            if self.fuseTime > 0:
-                self.fuseTime -= 1
+            if self.fuse_time > 0:
+                self.fuse_time -= 1
             else:
                 self.explose()
 

@@ -5,6 +5,7 @@ from os.path import join as pathjoin
 from random import random, choice
 import logging
 
+import game_server.interface
 from game_server.games.bomberman.entities import *
 from game_server.games.bomberman.settings import *
 
@@ -36,16 +37,17 @@ def updatable_queue(iterable):
             new = yield
 
 
-class Status:
+class Status(game_server.interfaces.Status):
     """Garde une trace de ce qu'il s'est passé durant un tour"""
+    entities = {}
+    explosions = {}
+    map = {}
+
     def __init__(self, tickno):
-        self.didsmthhappen = False
         self.tickno = tickno
 
     def add_entity(self, entity, id_=None):
         self.didsmthhappen = True
-        if "entities" not in self.__dict__:
-            self.entities = dict()
 
         self.entities[id(entity) if id_ is None else id_] = {
             "name": str(entity),
@@ -58,8 +60,6 @@ class Status:
 
     def add_explosion(self, bomb):
         self.didsmthhappen = True
-        if "explosions" not in self.__dict__:
-            self.explosions = dict()
 
         self.explosions[id(bomb)] = {
             "name": str(bomb),
@@ -67,36 +67,51 @@ class Status:
             "radius": bomb.power
         }
 
+    def add_map(self, map):
+        self.map = map
+
     def update_map(self, xpos, ypos, ceil):
         self.didsmthhappen = True
-        if "map" not in self.__dict__:
-            self.map = dict()
 
         # In python you can use anything hashable as dictionnary key.
         # In javascript it has to be a string
         # str([]) is an hack to convert a python's list into a JSON list
         self.map[str([xpos, ypos])] = ceil
 
-    def gameover(self, winner=None):
+    def set_winners(self, winners: list):
         self.didsmthhappen = True
-        self.winner = winner
+        self.winners = winners
 
-    def get_dict(self):
-        return self.__dict__
+    def tojson(self) -> str:
+        return json.dumps({key: value for key, value in self.__dict__.items() if key != "didsmthhappen"})
 
 
 class Bomberman:
     """Le jeu"""
 
-    def __init__(self, gameid: int, players: list, mapname: str):
+    bombs = []
+    map = []
+    get_events = lambda _: ["die", "move", "stop", "plant", "fuse"]
+
+
+    def __init__(self, gameid: int, players: list):
+        self.gameid = gameid
+        for player_id in players:
+            self.players[player_id] = object()
+
+    def start(self, mapname: str) -> Status:
         """Initialise avec un nom de map et des joueurs"""
 
         # Ouvre le fichier map et fait correspondre la ligne à l'axe des ordonnées
         # et l'index dans une ligne à l'axe des absises (pour avoir self.map[x][y] comme en math)
+        self.tickno += 1
+        status = Status(self.tickno)
+
         with open(pathjoin("game_server", "games", "bomberman", "maps", mapname), "r") as mapfile:
             self.map = list(zip_list(*[list(line) for line in mapfile.readlines()]))
+            status.add_map(self.map)
 
-        self.players = {}
+        players_id = list(self.players.keys())
         for xpos, row in enumerate(self.map):
             for ypos, ceil in enumerate(row):
                 # Pour chaque case
@@ -104,32 +119,22 @@ class Bomberman:
                 if ceil == MAP_BRICK:
                     if random() < MAP_BRICK_TO_VOID_RATIO:
                         self.map[xpos][ypos] = MAP_VOID
+                        status.update_map(xpos, ypos, MAP_VOID)
                 # Si c'est un nombre, on lui associe un joueur (si il en reste)
                 elif ceil.isdigit():
-                    if int(ceil) < len(players):
-                        self.players[players[int(ceil)]] = Player([xpos, ypos])
-                    self.map[xpos][ypos] = MAP_VOID
+                    if int(ceil) < len(self.players):
+                        player = Player([xpos, ypos])
+                        player_id = players_id[int(ceil)]
+                        self.players[player_id] = player
+                        status.add_entity(player, player_id)
 
-        if len(self.players.keys()) < len(players):
+                    self.map[xpos][ypos] = MAP_VOID
+                    status.update_map(xpos, ypos, MAP_VOID)
+
+        if not isinstance(self.players[players_id[-1]], Player):
             raise ValueError("Impossible to spawn all players")
 
-        self.gid = gameid
-        self.bombs = []
-        self.gameover = False
-        self.tickno = 0
-        self.get_events = lambda: ["die", "move", "stop", "plant", "fuse"]
-
-    def get_startup_status(self):
-        return {
-            "map": self.map,
-            "players": {
-                player: {
-                    "position": list(starmap(add, zip(self.players[player].position, map(lambda x: x / GAME_OFFSET_PER_POSITION, self.players[player].offset)))),
-                    "direction": self.players[player].direction
-                } for player in self.players
-            },
-            "frequency": GAME_TICKS_PER_SECOND
-        }
+        return status
 
     def handle_players(self, status):
         """Fonction de gestion des joueurs."""
@@ -142,10 +147,10 @@ class Bomberman:
                 if self.move_entity(player, status):
                     newpos = list(starmap(add, zip(player.position, map(lambda x: x / GAME_OFFSET_PER_POSITION, player.offset))))
                     if (oldpos == newpos):
-                        logger.warning("Game ID %d: Internal Error, player ID %d didn't move %s at %s but still moving.", self.gid, pid, player.direction, player.position)
+                        logger.warning("Game ID %d tick n°%d: Internal Error, player ID %d didn't move %s at %s but still moving.", self.gameid, self.tickno, pid, player.direction, player.position)
                         player.stop()
                     else:
-                        logger.debug("Game ID %d: Player ID %d moved from %s to %s", self.gid, pid, oldpos, newpos)
+                        logger.debug("Game ID %d tick n°%d: Player ID %d moved from %s to %s", self.gameid, self.tickno, pid, oldpos, newpos)
                         status.add_entity(player, pid)
 
             # Gère l'événement "poser une bombe" et met à jour le statut
@@ -160,7 +165,7 @@ class Bomberman:
                     self.bombs.append(m)
                     self.map[m.position[0]][m.position[1]] = MAP_MINE
                     status.add_entity(m)
-                    logger.info("Game ID %d: Player ID %d planted a %s at %s", self.gid, pid, str(m), m.position)
+                    logger.info("Game ID %d tick n°%d: Player ID %d planted a %s at %s", self.gameid, self.tickno, pid, str(m), m.position)
 
                 # Le joueur pose une bombe
                 else:
@@ -168,7 +173,7 @@ class Bomberman:
                     self.bombs.append(b)
                     self.map[b.position[0]][b.position[1]] = MAP_BOMB
                     status.add_entity(b)
-                    logger.info("Game ID %d: Player ID %d planted a %s at %s", self.gid, pid, str(b), b.position)
+                    logger.info("Game ID %d tick n°%d: Player ID %d planted a %s at %s", self.gameid, self.tickno, pid, str(b), b.position)
 
             # Gère l'événement "actionner une mine"
             if player.fuse_event and player.has_mine:
@@ -176,7 +181,7 @@ class Bomberman:
                 if player.mines:
                     m = player.mines.popleft()
                     m.explose()
-                    logger.info("Game ID %d: Player ID %d fused a %s at %s", self.gid, pid, repr(b), b.position)
+                    logger.info("Game ID %d tick n°%d: Player ID %d fused a %s at %s", self.gameid, self.tickno, pid, repr(b), b.position)
 
     def handle_powerup(self, entity, status):
         """Fonction qui récupère la position d'une entité pour vérifier s'il y a un powerup à la même position
@@ -184,7 +189,7 @@ class Bomberman:
         ceil = self.map[entity.position[0]][entity.position[1]]
         if ceil in map((itemgetter(0)), POWERUPS):
             if isinstance(entity, Player):
-                logger.info("Game ID %d: Player ID %d got powerup %s at %s", self.gid, [pid for pid, player in self.players.items() if player == entity][0], ceil, entity.position)
+                logger.info("Game ID %d tick n°%d: Player ID %d got powerup %s at %s", self.gameid, self.tickno, [pid for pid, player in self.players.items() if player == entity][0], ceil, entity.position)
                 if ceil == MAP_POWERUP_BOMB:
                     entity.bomb += 1
                 elif ceil == MAP_POWERUP_MINE:
@@ -197,7 +202,7 @@ class Bomberman:
                     entity.has_hammer = True
 
             else:
-                logger.info("Game ID %d: powerup %s at %s has been destroy", self.gid, ceil, entity.position)
+                logger.info("Game ID %d tick n°%d: powerup %s at %s has been destroy", self.gameid, self.tickno, ceil, entity.position)
             self.map[entity.position[0]][entity.position[1]] = MAP_VOID
             status.update_map(entity.position[0], entity.position[1], MAP_VOID)
 
@@ -218,7 +223,7 @@ class Bomberman:
                 status.add_explosion(bomb)
                 self.map[bomb.position[0]][bomb.position[1]] = MAP_VOID
                 self.bombs.remove(bomb)
-                logger.info("Game ID %d: Bomb ID %d exploded at %s", self.gid, id(bomb), bomb.position)
+                logger.info("Game ID %d tick n°%d: Bomb ID %d exploded at %s", self.gameid, self.tickno, id(bomb), bomb.position)
 
                 # Calcule la déflagration
                 for vector in VECTORS.values():
@@ -242,7 +247,7 @@ class Bomberman:
                         if p is not None:
                             p.die()
                             status.add_entity(p, pid)
-                            logger.info("Game ID %d: Bomb ID %d blew up Player ID %d at %s", self.gid, id(bomb), pid, p.position)
+                            logger.info("Game ID %d tick n°%d: Bomb ID %d blew up Player ID %d at %s", self.gameid, self.tickno, id(bomb), pid, p.position)
 
                         # Si la déflagration touche un mur, elle s'arrête
                         if self.map[xpos][ypos] == MAP_WALL:
@@ -254,14 +259,14 @@ class Bomberman:
                                 powerup = choice([pwup for pwup, weigth in POWERUPS for i in range(weigth)])
                                 self.map[xpos][ypos] = powerup
                                 status.update_map(xpos, ypos, powerup)
-                                logger.info("Game ID %d: Bomb ID %d blew up a brick to a powerup \"%s\" at [%d, %d]", self.gid, id(bomb), powerup, xpos, ypos)
+                                logger.info("Game ID %d tick n°%d: Bomb ID %d blew up a brick to a powerup \"%s\" at [%d, %d]", self.gameid, self.tickno, id(bomb), powerup, xpos, ypos)
                             break
 
                         # Sinon si c'est un powerup, il est soufflé, le status est mis à jour et la déflagration s'arrête
                         elif self.map[xpos][ypos] in map((itemgetter(0)), POWERUPS):
                             self.map[xpos][ypos] = MAP_VOID
                             status.update_map(xpos, ypos, MAP_VOID)
-                            logger.info("Game ID %d: Bomb ID %d blew up a powerup at [%d, %d]", self.gid, id(bomb), xpos, ypos)
+                            logger.info("Game ID %d tick n°%d: Bomb ID %d blew up a powerup at [%d, %d]", self.gameid, self.tickno, id(bomb), xpos, ypos)
                             break
 
             # Calcule le décplacement et met à jour le statut
@@ -271,14 +276,14 @@ class Bomberman:
                 if self.move_entity(bomb, status):
                     status.add_entity(bomb)
                     newpos = list(starmap(add, zip(bomb.position, map(lambda x: x / GAME_OFFSET_PER_POSITION, bomb.offset))))
-                    logger.debug("Game ID %d: Bomb ID %d moved from %s to %s", self.gid, id(bomb), oldpos, newpos)
+                    logger.debug("Game ID %d tick n°%d: Bomb ID %d moved from %s to %s", self.gameid, self.tickno, id(bomb), oldpos, newpos)
 
                 if isinstance(bomb, Bomb):
                     self.map[bomb.position[0]][bomb.position[1]] = MAP_BOMB
                 elif isinstance(bomb, Mine):
                     self.map[bomb.position[0]][bomb.position[1]] = MAP_MINE
 
-    def main(self):
+    def play(self):
         """Fonction de gestion d'un tick du jeu, promet de compléter un statut qui récapitulera le déroulement de ce tick"""
         if not self.gameover:
             self.tickno += 1
@@ -286,7 +291,7 @@ class Bomberman:
             self.handle_players(status)
             self.handle_bombs(status)
             self.check_gameover(status)
-            return status.get_dict()
+            return status
 
     def iswalkable(self, xpos: int, ypos: int):
         """Fonction qui retourne vrai si un joueur peut marcher sur la case désigné"""

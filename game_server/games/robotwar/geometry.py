@@ -5,12 +5,14 @@ class Point:
         self.x = posx
         self.y = posy
 
+    def distance(self, point: Point) -> float:
+        return sqrt((point.x - self.x) ** 2 + (point.y - self.y) ** 2)
+
     def __str__(self) -> str:
         return "({}, {})".format(self.x, self.y)
 
     def __repr__(self) -> str:
         return "<Point(x={}, y={})>".format(self.x, self.y)
-
 
 class Line:
     def __init__(self, p1: Point, p2: Point):
@@ -44,6 +46,9 @@ class Vector:
         return Point(begin.x + cos(self.direction) * self.length,
                      begin.y + sin(self.direction) * self.length)
 
+    def __repr__(self) -> str:
+        return "<Vector(direction={}, lenght={})>".format(self.direction, self.lenght)
+
 class RectRange:
     def __init__(self, p1: Point, p2: Point, radius=0.0):
         self.min = Point(min(p1.x, p2.x) - radius, min(p1.y, p2.y) - radius)
@@ -58,13 +63,10 @@ class RectRange:
     def __contains__(self, point: Point) -> bool:
         return self.min.x <= point.x <= self.max.x and self.min.y <= point.y <= self.max.y
 
-class Cercle:
+class Circle:
     def __init__(self, center: Point, radius: float):
         self.center = center
         self.radius = radius
-
-    def __repr__(self) -> str:
-        return "<Cercle(Center:{}, Radius:{})>".format(self.center, self.radius)
 
     def inter(self, other: object) -> bool:
         dx = self.center.x + self.radius - other.center.x - other.radius
@@ -73,3 +75,9 @@ class Cercle:
         dist = sqrt(dx ** 2 + dy ** 2)
 
         return dist < self.radius + other.radius
+
+    def __contains__(self, point: Point) -> bool:
+        return self.center.distance(point) <= self.radius
+
+    def __repr__(self) -> str:
+        return "<Cercle(Center:{}, Radius:{})>".format(self.center, self.radius)
