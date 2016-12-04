@@ -3,7 +3,6 @@ from itertools import count
 import logging
 import math
 from time import time
-import json
 from collections import Iterable
 
 import game_server.interfaces
@@ -57,8 +56,8 @@ class Status(game_server.interfaces.Status):
         self.winners = winners
 
 
-    def tojson(self) -> str:
-        return json.dumps({key: value for key, value in self.__dict__.items() if key != "didsmthhappen"})
+    def to_dict(self) -> str:
+        return {key: value for key, value in self.__dict__.items() if key != "didsmthhappen"}
 
     def __str__(self) -> str:
         return "<robotwar.Status#{}>".format(self.tickno) 

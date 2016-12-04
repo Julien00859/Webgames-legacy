@@ -82,8 +82,8 @@ class Status(game_server.interfaces.Status):
         self.didsmthhappen = True
         self.winners = winners
 
-    def tojson(self) -> str:
-        return json.dumps({key: value for key, value in self.__dict__.items() if key != "didsmthhappen"})
+    def to_dict(self) -> dict:
+        return {key: value for key, value in self.__dict__.items() if key != "didsmthhappen"}
 
 
 class Bomberman:

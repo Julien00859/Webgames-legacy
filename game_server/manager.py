@@ -120,7 +120,7 @@ class Manager:
         logger.info("Starting game %s with ID %d and players %s", GAMES[queue]["gamefunc"].__name__, gid, str(players), extra={"gameid": gid})
 
         # Init a new game and retrieve the startup message
-        game = GAMES[queue]["gamefunc"](gid, players, **GAMES[queue]["initfunc"]())
+        game = GAMES[queue]["gamefunc"](gid, players)
         startup_status = json.dumps({"cmd": "startup_status", "startup_status": game.get_startup_status()})
         logger.debug("Game ID %d sent the following command: %s", gid, startup_status, extra={"gameid": gid})
 
@@ -136,20 +136,19 @@ class Manager:
         self.games[gid]["game"] = game
         self.games[gid]["thread"] = Thread(
             target=self.game_handler,
-            args=(gid, ),
+            args=(game, ),
             daemon=True
         )
 
         # Start the game
         self.games[gid]["thread"].start()
 
-    def game_handler(self, gid):
-        """Handle a game, calling the "main" method each tick, retrieve the game status to send it to the players"""
+    def game_handler(self, game):
+        """Handle a game, calling the "play" method each tick, retrieve the game status to send it to the players"""
 
-        game = self.games[gid]["game"]
-        players = self.games[gid]["players"]
+        status = game.start(**GAMES[queue]["startfunc"]())
+        for pid in game.players.keys():
 
-        frequency = game.get_startup_status()["frequency"]
 
         try:
             tick = Event()
@@ -157,16 +156,15 @@ class Manager:
             # Main loop stop when the game is over or when the game manager is closing
             while self.running:
                 # After the given time, the tick event is set and the loop.. loop :p
-                Timer(1 / frequency, tick.set).start()
+                Timer(1 / game.frequency, tick.set).start()
 
                 # Call the main method of the game and retrieve a status
-                status = game.main()
+                status = game.play()
 
                 # If something happened during this tick, send the status to the players
-                if status["didsmthhappen"]:
-                    status_json = json.dumps({"cmd": "status", "status": status})
-                    logger.debug("Game ID %d sent the following command: %s", gid, status_json, extra={"gameid": gid})
-                    self.send_to_game(gid, status_json)
+                if status.didsmthhappen:
+                    logger.debug("Game ID %d sent the following command: %s", gid, status.tojson(), extra={"gameid": gid})
+                    self.send_to_game(gid, status.tojson())
 
                 # If the game is over, exit main loop
                 if game.gameover:

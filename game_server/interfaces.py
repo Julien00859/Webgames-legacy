@@ -1,8 +1,10 @@
 from abc import ABCMeta, abstractmethod
 from itertools import count
+from settings import GAME_FREQUENCY
 
 
 class Game(metaclass=ABCMeta):
+	frequency = GAME_FREQUENCY
 	gameid = 0
 	players = {}
 	tickgen = count()
@@ -43,7 +45,7 @@ class Status(metaclass=ABCMeta):
 		pass
 
 	@abstractmethod
-	def tojson(self) -> str:
+	def to_dict(self) -> dict:
 		pass
 
 	@abstractmethod
