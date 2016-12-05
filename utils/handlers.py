@@ -12,17 +12,7 @@ class SQLAlchemyHandler(Handler):
             record.playerid = None
         if not hasattr(record, "gameid"):
             record.gameid = None
+        if not hasattr(record, "tickno"):
+            record.tickno = None
 
-        self.dbsession.add(models.Log(
-            created=record.created,
-            exc_text=record.exc_text,
-            filename=record.filename,
-            levelname=record.levelname,
-            levelno=record.levelno,
-            lineno=record.lineno,
-            module=record.module,
-            message=record.message,
-            pathname=record.pathname,
-            playerid=record.playerid,
-            gameid=record.gameid
-        ))
+        self.dbsession.add(models.Log(**record))
