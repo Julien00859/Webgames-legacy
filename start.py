@@ -15,7 +15,7 @@ def start():
     processes = [
         Process(target=log_server_start, args=(log_queue,)),
         Process(target=auth_server_start, args=(log_queue,)),
-        Process(target=game_server_start, args=(log_queue,)),
+        Process(target=game_server_start, args=(log_queue,))
     ]
 
     def stop(signnum, _):
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     if osname != "posix":
         raise OSError("This program need to run on Linux")
 
-    if version_info < (3, 5):
-        raise EnvironmentError("This program need at least Python 3.5. You're using Python {}.{}".format(*version_info)
+    if version_info < PYTHON_REQUIRED_VERSION:
+        raise EnvironmentError("This program need at least Python {}.{}. You're using Python {}.{}".format(*PYTHON_REQUIRED_VERSION, *version_info))
 
     start()
