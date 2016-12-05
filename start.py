@@ -1,6 +1,7 @@
 #!venv/bin/python
 
 from os import name as osname
+from sys import version_info
 from settings import *
 from multiprocessing import Process, Queue
 
@@ -37,6 +38,9 @@ def start():
 
 if __name__ == "__main__":
     if osname != "posix":
-        raise OSError()
+        raise OSError("This program need to run on Linux")
+
+    if version_info < (3, 5):
+        raise EnvironmentError("This program need at least Python 3.5. You're using Python {}.{}".format(*version_info)
 
     start()
