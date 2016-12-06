@@ -9,11 +9,11 @@ LOG_CONSOLE_LEVEL = INFO
 
 LOG_FILE = True
 LOG_FILE_LEVEL = INFO
-LOG_FILE_DIR = "log_server/logs/"
+LOG_FILE_DIR = "logs/"
 LOG_FILE_NAME = "latest.log"
 LOG_FILE_STORE = True
 
-LOG_SQL = True
+LOG_SQL = False
 LOG_SQL_LEVEL = DEBUG
 LOG_SQL_SERVER = "sqlite:///data.db"
 
