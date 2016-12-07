@@ -10,7 +10,8 @@ from gzip import open as gzipopen
 from shutil import copyfileobj
 
 from settings import *
-from utils.handlers import SQLAlchemyHandler
+from models import Session
+from utils.handlers import *
 
 
 def get_console_handler() -> logging.Handler:
@@ -28,8 +29,8 @@ def get_file_handler() -> logging.Handler:
 
 
 def get_sql_handler() -> logging.Handler:
-    sql_handler = SQLAlchemyHandler(session)
-    sql_handler.setLevel(LOG_DB_LEVEL)
+    sql_handler = SQLAlchemyHandler(Session())
+    sql_handler.setLevel(LOG_SQL_LEVEL)
     return sql_handler
 
 
@@ -53,7 +54,6 @@ def compress(filein: str, fileout: str) -> None:
 
 def start(log_queue: Queue) -> QueueListener:
     root = logging.getLogger()
-    print(root.handlers) #  QueueHandler grace au fork
 
     logger = logging.getLogger(__name__)
     handlers = []
@@ -86,17 +86,16 @@ def start(log_queue: Queue) -> QueueListener:
     else:
         root.addHandler(logging.NullHandler())
 
-    queue_listener = QueueListener(log_queue, *handlers, respect_handler_level=True)
+    queue_listener = QueueListenerNoThread(log_queue, *handlers, respect_handler_level=True)
 
     def stop(signnum, _) -> None:
         """Stop the process by stopping the QueueListener and the logging module"""
 
         logger.info("Stop QueueListener")
-        queue_listener.enqueue_sentinel()
         queue_listener.stop()
         logging.shutdown()
         exit(0)
     signal(SIGTERM, stop)
 
-    logger.info("Starting QueueListener")
+    logger.info("Start QueueListener")
     queue_listener.start()

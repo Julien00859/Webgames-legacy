@@ -1,6 +1,6 @@
 from logging import DEBUG, INFO, WARNING, ERROR
 
-#Python
+# Python
 PYTHON_REQUIRED_VERSION = (3, 5)
 
 # Logging
@@ -13,9 +13,8 @@ LOG_FILE_DIR = "logs/"
 LOG_FILE_NAME = "latest.log"
 LOG_FILE_STORE = True
 
-LOG_SQL = False
+LOG_SQL = True
 LOG_SQL_LEVEL = DEBUG
-LOG_SQL_SERVER = "sqlite:///data.db"
 
 AUTH_HOST = "localhost"
 AUTH_PORT = 14200
@@ -24,5 +23,9 @@ if AUTH_HTTPS:
     AUTH_CERT_PATH = ""
     AUTH_KEY_PATH = ""
 
-GAME_DIR = "game_server/games/"
+# Game
+GAMES_DIR = "games/"
 GAME_DEFAULT_FREQUENCY = 20
+
+
+DB_URI = "sqlite:///data.db"
