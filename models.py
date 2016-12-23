@@ -10,7 +10,7 @@ from settings import DB_URI
 Base = declarative_base()
 
 class Log(Base):
-	__tablename__ = "log"
+	__tablename__ = "tb_log"
 	id = Column(Integer, primary_key=True)
 	created = Column(Numeric, nullable=False)
 	exc_text = Column(String, nullable=True)
@@ -27,18 +27,18 @@ class Log(Base):
 
 
 class Game(Base):
-	__tablename__ = "game"	
+	__tablename__ = "tb_game"	
 	g_name = Column(String, primary_key=True)
 
 
 class Counter(Base):
-	__tablename__ = "counter"
+	__tablename__ = "tb_counter"
 	c_name = Column(String, primary_key=True)
 	c_value = Column(Integer, nullable=False)
 
 
 class User(Base):
-	__tablename__ = "user"
+	__tablename__ = "tb_user"
 	u_id = Column(Integer, primary_key=True)
 	u_name = Column(String, unique=True)
 	u_email = Column(String(254), unique=True)  # RFC 3696
@@ -49,9 +49,9 @@ class User(Base):
 
 
 class Score(Base):
-	__tablename__ = "score"
-	g_name = Column(String, ForeignKey("game.g_name", onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-	u_id = Column(String, ForeignKey("user.u_id", onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+	__tablename__ = "tb_score"
+	g_name = Column(String, ForeignKey("tb_game.g_name", onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+	u_id = Column(Integer, ForeignKey("tb_user.u_id", onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
 	score = Column(Integer, nullable=False)
 
 	CheckConstraint("score >= 0")
