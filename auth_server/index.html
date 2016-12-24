@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Auth</title>
+	<meta charset="utf-8">
+	<style type=text/css>
+		body {
+			display: flex;
+			flex-direction: column;
+			font-family: Tahoma, Verdana, sans-serif;
+		}
+		fieldset {
+			max-width: 20em;
+			display: flex;
+			flex-direction: column;
+			align-content: space-between;
+		}
+		label {
+			margin: 0.2em;
+		}
+		input {
+			margin-bottom: 0.5em;
+		}
+	</style>
+	<script>
+		function signin(form) {
+			fetch("/signin", {
+				method: "POST",
+				headers:{
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					username: form.username.value,
+					password: form.password.value
+				})
+			}).then(function(res){
+				console.log(res)
+			})
+			return false
+		}
+	</script>
+</head>
+<body>
+	<form method=post action="/signin" onsubmit="return signin(this)">
+		<fieldset>
+			<legend>Sign in / Login</legend>
+			<label for=username>Username or email:</label>
+			<input type=text name=username required=true>
+			<label for=password>Password:</label>
+			<input type=password name=password required=true>
+			<input type=submit>
+		</fieldset>
+	</form>
+	<form method=post action="/signup" enctype="application/json">
+		<fieldset>
+			<legend>Sign up / Register</legend>
+			<label for=username>Username:</label>
+			<input type=text name=username required=true>
+			<label for=email>Email:</label>
+			<input type=text name=email required=true>
+			<label for=password>Password:</label>
+			<input type=password name=password required=true>
+			<input type=submit>
+		</fieldset>
+	</form>
+</body>
+</html>

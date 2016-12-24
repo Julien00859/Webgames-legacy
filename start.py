@@ -25,8 +25,8 @@ def start():
 
     processes = [
         Process(target=log_server_start, args=(log_queue,)),
-        Process(target=auth_server_start, args=(log_queue,))
-        #Process(target=game_server_start, args=(log_queue,))
+        Process(target=auth_server_start)
+        #Process(target=game_server_start)
     ]
 
 
