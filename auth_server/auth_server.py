@@ -68,13 +68,13 @@ class AuthHandler(BaseHTTPRequestHandler):
 			post_data = json.loads(self.rfile.read(length).decode("UTF-8"))
 			if self.path == "/signin":
 				print("!")
-				self.signin(post_data["username"], post_data["password"])
+				self.signin(post_data["login"], post_data["password"])
 		except:
 			logger.exception("Invalid POST request")
 			self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
 
-	def signin(self, username: str, password: str) -> None:
-		user = getSession().query(User).filter((User.u_name == username) | (User.u_email == username)).one_or_none()
+	def signin(self, login: str, password: str) -> None:
+		user = getSession().query(User).filter((User.u_name == login) | (User.u_email == login)).one_or_none()
 		if user is None:
 			self.send_response(404)
 		else:
@@ -88,7 +88,7 @@ class AuthHandler(BaseHTTPRequestHandler):
 			add_token(token.decode())
 			self.wfile.write(token)
 
-
+	def signup(self, username: str, )
 
 
 
@@ -107,6 +107,7 @@ def start():
 		http.shutdown()
 	signal(SIGTERM, stop)
 
+	logger.info("Start auth server on https://%s:%d with %d workers", AUTH_HOST, AUTH_PORT, AUTH_WORKER_COUNT)
 	for worker in range(AUTH_WORKER_COUNT - 1):
 		Thread(target=http.serve_forever).start()
 	http.serve_forever()

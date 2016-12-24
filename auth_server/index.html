@@ -23,6 +23,26 @@
 		}
 	</style>
 	<script>
+		function main() {
+			 for (var i = 0, radios = document.getElementsByName("logintype"); i < radios.length; i++) {
+			 	radios[i].addEventListener("change", function(event){
+			 		if (this.value == "signin")  {
+			 			document.getElementById("legend").textContent = "Sign in / Login";
+			 			document.getElementById("username").textContent = "Username or email:";
+			 			for (var j = 0, emails = document.getElementsByClassName("email"); j < emails.length; j++) {
+			 				emails[j].setAttribute("hidden", true);
+			 			}
+			 		}
+			 		else {
+			 			document.getElementsByTagName("legend")[0].textContent = "Sign up / Register";
+			 			document.getElementById("username").textContent = "Username:"
+			 			for (var j = 0, emails = document.getElementsByClassName("email"); j < emails.length; j++) {
+			 				emails[j].removeAttribute("hidden");
+			 			}
+			 		}
+			 	})
+			 }
+		}
 		function signin(form) {
 			fetch("/signin", {
 				method: "POST",
@@ -30,7 +50,7 @@
 					"Content-Type": "application/json"
 				},
 				body: JSON.stringify({
-					username: form.username.value,
+					login: form.username.value,
 					password: form.password.value
 				})
 			}).then(function(res){
@@ -38,28 +58,40 @@
 			})
 			return false
 		}
+		function signup(form) {
+			fetch("/signup", {
+				method: "POST",
+				headers:{
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					username: form.username.value,
+					email: form.email.value,
+					password: form.password.value
+				})
+			}).then(function(res){
+				console.log(res)
+			})
+			return false	
+		}
 	</script>
 </head>
-<body>
-	<form method=post action="/signin" onsubmit="return signin(this)">
+<body onload="main()">
+	<form id=f name=f action="#">
 		<fieldset>
-			<legend>Sign in / Login</legend>
-			<label for=username>Username or email:</label>
-			<input type=text name=username required=true>
-			<label for=password>Password:</label>
-			<input type=password name=password required=true>
-			<input type=submit>
-		</fieldset>
-	</form>
-	<form method=post action="/signup" enctype="application/json">
-		<fieldset>
-			<legend>Sign up / Register</legend>
-			<label for=username>Username:</label>
-			<input type=text name=username required=true>
-			<label for=email>Email:</label>
-			<input type=text name=email required=true>
-			<label for=password>Password:</label>
-			<input type=password name=password required=true>
+			<legend id="legend">Sign in / Login</legend>
+			<p>
+				<input type=radio id=signin name=logintype value=signin checked>
+				<label for=signin>Sign in / Login</label><br>
+				<input type=radio id=signup name=logintype value=signup>
+				<label for=signup>Sign up / Register</label>
+			</p>
+			<label class=username for=username id=username>Username or email:</label>
+			<input class=username type=text name=username required=true>
+			<label class=email for=email hidden>Email:</label>
+			<input class=email type=text name=email required=true hidden>
+			<label class=password for=password>Password:</label>
+			<input class=password type=password name=password required=true>
 			<input type=submit>
 		</fieldset>
 	</form>
