@@ -23,27 +23,43 @@
 		}
 	</style>
 	<script>
-		function main() {
-			 for (var i = 0, radios = document.getElementsByName("logintype"); i < radios.length; i++) {
+		function init() {
+			useFormAsSignIn();
+			for (var i = 0, radios = document.getElementsByName("logintype"); i < radios.length; i++) {
 			 	radios[i].addEventListener("change", function(event){
-			 		if (this.value == "signin")  {
-			 			document.getElementById("legend").textContent = "Sign in / Login";
-			 			document.getElementById("username").textContent = "Username or email:";
-			 			for (var j = 0, emails = document.getElementsByClassName("email"); j < emails.length; j++) {
-			 				emails[j].setAttribute("hidden", true);
-			 			}
-			 		}
-			 		else {
-			 			document.getElementsByTagName("legend")[0].textContent = "Sign up / Register";
-			 			document.getElementById("username").textContent = "Username:"
-			 			for (var j = 0, emails = document.getElementsByClassName("email"); j < emails.length; j++) {
-			 				emails[j].removeAttribute("hidden");
-			 			}
-			 		}
-			 	})
-			 }
+			 		if (this.value == "signin") useFormAsSignIn();
+			 		else useFormAsSignUp();
+			 	});
+			 	if (i == 0) radios[i].checked = true;
+			 	else radios[i].checked = false;
+			}
 		}
-		function signin(form) {
+
+		function useFormAsSignIn() {
+ 			document.getElementById("legend").textContent = "Sign in / Login";
+ 			document.getElementById("username").textContent = "Username or email:";
+ 			for (var j = 0, emails = document.getElementsByClassName("email"); j < emails.length; j++) {
+ 				emails[j].setAttribute("hidden", true);
+ 				if (j == 1) emails[j].removeAttribute("required");
+ 			}
+ 			//form.removeEventListener("submit");
+ 			form.addEventListener("submit", signin);
+		}
+
+		function useFormAsSignUp() {
+			document.getElementsByTagName("legend")[0].textContent = "Sign up / Register";
+ 			document.getElementById("username").textContent = "Username:"
+ 			for (var j = 0, emails = document.getElementsByClassName("email"); j < emails.length; j++) {
+ 				emails[j].removeAttribute("hidden");
+ 				if (j == 1) emails[j].setAttribute("required", true);
+ 			}
+ 			//form.removeEventListener("submit");
+ 			form.addEventListener("submit", signup)
+ 		
+		}
+
+		function signin(event) {
+			event.preventDefault();
 			fetch("/signin", {
 				method: "POST",
 				headers:{
@@ -55,10 +71,10 @@
 				})
 			}).then(function(res){
 				console.log(res)
-			})
-			return false
+			});
 		}
-		function signup(form) {
+		function signup(event) {
+			event.preventDefault();
 			fetch("/signup", {
 				method: "POST",
 				headers:{
@@ -71,13 +87,12 @@
 				})
 			}).then(function(res){
 				console.log(res)
-			})
-			return false	
+			});
 		}
 	</script>
 </head>
-<body onload="main()">
-	<form id=f name=f action="#">
+<body onload="init()">
+	<form id=form name=form action="#">
 		<fieldset>
 			<legend id="legend">Sign in / Login</legend>
 			<p>
@@ -89,7 +104,7 @@
 			<label class=username for=username id=username>Username or email:</label>
 			<input class=username type=text name=username required=true>
 			<label class=email for=email hidden>Email:</label>
-			<input class=email type=text name=email required=true hidden>
+			<input class=email type=text name=email hidden>
 			<label class=password for=password>Password:</label>
 			<input class=password type=password name=password required=true>
 			<input type=submit>

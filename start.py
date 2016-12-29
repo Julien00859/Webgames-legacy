@@ -1,19 +1,17 @@
 #!venv/bin/python
 
-from os import name as osname, getpid
-from sys import version_info
-from settings import *
-from multiprocessing import Process, Queue
 from logging import getLogger, NOTSET
 from logging.handlers import QueueHandler
+from multiprocessing import Process, Queue
+from os import name as osname, getpid
 from signal import signal, sigwait, SIGTERM
-
+from sys import version_info
 import argparse
 
-
-from log_server.log_server import start as log_server_start
 from auth_server.auth_server import start as auth_server_start
 #from game_server.game_server import start as game_server_start
+from log_server.log_server import start as log_server_start
+from settings import *
 
 def start():
     log_queue = Queue()
@@ -54,7 +52,7 @@ def createdb():
     session = Session()
     Base.metadata.create_all(engine)
 
-    admin = User(u_name=input("Admin name: "), u_email=input("Admin email: "), u_password=sha256(getpass("Admin password: ").encode()).hexdigest())
+    admin = User(u_name=input("Admin name: "), u_email=input("Admin email: "), u_password=sha256(AUTH_PASSWORD_SALT + getpass("Admin password: ").encode()).hexdigest())
 
     games = []
     for name in get_games().keys():
@@ -69,8 +67,8 @@ if __name__ == "__main__":
     if osname != "posix":
         raise OSError("This program need to run on Linux")
 
-    if version_info < PYTHON_REQUIRED_VERSION:
-        raise EnvironmentError("This program need at least Python {}.{}. You're using Python {}.{}".format(*PYTHON_REQUIRED_VERSION, *version_info))
+    if version_info < REQUIRED_VERSION:
+        raise EnvironmentError("This program need at least Python {}.{}. You're using Python {}.{}".format(*REQUIRED_VERSION, *version_info))
 
     parser = argparse.ArgumentParser(description="Start all WebGames server at once !")
     parser.add_argument("--createdb", action="store_true", help="Create the databases, insert default values and exit", dest="createdb")
