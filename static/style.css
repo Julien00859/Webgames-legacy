@@ -1,0 +1,87 @@
+body {
+  margin: 0;
+  font-family: 'Slabo 27px'
+}
+#header {
+  display: flex;
+  align-items: center;
+  height: 4em;
+  background-color: midnightblue;
+  color: white;
+  overflow: hidden;
+}
+#header, #header figure, #header h1, #header nav {
+  margin: 0;
+}
+
+#header figure {
+  padding: 1em;
+}
+#header figure img {
+  width: 50px;
+  height: 50px;
+}
+
+#header nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 2;
+  padding: 0 1rem 0 0;
+}
+
+#header nav a {
+  font-family: Roboto;
+  padding: 0 0.5rem;
+  color: white;
+  text-decoration: none
+}
+#header nav ul li:hover {
+  color: inherit;
+}
+
+main {
+  border-bottom: 1px solid black;
+  display: flex;
+  flex-direction: column;
+}
+
+main article figure {
+  float: left;
+}
+main article figure img {
+  width: 100px;
+  height: 100px;
+}
+
+.arrow {
+  display: inline-block;
+  height: 12px;
+  width: 15px;
+  background-color: black;
+  position: relative;
+}
+.arrow:after {
+  width: 0;
+  height: 0;
+  content: "";
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 6px solid black;
+  position: absolute;
+  left: 100%;
+}
+.arrow:hover {
+  width: 25px;
+}
+
+main article h2 a {
+  color: black;
+  text-decoration: none;
+}
+
+footer {
+  text-align: center;
+  font-size: small;
+  font-family: 'Roboto'
+}

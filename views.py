@@ -1,4 +1,6 @@
 from aiohttp import web
+from aiohttp_jinja2 import template
 
+@template("index.html")
 async def index(req):
-    return web.Response(text="Hello world !")
+    return {"title":"Home"}
