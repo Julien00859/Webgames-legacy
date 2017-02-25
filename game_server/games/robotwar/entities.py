@@ -1,5 +1,5 @@
 from game_server.games.robotwar.settings import *
-from game_server.games.robotwar.geometry import *
+from utils.geometry import *
 from exceptions import GameException
 
 from math import pi as PI, sin, cos, sqrt
@@ -56,9 +56,9 @@ class Entity:
         return sqrt((origin.x - self.position.x) ** 2 + (origin.y - self.position.y) ** 2)
 
     def check_move(self, entities: list) -> object:
-        origin = Cercle(self.position, self.size / 2)
+        origin = Circle(self.position, self.size / 2)
         movement = Vector(self.direction, self.speed)
-        destination = Cercle(movement(origin.center), origin.radius)
+        destination = Circle(movement(origin.center), origin.radius)
 
         rectangle = RectRange(origin.center, destination.center, origin.radius)
 
@@ -69,7 +69,7 @@ class Entity:
         line_right = Line(vector_right(origin.center), vector_right(destination.center))
 
         for entity in entities:
-            other = Cercle(entity.position, entity.size / 2)
+            other = Circle(entity.position, entity.size / 2)
 
             vector_right.length = other.radius
             vector_left.length = other.radius
@@ -93,6 +93,9 @@ class Entity:
     def die(self, **kwargs) -> None:
         self.is_alive = False
         self.is_moving = False
+
+    def __str__(self) -> str:
+        return "<Entity>"
 
 
 class Robot(Entity):
@@ -160,6 +163,9 @@ class Robot(Entity):
         super().die()
         self.is_shooting = False
 
+    def __str__(self) -> str:
+        return "<Robot>"
+
 
 class Bullet(Entity):
     size = 2
@@ -208,4 +214,7 @@ class Bullet(Entity):
             logger.warn("Dead bullet tried to move")
 
         return None
+
+    def __str__(self) -> str:
+        return "<Bullet>"
 
