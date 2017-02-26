@@ -1,9 +1,15 @@
 import asyncpg
 from collections import namedtuple
+from hashlib import sha256
 
 User = namedtuple("User", ["name", "mail", "password"])
 Game = namedtuple("Game", ["name"])
 Score = namedtuple("Score", ["user_id", "game_id", "play_count", "play_time", "win_count"])
+
+salt = None
+def hashpwd(password: str):
+    return sha256(salt + password.encode()).hexdigest()
+
 
 conn = None
 async def connect(host: str, port: int, user: str, database: str, password: str, loop):

@@ -1,44 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-  {% block head %}
-    <title>Webgames - {{title}}</title>
+    <title>Webgames</title>
     <meta charset=utf-8>
     <link href="https://fonts.googleapis.com/css?family=Roboto|Slabo+27px" rel="stylesheet">
     <link rel=stylesheet type=text/css href="/static/style.css">
-  {% endblock %}
+    {% if user %}
+    <!-- Include game libs -->
+    {% endif %}
 </head>
 <body>
-  {% block body %}
     <header id="header">
-      {% block header %}
         <figure>
-          <a id="logo" href="/"><img src="/static/logo.png"></a>
+            <a id="logo" href="/"><img src="/static/logo.png"></a>
         </figure>
         <h1>WebGames</h1>
         <nav>
-          {% block nav %}
             {% if user %}
-              <a href="/users/{{ user }}">Profile</a>
-              <a href="/logout">Logout</a>
+            <a href="/users/{{ user }}">Profile</a>
+            <a href="/logout">Logout</a>
             {% else %}
-              <a href="/signin">Sign in</a>
-              <a href="/signup">Sign up</a>
+            <a href="/signin">Sign in</a>
+            <a href="/signup">Sign up</a>
             {% endif %}
-          {% endblock %}
         </nav>
-      {% endblock %}
     </header>
     <main>
-      {% block main %}
-      {% endblock %}
+        {% for game in games %}
+        <article>
+            <figure>
+                <img src="/games/{{ game.name }}/logo.png">
+            </figure>
+            <header>
+                <h2>{{ game.name }}</h2>
+                <input type=button class="playButton" onclick="play({{ game.name }});" {% if not user %}disabled{% endif %}>
+            </header>
+            <p>Playing right now: <output>{{ game.playing }}</output>. In queue: <output>{{ game.inqueue }}</output></p>
+        </article>
+        {% endfor %}
     </main>
     <footer>
-      {% block footer %}
         <p>Développé par <a href="https://wwww.github.com/Julien00859">Julien Castiaux</a> avec l'aide des 2TI et du Salon des Devs</p>
         <p>Code source disponible sur <a href="https://wwww.github.com/Julien00859/WebGames">GitHub</a></p>
-      {% endblock %}
     </footer>
-  {% endblock %}
 </body>
 </html>

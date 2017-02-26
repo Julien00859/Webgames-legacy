@@ -12,3 +12,5 @@ PGDATABASE = environ.get("PGDATBASE", "webgames")
 PGPASSWORD = environ.get("PGPASSWORD", None)
 
 LOGLEVEL = environ.get("WGLOGLEVEL", "DEBUG")
+TOKENLENGTH = environ.get("WGTOKENLENGTH", 16)
+PWDSALT = environ.get("WGPWDSALT", "super_secret_key").encode()

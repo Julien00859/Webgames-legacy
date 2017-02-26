@@ -8,10 +8,15 @@ import logging
 from os import getcwd
 from os.path import join as pathjoin
 
+import tokens
 from routes import setup_routes
-from database import connect as dbconnect
+import database
 
-def start(addr: str, port: int, ssl: bool, dbhost: str, dbport: int, dbuser: str, dbname: str, dbpwd: str, loglevel: str) -> None:
+def start(addr: str, port: int, ssl: bool, dbhost: str, dbport: int, dbuser: str, dbname: str, dbpwd: str, loglevel: str, tklength: int, pwdsalt: str) -> None:
+    tokens.length = tklength
+    database.salt = pwdsalt
+
+
     logging.basicConfig(format="%(asctime)s [%(levelname)s] <%(name)s> %(message)s", level=getattr(logging, loglevel))
 
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -22,5 +27,5 @@ def start(addr: str, port: int, ssl: bool, dbhost: str, dbport: int, dbuser: str
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader("templates"))
     app.router.add_static("/static/", path=pathjoin(getcwd(), "static"), name="static")
 
-    loop.run_until_complete(dbconnect(dbhost, dbport, dbuser, dbname, dbpwd, loop))
+    loop.run_until_complete(database.connect(dbhost, dbport, dbuser, dbname, dbpwd, loop))
     web.run_app(app, host=addr, port=port)
