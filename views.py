@@ -4,10 +4,13 @@ from aiohttp_jinja2 import template
 from database import conn, User, hashpwd
 from secrets import compare_digest
 import accounts
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 @template("index.html")
 async def index(req):
-    return {"title": "Home"}
+    return {}
 
 async def signup(req):
     if req.content_type != "application/json":
@@ -46,7 +49,7 @@ async def signin(req):
         raise get_error(web.HTTPUnauthorized, "Account locked", "Due to multiple password fail, this account has been locked until {}.".format(unlock.isoformat(sep=" ", timespec="seconds")))
 
     elif not compare_digest(hashpwd(data["password"]), row.password):
-        unlock = accounts.fail(row.user_id, "<insert ip here>")  # TODO: Get this IP
+        unlock = accounts.fail(row.user_id, req.headers["x-forwarded-for"])
         raise get_error(web.HTTPUnauthorized, "Invalid password", "The password sent missmatch the stored password.")
 
     token = accounts.register(row.user_id)
