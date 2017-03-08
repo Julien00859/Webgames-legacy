@@ -19,15 +19,15 @@
     <main>
         <section id=games>
             {% for game in games %}
-            <article>
+            <article id="game_{{ game.game_id }}">
                 <figure>
-                    <img src="/games/{{ game.name }}/logo.png">
+                    <img src="/assets/games/{{ game.name }}/logo.png">
                 </figure>
                 <header>
                     <h2>{{ game.name }}</h2>
                     <input type=button class="playButton" onclick="play({{ game.name }});" disabled>
                 </header>
-                <p>Playing right now: <output>{{ game.playing }}</output>. In queue: <output>{{ game.inqueue }}</output></p>
+                <p>Playing right now: <output></output>. In queue: <output></output></p>
             </article>
             {% endfor %}
         </section>
