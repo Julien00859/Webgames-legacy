@@ -1,8 +1,7 @@
 from os import environ
 
-WGSSL = bool(environ.get("WGSSL", False))
 WGHOST = environ.get("WGHOST", "127.0.0.1")
-WGPORT = int(environ.get("WGPORT", 443 if WGSSL else 80))
+WGPORT = int(environ.get("WGPORT", 80))
 
 # Leave default value empty that ayncpg can manage them
 PGHOST = environ.get("PGHOST", None)
