@@ -29,6 +29,7 @@ if action == "runserver":
     parser.add_argument("--dbname", action="store", default=PGDATABASE, help="database name")
     parser.add_argument("--loglevel", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], default=LOGLEVEL, help="verbosity level")
     parser.add_argument("--tklength", action="store", type=int, default=TOKENLENGTH, help="token length")
+    parser.add_argument("--tkvalidity", action="store", default=TOKENVALIDITY, help="token validity")
     parser.add_argument("--pwdsalt", action="store", type=bytes, default=PWDSALT, help="password salt")
     cli = parser.parse_args(argv[2:])
     start(**cli.__dict__)

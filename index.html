@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webgames</title>
+    <meta charset=utf-8>
+    <link href="https://fonts.googleapis.com/css?family=Roboto|Slabo+27px" rel="stylesheet">
+    <link rel=stylesheet type=text/css href="/assets/style.css">
+</head>
+<body>
+    <header id="header">
+        <figure>
+            <a id="logo" href="/"><img src="/assets/logo.png"></a>
+        </figure>
+        <h1>WebGames</h1>
+        <nav>
+
+        </nav>
+    </header>
+    <main>
+        <section id=games>
+            {% for game in games %}
+            <article>
+                <figure>
+                    <img src="/games/{{ game.name }}/logo.png">
+                </figure>
+                <header>
+                    <h2>{{ game.name }}</h2>
+                    <input type=button class="playButton" onclick="play({{ game.name }});" disabled>
+                </header>
+                <p>Playing right now: <output>{{ game.playing }}</output>. In queue: <output>{{ game.inqueue }}</output></p>
+            </article>
+            {% endfor %}
+        </section>
+        <section id=merde>
+        </section>
+    </main>
+    <footer>
+        <p>Développé par <a href="https://wwww.github.com/Julien00859">Julien Castiaux</a> avec l'aide des 2TI et du Salon des Devs</p>
+        <p>Code source disponible sur <a href="https://wwww.github.com/Julien00859/WebGames">GitHub</a></p>
+    </footer>
+</body>
+</html>

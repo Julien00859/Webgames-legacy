@@ -8,10 +8,10 @@ Jinja2==2.9.5
 MarkupSafe==0.23
 multidict==2.1.4
 packaging==16.8
-pkg-resources==0.0.0
 pyparsing==2.1.10
 python-engineio==1.2.2
 python-socketio==1.7.1
+pytimeparse==1.1.6
 six==1.10.0
 uvloop==0.8.0
 yarl==0.9.8
