@@ -21,7 +21,6 @@ if action == "runserver":
     parser = ArgumentParser(description="Start script", prog=" ".join(argv[0:2]))
     parser.add_argument("-a", "--addr", action="store", default=WGHOST, help="host address")
     parser.add_argument("-p", "--port", action="store", type=int, default=WGPORT, help="host port")
-    parser.add_argument("--ssl", action="store_true", default=False, help="use HTTPS and WSS")
     parser.add_argument("--dbhost", action="store", default=PGHOST, help="database host address")
     parser.add_argument("--dbport", action="store", default=PGPORT, help="connection port number")
     parser.add_argument("--dbuser", action="store", default=PGUSER, help="name of the database role used for authentication")
