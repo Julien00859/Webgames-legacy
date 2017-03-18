@@ -1,0 +1,32 @@
+# WebGames settings, environ var prefix: WG
+webgames:
+  host: localhost
+  port: 8080
+
+# Logs settings, environ var prefix: WGLOG
+log:
+  stdout: yes
+  file: no
+  level: INFO
+
+# Tokens settings, environ var prefix: WGTK
+token:
+  length: 16
+  validity: 1d
+
+# Tokens settings, environ var prefix: WGCHLG
+challenge:
+  url: webgames.julien00859.be/challenge
+  length: 24
+  validity: 1d
+
+
+# Database settings, environ var prefix: PG
+# See documentation at https://magicstack.github.io/asyncpg/current/api/index.html#connection
+postgres:
+  host: localhost
+  port: null
+  user: postgres
+  password: sql
+  database: webgames
+  salt: super-secret-salt
