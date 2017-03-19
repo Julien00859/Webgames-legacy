@@ -3,12 +3,13 @@ webgames:
     host: localhost
     port: 8080
     domain: webgames.julien00859.be
-    scheme-ssl: yes
+    schemessl: yes
 
 # SMTP settings, environ var prefix: SMTP
 smtp:
     host: localhost
     port: 25
+    domain: julien00859.be
 
 # Logs settings, environ var prefix: WGLOG
 log:

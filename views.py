@@ -27,16 +27,16 @@ async def signup(req):
 
     chlg = challenges.create_for(user)
 
-    with open("mails" + sep + "challenge") as mailtemplate:
+    with open("mails" + sep + "challenge.txt") as mailtext:
         mail = EmailMessage()
         mail.set_content(mailtext.read().format(domain=req.app.config.domain,
                                                 scheme="https" if req.app.config.schemessl else "http",
                                                 challenge=chlg))
         mail["Subject"] = "WebGames Registration Challenge"
-        mail["From"] = "noreply@" + req.app.config.domain
+        mail["From"] = "noreply@julien00859.be"
         mail["To"] = user.email
 
-        with SMTP(req.app.config.smtphost) as smtp:
+        with SMTP("localhost") as smtp:
             smtp.send_message(mail)
 
     return text("Challenge sent")
