@@ -129,14 +129,15 @@ footer {
     width: 100%;
     background: rgba(0,0,0,0.4);
     opacity: 0;
-    display: none;
-    transition: opacity .2s cubic-bezier(0.39, 0.575, 0.565, 1);
+    transform: scale(0);
+    transition: opacity .2s cubic-bezier(0, 0, 0.3, 1), transform .4s cubic-bezier(0, 0, 0.3, 1);;
     pointer-events: none;
 }
 
 .signin-form-container__visible, .signup-form-container__visible, .new-project-form-container__visible {
     z-index: 2;
     opacity: 1;
+    transform: scale(1);
     display: block;
     pointer-events: auto;
 }

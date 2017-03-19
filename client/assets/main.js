@@ -63,6 +63,12 @@ class WebGames {
             const { token, name} = credentials;
             console.log(name, token); 
         })
+        .then(_ => {
+            requestAnimationFrame(_ => {
+                this._cancelLogin();
+            })
+        })
+        .catch(err => console.warn(err));
 
     }
 
@@ -82,7 +88,13 @@ class WebGames {
             })
         })
         .then(response => response.text())
-        .then(challenge => console.log(challenge));
+        .then(challenge => console.log(challenge))
+        .then(_ => {
+            requestAnimationFrame(_ => {
+                this._cancelRegister();
+            })
+        })
+        .catch(err => console.warn(err));
 
     }
 
