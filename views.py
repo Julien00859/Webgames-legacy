@@ -4,6 +4,8 @@ from sanic.exceptions import *
 from jinja2 import Template
 from os import sep
 from secrets import compare_digest
+from smtplib import SMTP
+from email.message import EmailMessage
 
 import challenges
 import accounts
@@ -17,7 +19,7 @@ async def index(req):
 async def signup(req):
 	if any(map(lambda key: key not in req.json, ["name", "email", "password"])):
 		raise InvalidUsage("Missing argument")
-	
+
 	if not await db.is_user_free(req.json["name"], req.json["email"]):
 		raise InvalidUsage("Username or email already taken")
 
@@ -25,22 +27,31 @@ async def signup(req):
 
 	chlg = challenges.create_for(user)
 
-	# send email
-	print(chlg)
+    with open("mails" + sep + "challenge") as mailtemplate:
+        mail = EmailMessage()
+        mail.set_content(mailtext.read().format(domain=req.app.config.domain,
+                                                scheme="https" if req.app.config.schemessl else "http",
+                                                challenge=chlg))
+        mail["Subject"] = "WebGames Registration Challenge"
+        mail["From"] = "noreply@" + req.app.config.domain
+        mail["To"] = user.email
 
-	return text(chlg)
+        with SMTP(req.app.config.smtphost) as smtp:
+            smtp.send_message(mail)
+
+	return text("Challenge sent")
 
 
 async def signin(req):
 	if any(map(lambda key: key not in req.json, ["login", "password"])):
 		raise InvalidUsage("Missing argument")
 
-	if accounts.is_locked(req.ip):
-		raise InvalidUsage("Account frozen")
-
 	user = db.get_user_by_login(req.json["login"])
 	if user is None:
 		raise NotFound("User not found")
+
+	if accounts.is_locked(user.name, req.ip):
+		raise InvalidUsage("Account frozen")
 
 	if not compare_digest(user.password, db.hashpwd(req.json["password"])):
 		unfreeze = accounts.fail(user.name, req.ip)
@@ -50,7 +61,7 @@ async def signin(req):
 
 	return json({"token": token, "name": user.name})
 
-	
+
 async def refresh(req):
 	if "name" not in req.json or "token" not in req.json:
 		raise InvalidUsage("Missing argument")
@@ -65,7 +76,7 @@ async def refresh(req):
 	if not accounts.is_valid(req.json["name"], req.json["token"]):
 		accounts.fail(user.name, req.ip)
 		raise NotFound("Token not found or expirated")
-	
+
 	return json({"token": token, "name": user.name})
 
 

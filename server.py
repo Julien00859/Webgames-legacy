@@ -10,18 +10,17 @@ import challenges
 import database as db
 import views
 
-def start(addr: str, port: int,
+def start(addr: str, port: int, domain: str, schemessl: bool,
           dbhost: str, dbport: int, dbuser: str, dbname: str, dbpwd: str,
           pwdsalt: str, loglevel: str,
           tklength: int, tkvalidity: str,
-          chlglength: int, chlgvalidity: str, chlgurl: str) -> None:
+          chlglength: int, chlgvalidity: str) -> None:
 
     # Set package constant
     accounts.token_length = tklength
     accounts.token_validity = timedelta(seconds=timeparse(tkvalidity))
     challenges.challenge_length = chlglength
     challenges.challenge_validity = timedelta(seconds=timeparse(chlgvalidity))
-    challenges.challenge_url = chlgurl
     db.salt = pwdsalt
 
     # Init logging
@@ -31,6 +30,8 @@ def start(addr: str, port: int,
 
     # Init web server
     app = Sanic(__name__)
+    app.config.domain = domain
+    app.config.schemessl = schemessl
 
     app.add_task(db.connect(host=dbhost, port=dbport, user=dbuser,
                             database=dbname, password=dbpwd))

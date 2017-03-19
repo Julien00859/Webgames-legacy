@@ -24,6 +24,8 @@ if action == "runserver":
     parser = ArgumentParser(description="Start script", prog=" ".join(argv[0:2]))
     parser.add_argument("-a", "--addr", action="store", default=environ.get("WGHOST", settings["webgames"]["host"]), help="host address")
     parser.add_argument("-p", "--port", action="store", type=int, default=int(environ.get("WGPORT", settings["webgames"]["port"])), help="host port")
+    parser.add_argument("--domain", action="store", default=environ.get("WGDOMAIN", settings["webgames"]["domain"]), help="domain name")
+    parser.add_argument("--schemessl", action="store_true", default=environ.get("WGSCHEMESSL", settings["webgames"]["schemessl"]), help="build URL with HTTPS and WSS")
     parser.add_argument("--dbhost", action="store", default=environ.get("PGHOST", settings["postgres"]["host"]), help="database host address")
     parser.add_argument("--dbport", action="store", default=environ.get("PGPORT", settings["postgres"]["port"]), help="connection port number")
     parser.add_argument("--dbuser", action="store", default=environ.get("PGUSER", settings["postgres"]["user"]), help="role used for authentication")
@@ -35,7 +37,6 @@ if action == "runserver":
     parser.add_argument("--tkvalidity", action="store", default=environ.get("WGTKVALIDITY", settings["token"]["validity"]), help="token time validity")
     parser.add_argument("--chlglength", action="store", type=int, default=int(environ.get("WGCHLGLENGTH", settings["challenge"]["length"])), help="challenge length")
     parser.add_argument("--chlgvalidity", action="store", default=environ.get("WGCHLGVALIDITY", settings["challenge"]["validity"]), help="challenge time validity")
-    parser.add_argument("--chlgurl", action="store", default=environ.get("WGCHLGURL", settings["challenge"]["url"]), help="challenge url")
     cli = parser.parse_args(argv[2:])
     start(**cli.__dict__)
 

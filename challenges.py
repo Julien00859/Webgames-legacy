@@ -23,6 +23,7 @@ challenges: Dict[ChallengeToken, ChallengeFor] = {}
 
 challenge_length: int
 challenge_validity: timedelta
+challenge_url: str
 
 def create_for(user: User) -> ChallengeToken:
 	challenge = token_urlsafe(challenge_length)
