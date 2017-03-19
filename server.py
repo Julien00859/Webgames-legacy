@@ -29,16 +29,11 @@ def start(addr: str, port: int,
         format="%(asctime)s [%(levelname)s] <%(name)s> %(message)s",
         level=getattr(logging, loglevel))
 
-    # Init asyncio
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-    loop = asyncio.get_event_loop()
-
-    # Init database
-    loop.run_until_complete(db.connect(host=dbhost, port=dbport, user=dbuser,
-                                       database=dbname, password=dbpwd, loop=loop))
-
     # Init web server
     app = Sanic(__name__)
+
+    app.add_task(db.connect(host=dbhost, port=dbport, user=dbuser,
+                            database=dbname, password=dbpwd))
 
     app.add_route(views.index, "/", methods=["GET"])
     app.add_route(views.signup, "/signup", methods=["POST"])
@@ -49,4 +44,4 @@ def start(addr: str, port: int,
     app.static("/assets", pathjoin(".", "client", "assets"))
 
     # Start web server
-    app.run(host=addr, port=port, loop=loop)
+    app.run(host=addr, port=port)

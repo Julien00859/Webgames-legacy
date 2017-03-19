@@ -28,10 +28,10 @@ def hashpwd(password: str) -> str:
 
 conn: asyncpg.connection
 async def connect(host: str, port: int, user: str,
-                  database: str, password: str, loop) -> asyncpg.connection:
+                  database: str, password: str) -> asyncpg.connection:
     global conn
     conn = await asyncpg.connect(host=host, port=port, user=user,
-                                 database=database, password=password, loop=loop)
+                                 database=database, password=password)
     return conn
 
 
@@ -69,5 +69,5 @@ async def _get_user(query: str, *args) -> Union[User, None]:
 
 async def add_user(name: str, email: str, hashedpwd: str):
     async with conn.transaction():
-        sql = "INSERT INTO users (name, mail, password) VALUES ($1, $2, $3)"
+        sql = "INSERT INTO tbusers (u_name, u_email, u_password) VALUES ($1, $2, $3)"
         await conn.execute(sql, name, email, hashedpwd)

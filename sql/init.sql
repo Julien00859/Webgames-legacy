@@ -1,4 +1,4 @@
-﻿DROP TABLE IF EXISTS tbscores;
+DROP TABLE IF EXISTS tbscores;
 DROP TABLE IF EXISTS tbusers;
 DROP TABLE IF EXISTS tbgames;
 DROP DOMAIN IF EXISTS signedint;
@@ -12,7 +12,7 @@ CREATE DOMAIN email AS varchar(254) CHECK (VALUE ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-
 CREATE TABLE tbusers (
   u_name nickname PRIMARY KEY,
   u_email email NOT NULL UNIQUE,
-  u_pasword char(64) NOT NULL
+  u_password char(64) NOT NULL
 );
 
 CREATE TABLE tbgames (
