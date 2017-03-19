@@ -82,9 +82,9 @@ def fail(user: UserName, addr: IPAddress) -> datetime:
 def is_locked(user: UserName, addr: IPAddress) -> bool:
     """Check if the user can attemp to connect"""
 
-    return all([user in accounts,
-                addr in accounts[user].tries,
-                datetime.now() < accounts[user].tries[addr].lock_until])
+    return user in accounts and \
+           addr in accounts[user].tries and \
+           datetime.now() < accounts[user].tries[addr].lock_until
 
 
 def is_valid(user: UserName, token: Token) -> bool:
