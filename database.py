@@ -68,7 +68,7 @@ async def _get_user(query: str, *args) -> Union[User, None]:
     if row is None:
         return None
 
-    return User(row.u_name, row.u_email, row.u_password)
+    return User(row["u_name"], row["u_email"], row["u_password"])
 
 
 async def add_user(name: str, email: str, hashedpwd: str):
