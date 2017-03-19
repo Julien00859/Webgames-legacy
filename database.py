@@ -27,9 +27,11 @@ def hashpwd(password: str) -> str:
 
 
 conn: asyncpg.connection
-async def connect(host: str, port: int, user: str, database: str, password: str, loop) -> asyncpg.connection:
+async def connect(host: str, port: int, user: str,
+                  database: str, password: str, loop) -> asyncpg.connection:
     global conn
-    conn = await asyncpg.connect(host=host, port=port, user=user, database=database, password=password, loop=loop)
+    conn = await asyncpg.connect(host=host, port=port, user=user,
+                                 database=database, password=password, loop=loop)
     return conn
 
 

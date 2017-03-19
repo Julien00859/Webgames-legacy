@@ -1,16 +1,22 @@
-from os.path import join as pathjoin
+import asyncio
 from datetime import timedelta
 import logging
-from sanic import Sanic
+from os.path import join as pathjoin
 from pytimeparse import parse as timeparse
-import views
-import accounts
-import database as db
-import challenges
-import asyncio
+from sanic import Sanic
 import uvloop
+import accounts
+import challenges
+import database as db
+import views
 
-def start(addr: str, port: int, dbhost: str, dbport: int, dbuser: str, dbname: str, dbpwd: str, pwdsalt: str, loglevel: str, tklength: int, tkvalidity: str, chlglength: int, chlgvalidity: str, chlgurl: str) -> None:
+def start(addr: str, port: int,
+          dbhost: str, dbport: int, dbuser: str, dbname: str, dbpwd: str,
+          pwdsalt: str, loglevel: str,
+          tklength: int, tkvalidity: str,
+          chlglength: int, chlgvalidity: str, chlgurl: str) -> None:
+
+    # Set package constant
     accounts.token_length = tklength
     accounts.token_validity = timedelta(seconds=timeparse(tkvalidity))
     challenges.challenge_length = chlglength
@@ -18,12 +24,20 @@ def start(addr: str, port: int, dbhost: str, dbport: int, dbuser: str, dbname: s
     challenges.challenge_url = chlgurl
     db.salt = pwdsalt
 
-    logging.basicConfig(format="%(asctime)s [%(levelname)s] <%(name)s> %(message)s", level=getattr(logging, loglevel))
+    # Init logging
+    logging.basicConfig(
+        format="%(asctime)s [%(levelname)s] <%(name)s> %(message)s",
+        level=getattr(logging, loglevel))
 
+    # Init asyncio
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(db.connect(dbhost, dbport, dbuser, dbname, dbpwd, loop))
 
+    # Init database
+    loop.run_until_complete(db.connect(host=dbhost, port=dbport, user=dbuser,
+                                       database=dbname, password=dbpwd, loop=loop))
+
+    # Init web server
     app = Sanic(__name__)
 
     app.add_route(views.index, "/", methods=["GET"])
@@ -34,4 +48,5 @@ def start(addr: str, port: int, dbhost: str, dbport: int, dbuser: str, dbname: s
     app.add_route(views.challenge, "/challenge/<token>", methods=["GET"])
     app.static("/assets", pathjoin(".", "client", "assets"))
 
+    # Start web server
     app.run(host=addr, port=port, loop=loop)
