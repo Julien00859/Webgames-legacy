@@ -9,6 +9,7 @@ pyparsing==2.2.0
 pytimeparse==1.1.6
 PyYAML==3.12
 sanic==0.4.1
+sanic-compress==0.1.1
 six==1.10.0
 ujson==1.35
 uvloop==0.8.0
