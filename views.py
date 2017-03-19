@@ -35,12 +35,12 @@ async def signin(req):
 	if any(map(lambda key: key not in req.json, ["login", "password"])):
 		raise InvalidUsage("Missing argument")
 
-	if accounts.is_locked(req.ip):
-		raise InvalidUsage("Account frozen")
-
 	user = db.get_user_by_login(req.json["login"])
 	if user is None:
 		raise NotFound("User not found")
+
+	if accounts.is_locked(user.name, req.ip):
+		raise InvalidUsage("Account frozen")
 
 	if not compare_digest(user.password, db.hashpwd(req.json["password"])):
 		unfreeze = accounts.fail(user.name, req.ip)
