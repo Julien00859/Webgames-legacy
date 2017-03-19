@@ -85,6 +85,7 @@ main article p.statitics output {
   position: absolute;
   left: 100%;
 }
+
 .arrow:hover {
   width: 25px;
 }
@@ -98,4 +99,99 @@ footer {
   text-align: center;
   font-size: small;
   font-family: 'Roboto'
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.basic-button {
+  background: midnightblue;
+  color: #fff;
+  font-size: 18px;
+  text-align: center;
+  border: none;
+  box-shadow: 0 0 2px rgba(0,0,0,0.2);
+  border-radius: 3px;
+  padding: 5px 10px;
+  margin: 0 5px;
+  min-width: 115px;
+  outline: none;
+}
+
+.signin-form-container, .signup-form-container, .new-project-form-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    opacity: 0;
+    display: none;
+    transition: opacity .2s cubic-bezier(0.39, 0.575, 0.565, 1);
+    pointer-events: none;
+}
+
+.signin-form-container__visible, .signup-form-container__visible, .new-project-form-container__visible {
+    z-index: 2;
+    opacity: 1;
+    display: block;
+    pointer-events: auto;
+}
+
+.signin-form, .signup-form, .new-project-form {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 300px;
+    border-radius: 5px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.4); 
+    background: #fff;
+    padding: 15px;
+}
+
+.new-project-form {
+    padding: 20px;
+    max-height: 130px;
+}
+
+.signin-form {
+    max-height: 250px;
+}
+
+.signup-form {
+    max-height: 300px;
+}
+
+.username, .password, .email, .password-confirmation, .project {
+    display: flex;
+    height: 50px;
+    width: 100%;
+}
+
+.username input, .password input, .email input, .password-confirmation input, .project input {
+    height: 100%;
+    width: 100%;
+    outline: none;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 16px;
+    pointer-events: auto;
+    padding-left: 10px;
+}
+
+.project input {
+    width: 85%;
+}
+
+.username input:focus, .password input:focus, .password-confirmation input:focus {
+    /* */
+}
+
+.fa-user, .fa-key, .fa-envelope {
+    align-self: center;
 }
