@@ -1,0 +1,50 @@
+# WebGames settings, environ var prefix: WG
+webgames:
+    host: localhost
+    port: 8080
+    domain: example.com
+    schemessl: no
+
+# Database settings, environ var prefix: PG
+# See documentation at https://magicstack.github.io/asyncpg/current/api/index.html#connection
+postgres:
+    host: localhost
+    port: null
+    user: postgres
+    password: super-secret-password
+    database: webgames
+    salt: super-secret-salt
+
+# SMTP settings, environ var prefix: SMTP
+smtp:
+    host: localhost
+    port: 0
+    ssl: no
+    user: username
+    password: super-secret-password
+
+# Logs settings, environ var prefix: WGLOG
+# See documentation at https://docs.python.org/3.6/library/logging.html
+log:
+    # environ var prefix: WGLOGSTDOUT
+    stdout:
+        enabled: yes
+        level: INFO
+        format: "[{levelname}] <{name}:{funcName}> {message}"
+    # environ var prefix: WGLOGFILE
+    file:
+        enabled: yes
+        level: DEBUG
+        format: "{asctime} [{levelname}] <{name}:{funcName}> {message}"
+        name: latest.log
+        archive: no
+
+# Tokens settings, environ var prefix: WGTK
+token:
+    length: 16
+    validity: 1d
+
+# Tokens settings, environ var prefix: WGCHLG
+challenge:
+    length: 24
+    validity: 1d
