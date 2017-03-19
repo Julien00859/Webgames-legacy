@@ -36,6 +36,12 @@ body {
   color: white;
   text-decoration: none
 }
+#header nav ul li {
+    padding: 3px 5px;
+    border: 1px solid black;
+    display: inline-block;
+}
+
 #header nav ul li:hover {
   color: inherit;
 }
@@ -52,6 +58,14 @@ main article figure {
 main article figure img {
   width: 100px;
   height: 100px;
+}
+
+main article p.statitics {
+    font-style: italic;
+}
+
+main article p.statitics output {
+    font-style: normal;
 }
 
 .arrow {

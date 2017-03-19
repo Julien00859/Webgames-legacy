@@ -5,6 +5,8 @@
     <meta charset=utf-8>
     <link href="https://fonts.googleapis.com/css?family=Roboto|Slabo+27px" rel="stylesheet">
     <link rel=stylesheet type=text/css href="/assets/style.css">
+    <script type=text/javascript src="http://underscorejs.org/underscore-min.js"></script>
+    <script type=text/javascript src="/assets/main.js"></script>
 </head>
 <body>
     <header id="header">
@@ -13,25 +15,51 @@
         </figure>
         <h1>WebGames</h1>
         <nav>
-
+            <ul>
+                <a href="/signup"><li>Sign up</li></a>
+                <a href="/signin"><li>Sign in</li></a>
+                <a href="/profile" hidden><li>Profile</li></a>
+                <a href="/signout" hidden><li>Sign out</li></a>
+            </ul>
         </nav>
     </header>
     <main>
         <section id=games>
+            <article id="Bomberman">
+                <figure>
+                    <img src="/assets/games/Bomberman.png">
+                </figure>
+                <header>
+                    <h2>Bomberman</h2>
+                    <input type=button value="Play !">
+                </header>
+                <p class=description>Join the arena and fight against others players using your bombs and powerups !</p>
+                <p class=statistics>Playing right now: <output>4</output>. In queue: <output>3</output> / <output>4</output></p>
+            </article>
+            <article id="RobotWar">
+                <figure>
+                    <img src="/assets/games/RobotWar.png">
+                </figure>
+                <header>
+                    <h2>RobotWar</h2>
+                    <input type=button value="Play !">
+                </header>
+                <p>The World War III is declared ! The machine are taking controle of the world ! Join the battlefield to stop their progression !</p>
+                <p>Playing right now: <output>18</output>. In queue: <output>5</output> / <output>6</output></p>
+            </article>
             {% for game in games %}
-            <article id="game_{{ game.game_id }}">
+            <article id="{{ game.name }}">
                 <figure>
                     <img src="/assets/games/{{ game.name }}/logo.png">
                 </figure>
                 <header>
                     <h2>{{ game.name }}</h2>
-                    <input type=button class="playButton" onclick="play({{ game.name }});" disabled>
+                    <input type=button {% if not game.enabled %}disabled{% endif %} value="Play !">
                 </header>
-                <p>Playing right now: <output></output>. In queue: <output></output></p>
+                <p>{{ game.description }}</p>
+                <p>Playing right now: <output>{{ game.playing }}</output>. In queue: <output>{{ game.inqueue }}</output> / <output>{{ game.players_required }}</output></p>
             </article>
             {% endfor %}
-        </section>
-        <section id=merde>
         </section>
     </main>
     <footer>
