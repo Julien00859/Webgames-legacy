@@ -20,6 +20,8 @@ class WebGames {
         this._register = this._register.bind(this);
         this._cancelLogin = this._cancelLogin.bind(this);
         this._cancelRegister = this._cancelRegister.bind(this);
+        this._hideForms = this._hideForms.bind(this);
+        this._blockClick = this._blockClick.bind(this);
 
         this._addEventListeners();
     }
@@ -42,6 +44,15 @@ class WebGames {
     _cancelRegister(evt) {
         evt.preventDefault();
         this._signUpFormContainer.classList.remove('signup-form-container__visible');
+    }
+
+    _hideForms(evt) {
+        this._signInFormContainer.classList.remove('signin-form-container__visible');
+        this._signUpFormContainer.classList.remove('signup-form-container__visible');
+    }
+
+    _blockClick(evt) {
+        evt.stopPropagation();
     }
 
     _login(evt) {
@@ -107,6 +118,11 @@ class WebGames {
 
         this._signIn.addEventListener('submit', this._login);
         this._signUp.addEventListener('submit', this._register);
+
+        document.body.addEventListener('click', this._hideForms);
+
+        this._signInFormContainer.addEventListener('click', this._blockClick);
+        this._signUpFormContainer.addEventListener('click', this._blockClick);
     }
 }
 
