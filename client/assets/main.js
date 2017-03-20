@@ -1,10 +1,10 @@
 class WebGames {
-    
+
     constructor() {
         /* Go to form */
         this._signInButton = document.querySelector('.signin-button');
         this._signUpButton = document.querySelector('.signup-button');
-        
+
         /* Containers of forms */
         this._signInFormContainer = document.querySelector('.signin-form-container');
         this._signUpFormContainer = document.querySelector('.signup-form-container');
@@ -13,7 +13,7 @@ class WebGames {
         this._signIn = document.querySelector('.signin-form');
         this._cancelSignUp = document.querySelector('.cancel-form-signup-button');
         this._cancelSignIn = document.querySelector('.cancel-form-signin-button');
-        
+
         this._showSignInForm = this._showSignInForm.bind(this);
         this._showSignUpForm = this._showSignUpForm.bind(this);
         this._login = this._login.bind(this);
@@ -54,18 +54,18 @@ class WebGames {
                 'Content-type': 'application/json'
             },
             body: JSON.stringify({
-                login: form.pseudo.value, 
+                login: form.pseudo.value,
                 password: form.password.value
             })
         })
         .then(response => response.json())
         .then(credentials => {
             const { token, name} = credentials;
-            console.log(name, token); 
+            console.log(name, token);
         })
         .then(_ => {
             requestAnimationFrame(_ => {
-                this._cancelLogin();
+                this._signInFormContainer.classList.remove('signin-form-container__visible');
             })
         })
         .catch(err => console.warn(err));
@@ -82,7 +82,7 @@ class WebGames {
                 'Content-type': 'application/json'
             },
             body: JSON.stringify({
-                name: form.pseudo.value, 
+                name: form.pseudo.value,
                 email: form.email.value,
                 password: form.password.value
             })
@@ -91,7 +91,7 @@ class WebGames {
         .then(challenge => console.log(challenge))
         .then(_ => {
             requestAnimationFrame(_ => {
-                this._cancelRegister();
+                this._signUpFormContainer.classList.remove('signup-form-container__visible');
             })
         })
         .catch(err => console.warn(err));
@@ -101,8 +101,6 @@ class WebGames {
     _addEventListeners() {
         this._signInButton.addEventListener('click', this._showSignInForm);
         this._signUpButton.addEventListener('click', this._showSignUpForm);
-
-        console.log(this._cancelSignUp);
 
         this._cancelSignIn.addEventListener('click', this._cancelLogin);
         this._cancelSignUp.addEventListener('click', this._cancelRegister);
