@@ -1,4 +1,4 @@
-# WebGames settings, environ var prefix: WG
+# WebGames settings, environ var prefix: WG_
 webgames:
     host: localhost
     port: 8080
@@ -15,7 +15,7 @@ postgres:
     database: webgames
     salt: super-secret-salt
 
-# SMTP settings, environ var prefix: SMTP
+# SMTP settings, environ var prefix: SMTP_
 smtp:
     host: localhost
     port: 0
@@ -23,15 +23,15 @@ smtp:
     user: username
     password: super-secret-password
 
-# Logs settings, environ var prefix: WGLOG
+# Logs settings, environ var prefix: WG_LOG_
 # See documentation at https://docs.python.org/3.6/library/logging.html
 log:
-    # environ var prefix: WGLOGSTDOUT
+    # environ var prefix: WG_LOG_STDOUT
     stdout:
         enabled: yes
         level: INFO
         format: "[{levelname}] <{name}:{funcName}> {message}"
-    # environ var prefix: WGLOGFILE
+    # environ var prefix: WG_LOG_FILE
     file:
         enabled: yes
         level: DEBUG
@@ -39,12 +39,12 @@ log:
         name: latest.log
         archive: no
 
-# Tokens settings, environ var prefix: WGTK
+# Tokens settings, environ var prefix: WG_TK
 token:
     length: 16
     validity: 1d
 
-# Tokens settings, environ var prefix: WGCHLG
+# Tokens settings, environ var prefix: WG_CHLG
 challenge:
     length: 24
     validity: 1d
