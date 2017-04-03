@@ -3,3 +3,5 @@
 *.gz
 logs/
 venv/
+docker-compose.yml
+.vscode
