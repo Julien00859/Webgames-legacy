@@ -8,6 +8,7 @@ from shutil import copyfileobj
 from pytimeparse import parse as timeparse
 from sanic import Sanic
 from sanic_compress import Compress
+import socketio
 import uvloop
 import accounts
 import challenges
@@ -17,7 +18,8 @@ from routes import router
 def start(addr: str, port: int, domain: str, schemessl: bool, pwdsalt: str,
           dbhost: str, dbport: int, dbuser: str, dbname: str, dbpwd: str,
           smtphost: str, smtpport: int, smtpuser: str, smtppwd: str, smtpssl: bool,
-          redishost: str, redisport: int, redispwd: str, redisdb: int, redispoolsize: int,
+          redishost: str, redisport: int, redispwd: str, redisdb: int,
+          redisdbsio: int, redispoolsize: int,
           logstdout: bool, logstdoutlevel: str, logstdoutformat: str,
           logfile: bool, logfilelevel: str, logfileformat: str,
           logfilename: str, logfilearchive: bool,
@@ -57,9 +59,11 @@ def start(addr: str, port: int, domain: str, schemessl: bool, pwdsalt: str,
         logging.root.addHandler(logging.NullHandler())
 
 
-
     # Init web server
     app = Sanic(__name__)
+    rmg = socketio.AsyncRedisManager(f"redis://{redishost}:{redisport}/{redisdbsio}")
+    sio = socketio.AsyncServer(async_mode="sanic", client_manager)
+    sio.attach(app)
 
     Compress(app)
 
@@ -72,7 +76,7 @@ def start(addr: str, port: int, domain: str, schemessl: bool, pwdsalt: str,
     app.config.smtpssl = smtpssl
 
     # Init http and ws routes
-    router(app)
+    router(app, sio)
 
     # Connect to database and cache
     app.add_task(db.connect_to_db(host=dbhost, port=dbport, user=dbuser,
