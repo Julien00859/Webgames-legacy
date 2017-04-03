@@ -1,7 +1,7 @@
 # WebGames settings, environ var prefix: WG_
 webgames:
     host: localhost
-    port: 8080
+    port: 50898
     domain: example.com
     schemessl: no
 
@@ -22,6 +22,16 @@ smtp:
     ssl: no
     user: username
     password: super-secret-password
+
+# redis settings, environ var prefix: REDIS_
+# See documentation at index.html#asyncio_redis.Pool.create
+redis:
+    host: localhost
+    port: 6379
+    password: null
+    db: 0
+    poolsize: 10
+
 
 # Logs settings, environ var prefix: WG_LOG_
 # See documentation at https://docs.python.org/3.6/library/logging.html

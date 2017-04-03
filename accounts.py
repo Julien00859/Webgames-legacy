@@ -1,107 +1,70 @@
-# TODO: redis
-
+import database as db
 import secrets
 from datetime import datetime, timedelta
-from typing import Dict, NamedTuple, NewType
+from typing import NewType
 
-# data structure:
-# accounts: {
-#     UserName: {
-#         tokens: {
-#             Token: datetime,
-#             ...
-#         },
-#         tries: {
-#             Address: {
-#                 count: int,
-#                 lock_until: datetime
-#             },
-#             ...
-#         }
-#     },
-#     ...
-# }
-
-Token = NewType("Token", str)
-IPAddress = NewType("IPAddress", str)
-UserName = NewType("UserName", str)
-
-class Try(NamedTuple):
-    count: int
-    lock_until: datetime
-
-class Account(NamedTuple):
-    tokens: Dict[Token, datetime]
-    tries: Dict[IPAddress, Try]
-
-accounts: Dict[UserName, Account] = {}
 
 token_length: int
-token_validity: timedelta
+token_validity: int
+IPAddress = NewType("IPAddress", str)
+Token = NewType("Token", str)
 
 
-def register(user: UserName) -> Token:
-    """Register a user and give him a newly generated token"""
+async def register(user_id: int) -> Token:
+    """Generate a new token for a user"""
 
     token = secrets.token_urlsafe(token_length)
-    expiration = datetime.now() + token_validity
 
-    if user not in accounts:
-        accounts[user] = Account(tokens={}, tries={})
-
-    accounts[user].tokens[token] = expiration
+    with await db.cachepool as cache:
+        await cache.set(f"users:{user_id}:tokens:{token}", 1)
+        await cache.expire(f"users:{user_id}:tokens:{token}", token_validity)
 
     return token
 
 
-def fail(user: UserName, addr: IPAddress) -> datetime:
-    """Increment the fail-count for the given address
-       and calculate when the user can retry to connect"""
+async def freeze(user_id: int, addr: IPAddress) -> datetime:
+    """Freeze an account for a while"""
 
-    now = datetime.now()
+    with await db.cachepool as cache:
+        count = await cache.incr(f"users:{user_id}:fails:{addr}:count")
 
-    if user not in accounts:
-        accounts[user] = Account(tokens={}, tries={})
+        if count < 5:
+            unlock = datetime.utcnow()
+        elif count < 20:
+            unlock = datetime.utcnow() + timedelta(seconds=(2**count))
+        else:
+            unlock = datetime.utcnow() + timedelta(days=1)
 
-    if addr not in account[user].tries:
-        account[user].tries[addr] = Try(count=1, lock_until=now)
-        return datetime.now()
-
-    account[user].tries[addr].count += 1
-    if account[user].tries[addr].count < 5:
-        account[user].tries[addr].lock_until = now
-    elif account[user].tries[addr].count > 20:
-        account[user].tries[addr].lock_until = now + timedelta(days=1)
-    else:
-        time = 2 ** account[user].tries[addr].count
-        account[user].tries[addr].lock_until = now + timedelta(seconds=time)
-
-    return account[user].tries[addr].lock_until
+        await cache.set(f"users:{user_id}:fails:{addr}:unlock",
+                       int(unlock.timestamp()))
 
 
-def is_locked(user: UserName, addr: IPAddress) -> bool:
-    """Check if the user can attemp to connect"""
+async def unfreeze(user_id: int, addr: IPAddress) -> None:
+    """Unfreeze an account"""
 
-    return user in accounts and \
-           addr in accounts[user].tries and \
-           datetime.now() < accounts[user].tries[addr].lock_until
-
-
-def is_valid(user: UserName, token: Token) -> bool:
-    """Check if the token is valid and still usable"""
-
-    if user not in accounts or token not in accounts[user].tokens:
-        return False
-
-    if accounts[user].tokens[token] < datetime.now():
-        remove(user, token)
-        return False
-
-    accounts[user].tokens[token] = datetime.now() + token_validity
-    return True
+    with await db.cachepool as cache:
+        await cache.delete(f"users:{user_id}:fails:{addr}:count")
 
 
-def remove(user: UserName, token: Token):
-    del accounts[user].tokens[token]
-    if not accounts[user].tokens:
-        del accounts[user]
+async def is_frozen(user_id: int, addr: IPAddress) -> bool:
+    """Check if this IP can access its account"""
+
+    with await db.cachepool as cache:
+        unlock = await cache.get(f"users:{user_id}:fails:{addr}:unlock")
+
+    return unlock is not None and \
+           datetime.fromtimestamp(unlock) > datetime.utcnow()
+
+
+async def is_token_valid(user_id: int, token: Token) -> bool:
+    """Check if the token is valid"""
+    
+    with await db.cachepool as cache:
+        return await cache.exists(f"users:{user_id}:tokens:{token}")
+
+
+async def invalidate_token(user_id: int, token: Token) -> None:
+    """Make a token invalid"""
+
+    with await db.cachepool as cache:
+        await cache.delete(f"users:{user_id}:tokens:{token}")

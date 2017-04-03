@@ -10,7 +10,7 @@ from os import environ
 from yaml import load as yaml_load
 
 from server import start
-from database import connect, create
+import database as db
 
 version = namedtuple("version", ["major", "minor", "micro", "releaselevel"])(3, 0, 0, "alpha")
 
@@ -36,6 +36,11 @@ if action == "runserver":
     parser.add_argument("--smtpuser", action="store", default=environ.get("SMTP_USER", settings["smtp"]["user"]), help="email address used for authentication")
     parser.add_argument("--smtppwd", action="store", default=environ.get("SMTP_PASSWORD", settings["smtp"]["password"]), help="password used for authentication")
     parser.add_argument("--smtpssl", action="store_true", default=bool(environ.get("SMTP_SSL", settings["smtp"]["ssl"])), help="use smtp over ssl")
+    parser.add_argument("--redishost", action="store", default=environ.get("REDIS_HOST", settings["redis"]["host"]), help="redis host address")
+    parser.add_argument("--redisport", action="store", type=int, default=environ.get("REDIS_PORT", settings["redis"]["port"]), help="redis post")
+    parser.add_argument("--redispwd", action="store", default=environ.get("REDIS_PASSWORD", settings["redis"]["password"]), help="password used for authentication")
+    parser.add_argument("--redisdb", action="store", type=int, default=environ.get("REDIS_DATABASE", settings["redis"]["db"]), help="redis database number")
+    parser.add_argument("--redispoolsize", action="store", type=int, default=environ.get("REDIS_POOLSIZE", settings["redis"]["poolsize"]), help="redis concurrent connection pool size")
     parser.add_argument("--pwdsalt", action="store", default=environ.get("PGSALT", settings["postgres"]["salt"]).encode("UTF-8"), help="password salt")
     parser.add_argument("--logstdout", action="store_true", default=bool(environ.get("WG_LOG_STDOUT", settings["log"]["stdout"]["enabled"])), help="log to stdout")
     parser.add_argument("--logstdoutlevel", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], default=environ.get("WG_LOG_STDOUT_LEVEL", settings["log"]["stdout"]["level"]), help="verbosity level for stdout")
@@ -68,10 +73,10 @@ elif action == "initdb":
     async def coro():
         if cli.verbose:
             print("Connect to databse")
-        conn = await connect(cli.dbhost, cli.dbport, cli.dbuser, cli.dbname, cli.dbpwd, loop)
+        conn = await db.connect_to_db(cli.dbhost, cli.dbport, cli.dbuser, cli.dbname, cli.dbpwd)
         if cli.verbose:
             print("Connected, create tables")
-        await create()
+        await db.create()
         if cli.verbose:
             print("Tables created, close connection")
         await conn.close()

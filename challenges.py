@@ -1,65 +1,60 @@
-from typing import NewType, NamedTuple, Dict
-from secrets import token_urlsafe
-from database import User, add_user as db_add_user
+import database as db
 from datetime import datetime, timedelta
-
-
-IPAddress = NewType("IPAddress", str)
-
-ChallengeToken = NewType("ChallengeToken", str)
-
-class Try(NamedTuple):
-    count: int
-    lock_until: datetime
-
-class ChallengeFor(NamedTuple):
-	user: User
-	expiration: datetime
-
-
-tries: Dict[IPAddress, Try] = {}
-challenges: Dict[ChallengeToken, ChallengeFor] = {}
+from typing import NewType
+from secrets import token_urlsafe
 
 
 challenge_length: int
-challenge_validity: timedelta
-challenge_url: str
-
-def create_for(user: User) -> ChallengeToken:
-	challenge = token_urlsafe(challenge_length)
-	expiration = datetime.now() + challenge_validity
-
-	challenges[challenge] = ChallengeFor(user, expiration)
-
-	return challenge
+challenge_validity: int
+Challenge = NewType("Challenge", str)
+IPAddress = NewType("IPAddress", str)
 
 
-async def solve(challenge: ChallengeToken) -> None:
-	chlgfor = challenges.get(challenge)
-	if chlgfor is None:
-		return False
+async def create_for(guest: db.Guest) -> Challenge:
+    """Create a challenge for a db.Guest"""
 
-	if chlgfor.expiration < datetime.now():
-		del challenges[challenge]
-		return False
-
-	await db_add_user(*chlgfor.user)
-	del challenges[challenge]
-	return True
+    chlg = token_urlsafe(challenge_length)
+    with await db.cachepool as cache:
+        await cache.hmset_dict(f"chlgs:{chlg}", guest._asdict())
+        await cache.expire(f"chlgs:{chlg}", challenge_validity)
+    return chlg
 
 
-def fail(addr: IPAddress):
-	if addr not in tries:
-		tries[addr] = Try(count=0, lock_until=datetime.now())
+async def solve(chlg: Challenge) -> bool:
+    """Try to solve a challenge, if it does so: save the db.Guest in the db"""
 
-	else:
-		tries[addr].count += 1
+    with await db.cachepool as cache:
+        guest = await cache.hgetall(f"chlgs:{chlg}")
+        if guest:
+            await db.User.create(**guest)
+            await cache.delete(f"chlgs:{chlg}")
+            return True
+        return False
 
-		time = 30 * 2 ** account[user_id].tries[addr].count
-		tries[addr].lock_until = datetime.now() + timedelta(seconds=time)
 
-	return tries[addr].lock_until
+async def freeze(addr: IPAddress) -> datetime:
+    """Freeze an address for a while"""
+
+    with await db.cachepool as cache:
+        count = await cache.hincr(f"chlgtries:{addr}", "count")
+        unlock = datetime.utcnow() + timedelta(seconds=30 * 2 ** count)
+        await cache.hmset(f"chlgtries:{addr}", "unlock", unlock.total_seconds())
+
+    return unlock
 
 
-def is_locked(addr: IPAddress) -> bool:
-	return addr in tries and datetime.now() < tries[addr].lock_until
+async def unfreeze(addr: IPAddress) -> None:
+    """Unfreeze an address"""
+
+    with await db.cachepool as cache:
+        await cache.delete(f"chlgtries:{addr}")
+
+
+async def is_frozen(addr: IPAddress) -> bool:
+    """Check if the address is frozen"""
+
+    with await db.cachepool as cache:
+        unlock = await cache.get(f"fails:{addr}:unlock")
+
+    return unlock is not None and \
+           datetime.fromtimestamp(unlock) > datetime.utcnow()

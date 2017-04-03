@@ -2,7 +2,8 @@ import asyncio
 from datetime import timedelta, datetime
 import logging
 from gzip import open as gzipopen
-from os.path import join as pathjoin, isfile, getmtime
+from os.path import join as pathjoin, isfile, isdir, getmtime
+from os import mkdir
 from shutil import copyfileobj
 from pytimeparse import parse as timeparse
 from sanic import Sanic
@@ -11,11 +12,12 @@ import uvloop
 import accounts
 import challenges
 import database as db
-import views
+from routes import router
 
 def start(addr: str, port: int, domain: str, schemessl: bool, pwdsalt: str,
           dbhost: str, dbport: int, dbuser: str, dbname: str, dbpwd: str,
           smtphost: str, smtpport: int, smtpuser: str, smtppwd: str, smtpssl: bool,
+          redishost: str, redisport: int, redispwd: str, redisdb: int, redispoolsize: int,
           logstdout: bool, logstdoutlevel: str, logstdoutformat: str,
           logfile: bool, logfilelevel: str, logfileformat: str,
           logfilename: str, logfilearchive: bool,
@@ -23,9 +25,9 @@ def start(addr: str, port: int, domain: str, schemessl: bool, pwdsalt: str,
 
     # Set package constant
     accounts.token_length = tklength
-    accounts.token_validity = timedelta(seconds=timeparse(tkvalidity))
+    accounts.token_validity = timedelta(seconds=timeparse(tkvalidity)).total_seconds()
     challenges.challenge_length = chlglength
-    challenges.challenge_validity = timedelta(seconds=timeparse(chlgvalidity))
+    challenges.challenge_validity = timedelta(seconds=timeparse(chlgvalidity)).total_seconds()
     db.salt = pwdsalt
 
     # Init logs
@@ -37,6 +39,8 @@ def start(addr: str, port: int, domain: str, schemessl: bool, pwdsalt: str,
         logging.root.addHandler(stdout)
 
     if logfile:
+        if not isdir("logs"):
+            mkdir("logs")
         logpath = pathjoin("logs", logfilename)
         if logfilearchive and isfile(logpath):
             archivepath = pathjoin("logs", datetime.fromtimestamp(getmtime(logpath)).strftime("%y-%m-%d_%H-%M-%S") + ".gz")  # RIP PEP8
@@ -67,16 +71,14 @@ def start(addr: str, port: int, domain: str, schemessl: bool, pwdsalt: str,
     app.config.smtppwd = smtppwd
     app.config.smtpssl = smtpssl
 
-    app.add_task(db.connect(host=dbhost, port=dbport, user=dbuser,
-                            database=dbname, password=dbpwd))
+    # Init http and ws routes
+    router(app)
 
-    app.add_route(views.index, "/", methods=["GET"])
-    app.add_route(views.signup, "/signup", methods=["POST"])
-    app.add_route(views.signin, "/signin", methods=["POST"])
-    app.add_route(views.refresh, "/refresh", methods=["POST"])
-    app.add_route(views.signout, "/signout", methods=["POST"])
-    app.add_route(views.challenge, "/challenge/<token>", methods=["GET"])
-    app.static("/assets", pathjoin(".", "client", "assets"))
+    # Connect to database and cache
+    app.add_task(db.connect_to_db(host=dbhost, port=dbport, user=dbuser,
+                                  database=dbname, password=dbpwd))
+    app.add_task(db.connect_to_cache(host=redishost, port=redisport, db=redisdb,
+                                     password=redispwd, poolsize=redispoolsize))
 
     # Start web server
     app.run(host=addr, port=port)

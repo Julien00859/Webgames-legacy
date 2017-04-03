@@ -3,5 +3,3 @@
 *.gz
 logs/
 venv/
-docker-compose.yml
-Dockerfile

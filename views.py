@@ -1,4 +1,3 @@
-import database as db
 from sanic.response import json, html, redirect, text
 from sanic.exceptions import *
 from jinja2 import Template
@@ -10,6 +9,7 @@ from logging import getLogger
 
 import challenges
 import accounts
+from database import User, Guest
 
 logger = getLogger(__name__)
 template = Template(open("client" + sep + "index.html").read())
@@ -23,15 +23,15 @@ async def signup(req):
         logger.debug(f"Request is {req.json} but some arguments are missing.")
         raise InvalidUsage("Missing argument")
 
-    if not await db.is_user_free(req.json["name"], req.json["email"]):
+    if not await User.is_free(req.json["name"], req.json["email"]):
         logger.debug(f"Request is {req.json} but name or email is already taken")
         raise InvalidUsage("Username or email already taken")
 
-    user = db.User(req.json["name"], req.json["email"], db.hashpwd(req.json["password"]))
+    guest = Guest(req.json["name"], req.json["email"], User.hashpwd(req.json["password"]))
 
-    chlg = challenges.create_for(user)
+    chlg = await challenges.create_for(guest)
 
-    logger.info(f"User signed up with name: {user.name} and email: {user.email}. Challenge generated: {chlg}")
+    logger.info(f"Guest signed up with name: {guest.name} and email: {guest.email}. Challenge generated: {chlg}")
     with open("mails" + sep + "challenge.txt") as mailtext:
         mail = EmailMessage()
         mail.set_content(mailtext.read().format(domain=req.app.config.domain,
@@ -39,7 +39,7 @@ async def signup(req):
                                                 challenge=chlg))
         mail["Subject"] = "WebGames Registration Challenge"
         mail["From"] = req.app.config.smtpuser
-        mail["To"] = user.email
+        mail["To"] = guest.email
 
         with SMTP(req.app.config.smtphost, req.app.config.smtpport) as smtp:
             if req.app.config.smtpssl:
@@ -51,7 +51,7 @@ async def signup(req):
             smtp.login(req.app.config.smtpuser, req.app.config.smtppwd)
             smtp.send_message(mail)
 
-    return text("Challenge sent")
+    return text(f"Challenge sent to {guest.email}")
 
 
 async def signin(req):
@@ -59,65 +59,75 @@ async def signin(req):
         logger.debug(f"Request is {req.json} but some arguments are missing.")
         raise InvalidUsage("Missing argument")
 
-    user = await db.get_user_by_login(req.json["login"])
+    user = await User.get_by_login(req.json["login"])
     if user is None:
         logger.debug(f"Request is {req.json} but user coundn't be found.")
         raise NotFound("User not found")
 
-    if accounts.is_locked(user.name, req.ip):
+    if await accounts.is_frozen(user.id, req.ip):
         logger.debug(f"Request is {req.json} but the account is frozen.")
         raise InvalidUsage("Account frozen")
 
-    if not compare_digest(user.password, db.hashpwd(req.json["password"])):
+    if not compare_digest(user.password, User.hashpwd(req.json["password"])):
         logger.debug(f"Request is {req.json} but the password is invalid.")
-        unfreeze = accounts.fail(user.name, req.ip)
+        unfreeze = await accounts.freeze(user.id, req.ip)
         raise InvalidUsage("Invalid password. Account frozen until " + unfreeze.isoformat(sep=" ", timespec="seconds"))
 
-    token = accounts.register(user.name)
+    await accounts.unfreeze(user.id, req.ip)
+    token = await accounts.register(user.id)
     logger.info(f"User {user.name} connected. Token generated: {token}")
-    return json({"token": token, "name": user.name})
+    return json({"token": token, "id": user.id, "name": user.name})
 
 
 async def refresh(req):
-    if "name" not in req.json or "token" not in req.json:
+    if "id" not in req.json or "token" not in req.json:
         logger.debug(f"Request is {req.json} but some arguments are missing.")
         raise InvalidUsage("Missing argument")
 
-    user = db.get_user_by_name(req.json["name"])
+    user = User.get_by_id(req.json["id"])
     if user is None:
         logger.debug(f"Request is {req.json} but user coundn't be found.")
         raise NotFound("User not found")
 
-    if accounts.is_locked(user.name, req.ip):
+    if await accounts.is_frozen(user.id, req.ip):
         logger.debug(f"Request is {req.json} but the account is frozen.")
         raise InvalidUsage("Account frozen")
 
-    if not accounts.is_valid(req.json["name"], req.json["token"]):
+    if not await accounts.is_valid(req.json["id"], req.json["token"]):
         logger.debug(f"Request is {req.json} but the token is invalid or expirated.")
-        accounts.fail(user.name, req.ip)
+        await accounts.freeze(user.id, req.ip)
         raise NotFound("Token not found or expirated")
 
+    await accounts.unfreeze(user.id, req.ip)
     logger.info(f"User {user.name} refreshed it's token: {req.json['token']}")
-    return json({"token": req.json["token"], "name": user.name})
+    return json({"token": req.json["token"], "id": user.id, "name": user.name})
 
 
 async def signout(req):
-    if "name" not in req.json or "token" not in req.json:
+    if "id" not in req.json or "token" not in req.json:
         raise InvalidUsage("Missing arguments")
 
-    if accounts.is_valid(req.json["name"], req.json["token"]):
-        accounts.remove(req.json["name"], req.json["token"])
+    if await accounts.is_valid(req.json["id"], req.json["token"]):
+        await accounts.remove(req.json["id"], req.json["token"])
 
 
 async def challenge(req, token):
-    if challenges.is_locked(req.ip):
+    if await challenges.is_frozen(req.ip):
         logger.debug(f"Challenge is {token} but the account is frozen.")
         raise InvalidUsage("Account frozen")
 
     if not await challenges.solve(token):
         logger.debug(f"Challenge {token} is invalid.")
-        unfreeze = challenges.fail(req.ip)
+        unfreeze = await challenges.freeze(req.ip)
         raise InvalidUsage("Invalid token. Account frozen until " + unfreeze.isoformat(sep=" ", timespec="seconds"))
 
+    await challenges.unfreeze(req.ip)
     logger.info(f"Challenge {token} validated")
     return redirect(req.app.url_for("index"))
+
+
+async def websock(req, ws):
+    while True:
+        data = await ws.recv()
+        print(data)
+        await ws.send(data)

@@ -10,7 +10,8 @@ CREATE DOMAIN nickname AS varchar(24) CHECK (VALUE ~ '^[[:graph:] ]{3,24}$');
 CREATE DOMAIN email AS varchar(254) CHECK (VALUE ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
 
 CREATE TABLE tbusers (
-  u_name nickname PRIMARY KEY,
+  u_id serial PRIMARY KEY,
+  u_name nickname NOT NULL UNIQUE,
   u_email email NOT NULL UNIQUE,
   u_password char(64) NOT NULL
 );
@@ -21,14 +22,14 @@ CREATE TABLE tbgames (
 );
 
 CREATE TABLE tbscores (
-  u_name nickname,
+  u_id serial,
   g_name varchar(24),
   play_count signedint NOT NULL,
   play_time interval SECOND NOT NULL,
   win_count signedint NULL,
 
-  CONSTRAINT pk PRIMARY KEY (u_name, g_name),
-  CONSTRAINT fk_user_name FOREIGN KEY (u_name)
+  CONSTRAINT pk PRIMARY KEY (u_id, g_name),
+  CONSTRAINT fk_user_id FOREIGN KEY (u_id)
     REFERENCES tbusers
     ON UPDATE CASCADE
     ON DELETE CASCADE,
