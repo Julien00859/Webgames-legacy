@@ -7,6 +7,7 @@ u_reset_expiration
 */
 
 const pgp = require('../postgres');
+const {hashPassword, verifyPassword, generateJWT} = require('../model/user-model');
 
 function login() {
   const {name, mail, password} = req.body;
