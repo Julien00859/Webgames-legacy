@@ -5,6 +5,7 @@
   "main": "api/index.js",
   "scripts": {
     "bump": "npm version patch",
+    "test": "node api/test/user-test.js",
     "server": "nodemon api/index.js"
   },
   "repository": "git@github.com:EPHEC-TI/WebGames.git",

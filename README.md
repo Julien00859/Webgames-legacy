@@ -54,7 +54,7 @@ services:
 ```
 
 ```
-cd api && docker-compose up
+cd api && docker-compose up -d
 ```
 
 #### Launch the api server and launch test (why not)

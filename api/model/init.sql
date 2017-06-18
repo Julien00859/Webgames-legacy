@@ -15,7 +15,7 @@ CREATE TABLE tbusers (
   u_email email NOT NULL UNIQUE,
   u_hash char(64) NOT NULL,
   u_reset_password_token char(64) NULL,
-  u_reset_password_expiration datetime NULL
+  u_reset_password_expiration timestamp NULL
 );
 
 CREATE TABLE tbgames (
