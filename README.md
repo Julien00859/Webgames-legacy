@@ -13,8 +13,10 @@ Service de jeux multi-joueur web-friendly
 | `/api/register` | POST | login register | FALSE | 
 | `/api/login` | GET | local login | FALSE | 
 | `/api/logout`| GET | local logout | TRUE |
-| `/api/me`| GET | user profile | TRUE |
-| `/api/:u_id` | GET | specifice user profile | FALSE/TRUE | public informations |
+| `/api/forgot` | POST | give your email and get a url in your email to change your password | FALSE |
+| `api/account/reset/:token` | POST | change your password | TRUE | token is a reset token |
+| `/api/account`| GET | current user profile | TRUE |
+| `/api/account/:u_id` | GET | specifice user profile | FALSE/TRUE | public informations |
 
 ## Installation step
 
