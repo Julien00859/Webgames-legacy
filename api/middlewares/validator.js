@@ -1,40 +1,34 @@
 function validateRegister(req, res, next) {
-  const {username, mail, password} = req.body;
-  const mailRegex = '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
-  const errors = {};
+  req.checkBody('username', "Le nom d'utilisateur est vide").notEmpty();
+  req.checkBody('username', "Le nom d'utilisateur doit être compris entre 3 et 24 caractères").len(3, 24);
+  req.checkBody('mail', "L'e-mail est vide ou n'est pas valide.").notEmpty();
+  req.checkBody('mail', "L'e-mail n'est pas valide (example@example.com).").isEmail();
+  req.checkBody('password', 'Le mot de passe est vide / trop court / trop long.').notEmpty()
+  req.checkBody('password', 'Le mot de passe doit être compris entre 8 et 72 caractères').len(8, 72);
 
-  if (username === '' || username < 3 || username > 24) {
-    errors.username = "Le nom d'utilisateur est soit vide / trop court / trop long.";
+  const errors = req.validationErrors();
+  if (errors) {
+    return res.status(500).json({error: errors.map(err => err.msg)});
   }
 
-  if (mail === '' || !(mailRegex.test(username))) {
-    errors.mail = "L'e-mail est vide ou n'est pas valide.";
-  }
-
-  if (password === '') {
-    errors.password = 'Le mot de passe est vide.';
-  }
-
-  if (Object.keys(errors).length > 0) {
-    return res.status(500).send({errors});
-  }
   next();
 }
 
-function validateLogin() {
-  const {username, password} = req.body;
-  const errors = {};
+function validateLogin(req, res, next) {
+  req.checkBody('username', "Le nom d'utilisateur est vide").notEmpty();
+  req.checkBody('username', "Le nom d'utilisateur doit être compris entre 3 et 24 caractères").len(3, 24);
+  req.checkBody('password', 'Le mot de passe est vide / trop court / trop long.').notEmpty()
+  req.checkBody('password', 'Le mot de passe doit être compris entre 8 et 72 caractères').len(8, 72);
 
-  if (username === '') {
-    errors.username = "Le nom d'utilisateur ne peut être vide.";
+  const errors = req.validationErrors();
+  if (errors) {
+    return res.status(500).json({error: errors.map(err => err.msg)});
   }
 
-  if (password === '') {
-    errors.password = 'Le mot de passe est vide.';
-  }
-
-  if (Object.keys(errors).length > 0) {
-    return res.status(500).send({errors});
-  }
   next();
+}
+
+module.exports = {
+  validateRegister,
+  validateLogin
 }

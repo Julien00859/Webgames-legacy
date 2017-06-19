@@ -45,8 +45,6 @@ version: '2'
 services:
   db:
     image: postgres
-    volumes:
-      - ./model/init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       - POSTGRES_USER=<user>
       - POSTGRES_PASSWORD=<password>

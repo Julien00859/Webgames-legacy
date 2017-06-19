@@ -32,21 +32,24 @@ passport.use(new LocalStrategy({
 ));
 
 function register(req, res) {
-  const {username, mail, password} = req.body;
-  const hash =
-    hashPassword(password)
-      .then(hash => hash)
-      .catch(error => res.status(500).send({error}));
+  const {password} = req.body;
 
-  console.log(hash);
+  hashPassword(password)
+    .then(hash => saveUserInDb(req, res, hash))
+    .catch(error => res.status(500).json({error}));
+}
 
+function saveUserInDb(req, res, hash) {
+  const {username, mail} = req.body;
   // .spread(user, created) = .then([user, created])
   User.findOrCreate({where: {u_name: username}, defaults: {u_email: mail, u_hash: hash}}).spread((user, created) => {
-    if (!created) {
-      return res.status(400).send({error: `le nom d'utilisateur ${user.u_email} est indisponible`});
+    if (!created) { // existe déjà
+      return res.status(400).json({error: `le nom d'utilisateur ${user.u_name} est déjà utilisé.`});
     }
-    res.status(200).send({success: 'Utilisateur créé avec succès !'});
+    res.status(200).json({success: 'Utilisateur créé avec succès !'});
     return res.redirect('/');
+  }).catch(error => {
+    return res.status(500).send({error});
   });
 }
 
@@ -55,20 +58,32 @@ function login(req, res) {
 
   promisify(passport.authenticate, passport)('local').then((user) => {
     if (!user) {
-      return res.status(404).send({error: `utilisateur (${username}) non trouvé`});
+      return res.status(404).json({error: `utilisateur (${username}) non trouvé.`});
     }
     const token = generateJWT(user);
-    return res.send(200).send({token});
+    return res.status(200).json({token});
   }).catch(error => {
-    return res.status(500).send({error});
+    return res.status(500).json({error});
   });
 }
 
-function resetPassword() {
+function getResetToken(req, res) {
 
 }
 
-function logout() {
+function resetPassword(req, res) {
+
+}
+
+function getAccount(req, res) {
+
+}
+
+function getCurrentAccount(req, res) {
+
+}
+
+function logout(req, res) {
 
 }
 
@@ -76,5 +91,8 @@ module.exports = {
   register,
   login,
   resetPassword,
+  getResetToken,
+  getAccount,
+  getCurrentAccount,
   logout
 }
