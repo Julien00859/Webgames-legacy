@@ -17,7 +17,6 @@ const PORT = process.env.PORT || 5000;
 postgres.sync();
 
 router.use(passport.initialize());
-router.use(jwt);
 router.use(bodyParser.json());
 router.use(validator());
 router.use(bodyParser.urlencoded({
@@ -39,7 +38,7 @@ router.use(session({
 router.get('/check', (_, res) => res.send('api server ok.'));
 router.get('/api/logout', jwt, logout);
 router.get('/api/account', jwt, getCurrentAccount);
-router.get('/api/account/:u_id', getAccount);
+router.get('/api/account/:id', getAccount);
 router.post('/api/register', validateRegister, register);
 router.post('/api/login', validateLogin, login);
 router.post('/api/forgot', getResetToken);

@@ -18,6 +18,7 @@ passport.use(new LocalStrategy({
     passReqToCallback: false,
     session: false
   }, (username, password, done) => {
+    console.log('local');
     User.findOne({where: {u_name: username}}).then(user => {
       if (!user) return done(null, false); // no user
       return verifyPassword(password, user.u_hash)
@@ -54,17 +55,23 @@ function saveUserInDb(req, res, hash) {
 }
 
 function login(req, res) {
-  const {username, mail, password} = req.body;
+  const {username, password} = req.body;
 
-  promisify(passport.authenticate, passport)('local').then((user) => {
+  // NOTE
+  // passport.authenticate does not support promisify
+  // you have to pass req, res to this method
+  passport.authenticate('local', (error, user) => {
+    if (error) {
+      return res.status(500).json({error});
+    }
+
     if (!user) {
       return res.status(404).json({error: `utilisateur (${username}) non trouvé.`});
     }
+
     const token = generateJWT(user);
     return res.status(200).json({token});
-  }).catch(error => {
-    return res.status(500).json({error});
-  });
+  })(req, res);
 }
 
 function getResetToken(req, res) {
@@ -76,11 +83,20 @@ function resetPassword(req, res) {
 }
 
 function getAccount(req, res) {
-
+  const {id} = req.params;
+  User.findById(id).then(user => {
+    res.status(200).json(user);
+  }).catch(error => {
+    res.status(500).json({error});
+  });
 }
 
 function getCurrentAccount(req, res) {
-
+  const simpleUserJson = {
+    username: req.user.username,
+    mail: req.user.mail
+  }
+  res.status(200).send(simpleUserJson);
 }
 
 function logout(req, res) {
