@@ -9,7 +9,7 @@ const RedisStore = require('connect-redis')(session);
 const passport = require('passport');
 const jwt = require('./middlewares/jwt');
 const {validateLogin, validateRegister} = require('./middlewares/validator');
-const {register, login, resetPassword, getResetToken, getCurrentAccount, getAccount, logout} = require('./controller/user-controller');
+const {register, login, resetPasswordForm, resetPassword, getResetToken, getCurrentAccount, getAccount, logout} = require('./controller/user-controller');
 
 const app = express();
 const router = express.Router();
@@ -39,10 +39,12 @@ router.get('/check', (_, res) => res.send('api server ok.'));
 router.get('/api/logout', jwt, logout);
 router.get('/api/account', jwt, getCurrentAccount);
 router.get('/api/account/:id', getAccount);
+router.get('/api/account/reset/:id/:token', resetPasswordForm);
 router.post('/api/register', validateRegister, register);
 router.post('/api/login', validateLogin, login);
 router.post('/api/forgot', getResetToken);
-router.post('/api/account/reset/:token', resetPassword);
+router.post('/api/account/reset', resetPassword);
+
 
 app.use(router);
 
