@@ -14,6 +14,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const crypto = require('crypto');
 const nodemail = require('nodemailer');
 const handlebars = require('handlebars');
+const blacklist = require('express-jwt-blacklist');
 const {User, hashPassword, verifyPassword, generateJWT} = require('../model/user-model');
 
 passport.use(new LocalStrategy({
@@ -22,7 +23,6 @@ passport.use(new LocalStrategy({
     passReqToCallback: false,
     session: false
   }, (username, password, done) => {
-    console.log('local');
     User.findOne({where: {u_name: username}}).then(user => {
       if (!user) return done(null, false); // no user
       return verifyPassword(password, user.u_hash)
@@ -52,7 +52,7 @@ function saveUserInDb(req, res, hash) {
       return res.status(400).json({error: `le nom d'utilisateur ${user.u_name} est déjà utilisé.`});
     }
     res.status(200).json({success: 'Utilisateur créé avec succès !'});
-    return res.redirect('/');
+    //return res.redirect('/');
   }).catch(error => {
     return res.status(500).send({error});
   });
@@ -64,7 +64,8 @@ function login(req, res) {
   // NOTE
   // passport.authenticate does not support promisify
   // you have to pass req, res to this method
-  passport.authenticate('local', (error, user) => {
+  passport.authenticate('local',
+    {successRedirect: '/', failureRedirect: '/login'}, (error, user) => {
     if (error) {
       return res.status(500).json({error});
     }
@@ -75,7 +76,7 @@ function login(req, res) {
 
     const token = generateJWT(user);
     res.status(200).json({token});
-    return res.redirect('/');
+    //return res.redirect('/');
   })(req, res);
 }
 
@@ -113,18 +114,18 @@ function getResetToken(req, res) {
     });
   }).catch(error => {
     res.status(500).json({error});
-  })
+  });
 }
 
 function sendMail(mail, id, token, options) {
   const transporter = nodemail.createTransport({
-    host: process.env.HOSTMAIL,
-    port: 465,
-    secure: true,
-    auth: {
+    host: production ? process.env.HOSTMAIL : 'localhost',
+    port: production ? 465 : 1025,
+    secure: production ? true : false,
+    auth: production ? {
       user: process.env.USERMAIL,
       pass: process.env.PASSMAIL
-    }
+    } : false
   });
 
   const emailHtml = handlebars.compile('../templates/email.hbs')(options);
@@ -165,6 +166,26 @@ function resetPasswordForm(req, res) {
 
 function resetPassword(req, res) {
   const {mail, password} = req.body;
+
+  User.find({wbere: {u_email: mail}}).then(user => {
+    if (!user) {
+      res.status(404).json({error: "Cette e-mail n'appartient à aucun compte utilisateur."});
+      return;
+    }
+
+    hashPassword(password)
+    .then(hash => {
+      user.updateAttributes({
+      u_hash: hash
+      }).then(update => {
+        res.status(200).json({success: 'mot de passe changé avec succès !'});
+      }).catch(error => {
+        res.status(500).json({error});
+      });
+    });
+  }).catch(error => {
+    res.status(500).json({error});
+  });
 }
 
 function getAccount(req, res) {
@@ -181,19 +202,30 @@ function getCurrentAccount(req, res) {
     username: req.user.username,
     mail: req.user.mail
   }
-  res.status(200).send(simpleUserJson);
+  res.status(200).json(simpleUserJson);
+}
+
+function updateAccount(req, res) {
+  console.log(req.user);
+}
+
+function revokeToken(user) {
+  new Promise(r => blacklist.revoke(user, r));
 }
 
 function logout(req, res) {
-
+  revokeToken(req.user)
+    .then(_ => res.status(200).send('disconnected').redirect('/'));
 }
 
 module.exports = {
   register,
   login,
+  resetPasswordForm,
   resetPassword,
   getResetToken,
   getAccount,
   getCurrentAccount,
+  updateAccount,
   logout
 }

@@ -53,7 +53,7 @@ describe('authentication', _ => {
     done();
   });
 
-  it('should register a new user and save him in the db', done => {
+  it('should register a new user and save it into the db', done => {
     chai.request(app)
       .post('/api/register')
       .send({
@@ -71,7 +71,7 @@ describe('authentication', _ => {
       })
   });
 
-  it('should not register a user already registered', done => {
+  it('should not register a already registered user', done => {
     chai.request(app)
       .post('/api/register')
       .send({
@@ -121,17 +121,122 @@ describe('authentication', _ => {
       });
   });
 
-  it('should not login an unregistered user', done => {
+  it('should not login a unregistered user', done => {
     chai.request(app)
       .post('/api/login')
       .send({
         username: 'Jacky',
         password: 'superabricot'
       }).then(response => {
-        done()
         done();
       }).catch(error => {
         error.should.have.status(404);
+        done();
+      });
+  });
+});
+
+describe('any profile', _ => {
+  it('should show the profile of a given user', done => {
+    chai.request(app)
+      .get('/api/account/:id')
+      .then(response => {
+        response.should.have.status(200);
+        response.body.should.have.any.keys('username', 'mail');
+        done();
+      }).catch(error => {
+        done();
+      });
+  });
+});
+
+describe('token routes', _ => {
+  let token;
+
+  before(done => {
+    chai.request(app)
+      .post('/api/login')
+      .send({
+        username: 'Matiuso',
+        password: 'superabricot2000formula1'
+      }).then(response => {
+        token = response.body.token;
+        done();
+      }).catch(error => {
+        done();
+      });
+  });
+
+  it('should show the profile of the connected user', done => {
+    chai.request(app)
+      .get('/api/account')
+      .set('authorization', 'Bearer ' + token)
+      .then(response => {
+        response.should.have.status(200);
+        response.body.should.have.any.keys('username', 'mail');
+        done();
+      }).catch(error => {
+        done();
+      });
+  });
+
+  it('should update profile of a logged user', done => {
+    chai.request(app)
+      .put('/api/account/update')
+      .set('authorization', 'Bearer ' + token)
+      .send({
+        username: 'Matiusoooooo',
+      }).then(response => {
+        response.should.have.status(200);
+        response.body.username.should.be.eq('Matiusoooooo');
+      }).catch(error => {
+        done();
+      });
+  });
+
+  it('should logout a authenticated user', done => {
+    chai.request(app)
+      .delete('/api/logout')
+      .set('authorization', 'Bearer ' + token)
+      .then(response => {
+        response.should.have.status(200);
+        response.body.should.be.eq('disconnected');
+        response.should.redirectTo('/');
+        done();
+      }).catch(error => {
+        done();
+      });
+  });
+});
+
+describe('forgot', _ => {
+  it('should send an email if password forgot', done => {
+    chai.request(app)
+      .post('/api/forgot')
+      .send({
+        mail: 'unknown@unknown.com'
+      }).then(response => {
+        response.should.have.status(200);
+        response.body.should.have.any.keys('success');
+        response.body.success.should.be.eq('Email envoyé avec succès à unknown@unknown.com. Vous avez 1 heure.')
+        done();
+      }).catch(error => {
+        done();
+      });
+  });
+
+  it('should allow password reset if token and id are valid', done => {
+    chai.request(app)
+      .put('/api/account/reset')
+      .send({
+        mail: 'unknown@unknown.com',
+        password: 'trololoonsemarreaubistrot'
+      }).then(response => {
+        response.should.have.status(200);
+        response.body.should.have.any.keys('success');
+        response.body.success.should.be.eq('mot de passe changé avec succès !');
+        done();
+      }).catch(error => {
         done();
       });
   });
