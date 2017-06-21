@@ -91,13 +91,13 @@ function getResetToken(req, res) {
 
     // ajout du token + date d'expiration à son compte
     const token = crypto.randomBytes(20).toString('hex');
-    user.updateAttributes({
+    user.update({
       u_reset_password_token: token,
       u_reset_expiration: Date.now() + 3600
-    }).then(update => {
+    }).then(([rowAffected]) => {
       // envoi du mail avec le id utilisateur + token
       // title, content, url, action
-      const id = update.u_id;
+      const id = user.u_id;
       const options = {
         title: 'Réinitialisation du mot de passe',
         content: `Vous recevez ce mail car vous avec perdu votre mot de passe,
@@ -110,12 +110,8 @@ function getResetToken(req, res) {
         console.log('sendMail sent');
         res.status(200).json({success: `Email envoyé avec succès à ${mail}. Vous avez 1 heure.`});
       }).catch(error => res.status(500).json({error}));
-    }).catch(error => {
-      res.status(500).json({error});
-    });
-  }).catch(error => {
-    res.status(500).json({error});
-  });
+    }).catch(error => res.status(500).json({error}));
+  }).catch(error => res.status(500).json({error}));
 }
 
 function sendMail(mail, options) {
@@ -209,17 +205,12 @@ function getCurrentAccount(req, res) {
 }
 
 function updateAccount(req, res) {
-  User.findById(req.user._id).then(user => {
-    if (!user) {
-      res.status(404).json({error: 'utilisateur non trouvé...'});
-      return;
-    }
-
-    user.updateAttributes(req.body).then(update => {
-      res.status(200).json(update);
-      return;
-    }).catch(error => res.status(500).json({error}));
-
+  User.update(req.body, {where: {u_id: req.user._id}}).then(([rowAffected]) => {
+    // get updated profile
+    User.findById(req.user._id).then(user => {
+      const token = generateJWT(user);
+      revokeToken(req.user).then(_ => res.status(200).json({token}));
+    }).catch(res.status(500).send({error}));
   }).catch(error => res.status(500).send({error}));
 }
 

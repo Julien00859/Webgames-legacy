@@ -188,7 +188,7 @@ describe('token routes', _ => {
         username: 'Matiusoooooo',
       }).then(response => {
         response.should.have.status(200);
-        response.body.username.should.be.eq('Matiusoooooo');
+        response.body.should.have.any.keys('token');
       }).catch(error => {
         done();
       });
