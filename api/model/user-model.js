@@ -40,7 +40,7 @@ const User = sequelize.define('user', {
     allowNull: false
   },
   u_reset_password_token: {
-    type: Sequelize.STRING(20)
+    type: Sequelize.STRING
   },
   u_reset_password_expiration: {
     type: Sequelize.DATE
@@ -64,9 +64,12 @@ function verifyPassword(sentPassword, dbPassword) {
 function generateJWT(user) {
   return jwt.sign({
       _id: user.u_id,
-      name: user.u_name,
-      email: user.u_email
-  }, process.env.SECRET, {expiresIn: '1h'});
+      username: user.u_name,
+      mail: user.u_email
+  }, process.env.SECRET, {
+    expiresIn: '1h',
+    subject: 'webgames'
+  });
 }
 
 module.exports = {

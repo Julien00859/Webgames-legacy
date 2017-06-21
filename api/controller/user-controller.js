@@ -90,7 +90,7 @@ function getResetToken(req, res) {
     }
 
     // ajout du token + date d'expiration à son compte
-    const token = crypto.randomBytes(20);
+    const token = crypto.randomBytes(20).toString('hex');
     user.updateAttributes({
       u_reset_password_token: token,
       u_reset_expiration: Date.now() + 3600
@@ -102,11 +102,12 @@ function getResetToken(req, res) {
         title: 'Réinitialisation du mot de passe',
         content: `Vous recevez ce mail car vous avec perdu votre mot de passe,
           cliquez sur le lien ci-dessous pour changer de mot de passe`,
-        url: `http://${req.host}/api/account/reset?id=${id}&token=${token}`,
+        url: `http://${req.hostname}/api/account/reset?id=${id}&token=${token}`,
         action: 'Changer de mot de passe'
       };
 
       sendMail(mail, options).then(info => {
+        console.log('sendMail sent');
         res.status(200).json({success: `Email envoyé avec succès à ${mail}. Vous avez 1 heure.`});
       }).catch(error => res.status(500).json({error}));
     }).catch(error => {
@@ -117,7 +118,7 @@ function getResetToken(req, res) {
   });
 }
 
-function sendMail(mail, id, token, options) {
+function sendMail(mail, options) {
   const transporter = nodemail.createTransport({
     host: production ? process.env.HOSTMAIL : 'localhost',
     port: production ? 465 : 1025,
@@ -137,11 +138,13 @@ function sendMail(mail, id, token, options) {
     html: emailHtml
   };
 
+  console.log('email');
+
   return promisify(transporter.sendMail, transporter)(mailOptions);
 }
 
 function resetPasswordForm(req, res) {
-  const {id, token} = req.params;
+  const {id, token} = req.query;
   User.findById(id).then(user => {
     if (!user) {
       res.status(404).json({error: 'utilisateur non trouvé... Hack ?'});
@@ -176,7 +179,7 @@ function resetPassword(req, res) {
     hashPassword(password)
     .then(hash => {
       user.updateAttributes({
-      u_hash: hash
+        u_hash: hash
       }).then(update => {
         res.status(200).json({success: 'mot de passe changé avec succès !'});
       }).catch(error => {
@@ -206,11 +209,22 @@ function getCurrentAccount(req, res) {
 }
 
 function updateAccount(req, res) {
-  console.log(req.user);
+  User.findById(req.user._id).then(user => {
+    if (!user) {
+      res.status(404).json({error: 'utilisateur non trouvé...'});
+      return;
+    }
+
+    user.updateAttributes(req.body).then(update => {
+      res.status(200).json(update);
+      return;
+    }).catch(error => res.status(500).json({error}));
+
+  }).catch(error => res.status(500).send({error}));
 }
 
 function revokeToken(user) {
-  new Promise(r => blacklist.revoke(user, r));
+  return new Promise(r => blacklist.revoke(user, r));
 }
 
 function logout(req, res) {
