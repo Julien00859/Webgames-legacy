@@ -7,6 +7,13 @@ const {hashPassword, verifyPassword, generateJWT} = require('../model/user-model
 
 chai.use(chaiHttp);
 
+function decodeToken(token) {
+  return new Promise(resolve => {
+    const decodedToken = JSON.parse(window.atob(token.split('.')[1]));
+    resolve(decodedToken);
+  });
+}
+
 describe('hashing', _ => {
   it('should encrypt password (bcrypt)', done => {
     const password = 'superabricot2000formula1';
@@ -189,6 +196,10 @@ describe('token routes', _ => {
       }).then(response => {
         response.should.have.status(200);
         response.body.should.have.any.keys('token');
+        decodeToken(response.body.token).then(token => {
+          token.u_username.should.be.eq('Matiusoooooo');
+          done();
+        });
       }).catch(error => {
         done();
       });
