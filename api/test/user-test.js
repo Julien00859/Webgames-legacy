@@ -20,10 +20,7 @@ describe('hashing', _ => {
     hashPassword(password).then(hash => {
       hash.should.exist;
       done();
-    }).catch(error => {
-      error.should.not.exist;
-      done();
-    })
+    });
   });
 
   it('should validate the password if match', done => {
@@ -32,11 +29,8 @@ describe('hashing', _ => {
       verifyPassword(password, hash).then(response => {
         response.should.be.true;
         done();
-      }).catch(error => error.should.not.exist);
-    }).catch(error => {
-      error.should.not.exist;
-      done();
-    })
+      });
+    });
   });
 
   it('should not validate a wrong password', done => {
@@ -46,11 +40,8 @@ describe('hashing', _ => {
       verifyPassword(wrongPassword, hash).then(response => {
         response.should.be.false;
         done();
-      }).catch(error => error.should.not.exist);
-    }).catch(error => {
-      error.should.exist;
-      done();
-    })
+      });
+    });
   });
 });
 
@@ -73,9 +64,7 @@ describe('authentication', _ => {
         response.should.redirectTo('/');
         response.body.success.should.be.eq('Utilisateur créé avec succès !');
         done();
-      }).catch(error => {
-        done();
-      })
+      });
   });
 
   it('should not register a already registered user', done => {
@@ -85,8 +74,6 @@ describe('authentication', _ => {
         username: 'Matiuso',
         password: 'superabricot2000formula1',
         mail: 'unknown@unknown.com'
-      }).then(response => {
-        done();
       }).catch(error => {
         error.should.have.status(400);
         error.response.body.error.should.be.eq("le nom d'utilisateur Matiuso est déjà utilisé.");
@@ -101,12 +88,8 @@ describe('authentication', _ => {
         username: '',
         password: 'superabricot2000formula1',
         mail: 'unknown@unknown.com'
-      }).then(response => {
-        //response.should.be.empty;
-        done();
       }).catch(error => {
         error.should.have.status(500);
-        //error.response.body.error[0].should.be.eq("Le nom d'utilisateur est vide.");
         done();
       })
   });
@@ -123,8 +106,6 @@ describe('authentication', _ => {
         response.body.token.should.be.a('string');
         response.body.should.have.any.keys('token');
         done();
-      }).catch(error => {
-        done();
       });
   });
 
@@ -134,8 +115,6 @@ describe('authentication', _ => {
       .send({
         username: 'Jacky',
         password: 'superabricot'
-      }).then(response => {
-        done();
       }).catch(error => {
         error.should.have.status(404);
         done();
@@ -150,8 +129,6 @@ describe('any profile', _ => {
       .then(response => {
         response.should.have.status(200);
         response.body.should.have.any.keys('username', 'mail');
-        done();
-      }).catch(error => {
         done();
       });
   });
@@ -169,8 +146,6 @@ describe('token routes', _ => {
       }).then(response => {
         token = response.body.token;
         done();
-      }).catch(error => {
-        done();
       });
   });
 
@@ -181,8 +156,6 @@ describe('token routes', _ => {
       .then(response => {
         response.should.have.status(200);
         response.body.should.have.any.keys('username', 'mail');
-        done();
-      }).catch(error => {
         done();
       });
   });
@@ -200,8 +173,6 @@ describe('token routes', _ => {
           token.u_username.should.be.eq('Matiusoooooo');
           done();
         });
-      }).catch(error => {
-        done();
       });
   });
 
@@ -214,13 +185,11 @@ describe('token routes', _ => {
         response.body.should.be.eq('disconnected');
         response.should.redirectTo('/');
         done();
-      }).catch(error => {
-        done();
       });
   });
 });
 
-describe('forgot', _ => {
+describe('forgot password', _ => {
   it('should send an email if password forgot', done => {
     chai.request(app)
       .post('/api/forgot')
@@ -230,8 +199,6 @@ describe('forgot', _ => {
         response.should.have.status(200);
         response.body.should.have.any.keys('success');
         response.body.success.should.be.eq('Email envoyé avec succès à unknown@unknown.com. Vous avez 1 heure.')
-        done();
-      }).catch(error => {
         done();
       });
   });
@@ -246,8 +213,6 @@ describe('forgot', _ => {
         response.should.have.status(200);
         response.body.should.have.any.keys('success');
         response.body.success.should.be.eq('mot de passe changé avec succès !');
-        done();
-      }).catch(error => {
         done();
       });
   });

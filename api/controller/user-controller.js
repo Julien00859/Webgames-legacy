@@ -23,7 +23,7 @@ passport.use(new LocalStrategy({
     passReqToCallback: false,
     session: false
   }, (username, password, done) => {
-    User.findOne({where: {u_name: username}}).then(user => {
+    User.find({where: {u_name: username}}).then(user => {
       if (!user) return done(null, false); // no user
       return verifyPassword(password, user.u_hash)
         .then(response => {
@@ -71,7 +71,7 @@ function login(req, res) {
     }
 
     if (!user) {
-      return res.status(404).json({error: `utilisateur (${username}) non trouvé.`});
+      return res.status(404).json({error: `utilisateur (${username}) non trouvé / mauvais mot de passe.`});
     }
 
     const token = generateJWT(user);
