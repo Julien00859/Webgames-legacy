@@ -17,7 +17,7 @@ Service de jeux multi-joueur web-friendly
 | `/api/account/reset/:id/:token` | GET | link receive via e-mail to change password | FALSE | token is a reset token |
 | `/api/account/reset` | POST | change password | TRUE | 
 | `/api/account`| GET | current user profile | TRUE |
-| `/api/account/:u_id` | GET | specifice user profile | FALSE/TRUE | public informations |
+| `/api/account/:u_id` | GET | specifice user profile | FALSE | public informations |
 | `/api/accound/update` | PUT | update user profile | TRUE |
 ## Installation step
 
