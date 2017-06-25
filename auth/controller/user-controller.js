@@ -141,9 +141,6 @@ async function sendMail(mail, options) {
 }
 
 function resetPasswordForm(req, res) {
-  res.send(req.query.id);
-  return;
-  console.log(req.query);
   const {id, token} = req.query;
   console.log(id, token);
   User.findById(id).then(user => {
