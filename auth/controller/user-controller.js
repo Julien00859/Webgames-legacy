@@ -9,6 +9,7 @@ u_reset_expiration
 */
 
 const promisify = require('es6-promisify');
+const fs = require('fs');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const crypto = require('crypto');
@@ -16,6 +17,7 @@ const nodemail = require('nodemailer');
 const handlebars = require('handlebars');
 const blacklist = require('express-jwt-blacklist');
 const {User, hashPassword, verifyPassword, generateJWT} = require('../model/user-model');
+const production = process.env.NODE_ENV === 'production';
 
 passport.use(new LocalStrategy({
     usernameField: 'username',
@@ -93,39 +95,40 @@ function getResetToken(req, res) {
     const token = crypto.randomBytes(20).toString('hex');
     user.update({
       u_reset_password_token: token,
-      u_reset_expiration: Date.now() + 3600
-    }).then(([rowAffected]) => {
+      u_reset_expiration: Date.now() + 3600000
+    }).then((rowAffected) => {
       // envoi du mail avec le id utilisateur + token
       // title, content, url, action
       const id = user.u_id;
       const options = {
         title: 'Réinitialisation du mot de passe',
-        content: `Vous recevez ce mail car vous avec perdu votre mot de passe,
-          cliquez sur le lien ci-dessous pour changer de mot de passe`,
+        content: `Vous recevez ce mail car vous avez perdu votre mot de passe,
+          cliquez sur le lien ci-dessous pour changer de mot de passe.`,
         url: `http://${req.hostname}/api/account/reset?id=${id}&token=${token}`,
         action: 'Changer de mot de passe'
       };
 
       sendMail(mail, options).then(info => {
-        console.log('sendMail sent');
         res.status(200).json({success: `Email envoyé avec succès à ${mail}. Vous avez 1 heure.`});
       }).catch(error => res.status(500).json({error}));
-    }).catch(error => res.status(500).json({error}));
+    }).catch(error => res.status(500).json({error: error.toString()})); // sinon possible d'avoir {} et pas l'erreur
   }).catch(error => res.status(500).json({error}));
 }
 
-function sendMail(mail, options) {
+async function sendMail(mail, options) {
   const transporter = nodemail.createTransport({
     host: production ? process.env.HOSTMAIL : 'localhost',
-    port: production ? 465 : 1025,
+    port: production ? 465 : 1025, // port pour maildev
     secure: production ? true : false,
+    ignoreTLS: production ? false : true,
     auth: production ? {
       user: process.env.USERMAIL,
       pass: process.env.PASSMAIL
     } : false
   });
 
-  const emailHtml = handlebars.compile('../templates/email.hbs')(options);
+  const template = await promisify(fs.readFile, fs)('./templates/email.hbs', 'utf-8');
+  const emailHtml = handlebars.compile(template)(options);
 
   const mailOptions = {
     from: 'WebGames <admin@webgames.com>',
@@ -134,13 +137,15 @@ function sendMail(mail, options) {
     html: emailHtml
   };
 
-  console.log('email');
-
   return promisify(transporter.sendMail, transporter)(mailOptions);
 }
 
 function resetPasswordForm(req, res) {
+  res.send(req.query.id);
+  return;
+  console.log(req.query);
   const {id, token} = req.query;
+  console.log(id, token);
   User.findById(id).then(user => {
     if (!user) {
       res.status(404).json({error: 'utilisateur non trouvé... Hack ?'});
@@ -157,7 +162,8 @@ function resetPasswordForm(req, res) {
       return;
     }
 
-    // res.redirect,...
+    // Could change...
+    res.status(200).send('authorization to change your password').redirect('/account/forgot/form');
   }).catch(error => {
     res.status(500).json({error});
   });
@@ -209,6 +215,7 @@ function updateAccount(req, res) {
     // get updated profile
     User.findById(req.user._id).then(user => {
       const token = generateJWT(user);
+      console.log(token);
       revokeToken(req.user).then(_ => res.status(200).json({token}));
     }).catch(res.status(500).send({error}));
   }).catch(error => res.status(500).send({error}));

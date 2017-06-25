@@ -1,12 +1,12 @@
 {
-  "name": "webgames-api",
+  "name": "webgames-auth",
   "version": "1.0.0",
-  "description": "api for webgames",
-  "main": "api/index.js",
+  "description": "auth for webgames",
+  "main": "index.js",
   "scripts": {
     "bump": "npm version patch",
-    "test": "mocha ./api/test",
-    "server": "nodemon ./api/index.js"
+    "test": "mocha test",
+    "server": "nodemon index.js"
   },
   "repository": "git@github.com:EPHEC-TI/WebGames.git",
   "author": "Mathieu-R <mathieu0709@gmail.com>",
