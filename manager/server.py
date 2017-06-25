@@ -8,71 +8,62 @@ import websockets
 import signal
 from os import environ
 
-logger = logging.getLogger(__name__)
+from commands import Server, User
 
-async def ducksendto(socket, message):
-	if isinstance(socket, asyncio.StreamWriter):
-		if isinstance(message, str):
-			socket.write(message.encode())
-		elif isinstance(message, bytes):
-			socket.write(message)
-		else:
-			raise TypeError("{} not supported".format(type(message)))
-		await socket.drain()
-	elif isinstance(socket, wsets.server.WebSocketCommonProtocol):
-		await socket.send(message)
-		
+logger = logging.getLogger(__name__)	
 
 async def tcp_handler(reader, writer):
-	addr = writer.get_extra_info("peername")
-	logger.info("New TCP connection from", *addr)
+	client = User(writer, writer.get_extra_info("peername"))
+
+	logger.info("New TCP connection from %s", client)
 	while True:
 		try:
-			data = await reader.read(64 * 1024)
-			msg = data.decode()
+			data = await reader.read(65536).decode()
 		except ConnectionResetError as e:
-			logger.warning("Connection reset by peer %s:%d", *addr)
+			logger.warning("Connection reset by peer %s:%d", client)
 			break
 		except:
-			logger.exception("Exception while reading data from %s:%d.", *addr)
+			logger.exception("Exception while reading data from %s:%d.", client)
 			break
 
-		logger.debug("Message from %s:%d: %s", *addr, msg)
+		logger.debug("Message from %s:%d: %s", client, msg)
 		if msg == "":
-			logger.warning("Empty payload from %s:%d. Assume connection closed by peer", *addr)
+			logger.warning("Empty payload from %s:%d. Assume connection closed by peer", client)
 			break
-		elif msg == "close":
+
+		client.eval(msg)
+		if client.close:
 			break
-		else:
-			await ducksendto(writer, data)
 		
 	writer.close()
-	logger.info("Connection with %s:%d closed", *addr)
+	logger.info("Connection with %s closed", client)
 
 
 async def ws_handler(ws, path):
-	logger.info("New WS connection from %s:%d", *ws.remote_address)
+	user = User(ws, ws.remote_address)
+
+	logger.info("New WS connection from %s", client)
 	while True:
 		try:
 			data = await ws.recv()
 			if not data:
-				logger.warning("Empty payload from %s:%d. Assume connection closed by peer", *addr)
+				logger.warning("Empty payload from %s. Assume connection closed by peer", client)
 				break
 			if data is bytes:
 				data = data.decode()
 		except websockets.exceptions.ConnectionClosed:
-			logger.warning("Connection closed by peer %s:%d", *ws.remote_address)
+			logger.warning("Connection closed by peer %s", client)
 			break
 		except:
-			logger.exception("Exception while reading data from %s:%d.", *ws.remote_address)
+			logger.exception("Exception while reading data from %s.", client)
 			break
-		if data == "close":
+
+		client.eval(data)
+		if client.close:
 			break
-		else:
-			await ducksendto(ws, data)
 
 	await ws.close()
-	logger.info("Connection with %s:%d closed", *ws.remote_address)
+	logger.info("Connection with %s closed", client)
 			
 
 def main():
