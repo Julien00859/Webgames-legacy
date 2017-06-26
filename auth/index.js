@@ -10,6 +10,7 @@ const passport = require('passport');
 const blacklist = require('express-jwt-blacklist');
 const jwt = require('./middlewares/jwt');
 const {validateLogin, validateRegister, validateForgot, validateReset} = require('./middlewares/validator');
+const resetPasswordMiddleware = require('./middlewares/reset-password');
 const {register, login, resetPasswordForm, resetPassword, getResetToken, getCurrentAccount, getAccount, updateAccount, logout, unregister} = require('./controller/user-controller');
 
 const app = express();
@@ -49,7 +50,7 @@ router.get('/api/account/:id', getAccount); // should fix it to not match whatev
 router.post('/api/register', validateRegister, register);
 router.post('/api/login', validateLogin, login);
 router.post('/api/forgot', validateForgot, getResetToken);
-router.put('/api/account/reset', validateReset, resetPassword);
+router.put('/api/account/reset', validateReset, resetPasswordMiddleware, resetPassword);
 router.put('/api/account/update', jwt, updateAccount);
 router.delete('/api/logout', jwt, logout);
 router.delete('/api/account/unregister', jwt, unregister);

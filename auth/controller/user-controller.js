@@ -8,7 +8,8 @@ u_reset_password_token
 u_reset_expiration
 */
 
-const {promisify} = require('util');
+//const {promisify} = require('util');
+const promisify = require('es6-promisify');
 const fs = require('fs');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
@@ -110,7 +111,7 @@ function getResetToken(req, res) {
 
       sendMail(mail, options).then(info => {
         res.status(200).json({success: `Email envoyé avec succès à ${mail}. Vous avez 1 heure.`});
-      }).catch(error => res.status(500).json({error}));
+      }).catch(error => res.status(500).json({error: error.toString()}));
     }).catch(error => res.status(500).json({error: error.toString()})); // sinon possible d'avoir {} et pas l'erreur
   }).catch(error => res.status(500).json({error}));
 }
@@ -127,7 +128,7 @@ async function sendMail(mail, options) {
     } : false
   });
 
-  const template = await promisify(fs.readFile)('./templates/email.hbs', 'utf-8');
+  const template = await promisify(fs.readFile, fs)('./templates/email.hbs', 'utf-8');
   const emailHtml = handlebars.compile(template)(options);
 
   const mailOptions = {
@@ -137,7 +138,7 @@ async function sendMail(mail, options) {
     html: emailHtml
   };
 
-  return promisify(transporter.sendMail)(mailOptions);
+  return promisify(transporter.sendMail, transporter)(mailOptions);
 }
 
 function resetPasswordForm(req, res) {
@@ -213,8 +214,8 @@ function updateAccount(req, res) {
       const token = generateJWT(user);
       console.log(token);
       revokeToken(req.user).then(_ => res.status(200).json({token}));
-    }).catch(res.status(500).send({error}));
-  }).catch(error => res.status(500).send({error}));
+    }).catch(res.status(500).send({error: error.toString()}));
+  }).catch(error => res.status(500).send({error: error.toString()}));
 }
 
 function revokeToken(user) {
