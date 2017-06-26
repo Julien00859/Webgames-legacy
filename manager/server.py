@@ -8,12 +8,14 @@ import websockets
 import signal
 from os import environ
 
-from commands import Server, User
+from clients_handler import ClientHandler
+from config import *
 
-logger = logging.getLogger(__name__)	
+logger = logging.getLogger(__name__)
+
 
 async def tcp_handler(reader, writer):
-	client = User(writer, writer.get_extra_info("peername"))
+	client = ClientHandler(writer, writer.get_extra_info("peername"))
 
 	logger.info("New TCP connection from %s", client)
 	while True:
@@ -40,7 +42,7 @@ async def tcp_handler(reader, writer):
 
 
 async def ws_handler(ws, path):
-	user = User(ws, ws.remote_address)
+	client = ClientHandler(ws, ws.remote_address)
 
 	logger.info("New WS connection from %s", client)
 	while True:
@@ -80,16 +82,12 @@ def main():
 	loop = asyncio.get_event_loop()
 
 	# Setup tcp and wset servers
-	host = environ.get("SERVER_ADDRESS", "127.0.0.1")
-	tcp_port = int(environ.get("SERVER_TCP_PORT", 8888))
-	ws_port = int(environ.get("SERVER_WS_PORT", 8889))
-
-	logger.info("Init TCP Server on %s:%d", host, tcp_port)
-	tcp_coro = asyncio.start_server(tcp_handler, host, tcp_port, loop=loop)
+	logger.info("Init User TCP Server on %s:%d", SERVER_HOST, SERVER_TCP_PORT)
+	tcp_coro = asyncio.start_server(tcp_handler, SERVER_HOST, SERVER_TCP_PORT, loop=loop)
 	tcp_server = loop.run_until_complete(tcp_coro)
 
-	logger.info("Init WebSocket Server on %s:%d", host, ws_port)
-	ws_coro = websockets.serve(ws_handler, host, ws_port, loop=loop)
+	logger.info("Init User WebSocket Server on %s:%d", SERVER_HOST, SERVER_WS_PORT)
+	ws_coro = websockets.serve(ws_handler, SERVER_HOST, SERVER_WS_PORT, loop=loop)
 	ws_server = loop.run_until_complete(ws_coro)
 
 	# Handle SIGTERM
