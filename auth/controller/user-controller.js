@@ -142,7 +142,6 @@ async function sendMail(mail, options) {
 
 function resetPasswordForm(req, res) {
   const {id, token} = req.query;
-  console.log(id, token);
   User.findById(id).then(user => {
     if (!user) {
       res.status(404).json({error: 'utilisateur non trouvé... Hack ?'});
@@ -191,7 +190,7 @@ function resetPassword(req, res) {
 }
 
 function getAccount(req, res) {
-  const {id} = req.params;
+  const {id} = req.query;
   User.findById(id).then(user => {
     res.status(200).json(user);
   }).catch(error => {

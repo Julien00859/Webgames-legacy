@@ -44,8 +44,8 @@ blacklist.configure({
 
 router.get('/check', (_, res) => res.send('api server ok.'));
 router.get('/api/account', jwt, getCurrentAccount);
-router.get('/api/account/:id', getAccount);
-router.get('/api/account/reset/:id/:token', resetPasswordForm);
+router.get('/api/account/reset', resetPasswordForm);
+router.get('/api/account/:id', getAccount); // should fix it to not match whatever after /account/
 router.post('/api/register', validateRegister, register);
 router.post('/api/login', validateLogin, login);
 router.post('/api/forgot', getResetToken);
