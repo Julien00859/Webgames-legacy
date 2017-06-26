@@ -9,7 +9,7 @@ from typing import get_type_hints
 
 logger = getLogger(__name__)
 Ping = namedtuple("Ping", ["value", "time_sent"])
-Command = namedtuple("Command", ["name", "restricted_to", "pattern", "types"])
+Command = namedtuple("Command", ["name", "restricted_to", "pattern"])
 
 def enum(name, values):
     return namedtuple(name, list(map(str, values)))(*range(len(values)))
