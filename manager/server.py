@@ -8,14 +8,14 @@ import websockets
 import signal
 from os import environ
 
-from clients_handler import ClientHandler
+from clients_handler import ClientHandler, ClientType
 from config import *
 
 logger = logging.getLogger(__name__)
 
 
 async def tcp_handler(reader, writer):
-	client = ClientHandler(writer, writer.get_extra_info("peername"))
+	client = ClientHandler(writer, writer.get_extra_info("peername"), ClientType.user)
 
 	logger.info("New TCP connection from %s", client)
 	while True:
@@ -33,7 +33,7 @@ async def tcp_handler(reader, writer):
 			logger.warning("Empty payload from %s:%d. Assume connection closed by peer", client)
 			break
 
-		client.eval(msg)
+		client.evaluate(msg)
 		if client.close:
 			break
 		
@@ -42,7 +42,7 @@ async def tcp_handler(reader, writer):
 
 
 async def ws_handler(ws, path):
-	client = ClientHandler(ws, ws.remote_address)
+	client = ClientHandler(ws, ws.remote_address, ClientType.user)
 
 	logger.info("New WS connection from %s", client)
 	while True:
@@ -60,7 +60,7 @@ async def ws_handler(ws, path):
 			logger.exception("Exception while reading data from %s.", client)
 			break
 
-		client.eval(data)
+		client.evaluate(data)
 		if client.close:
 			break
 
@@ -81,12 +81,12 @@ def main():
 	asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 	loop = asyncio.get_event_loop()
 
-	# Setup tcp and wset servers
-	logger.info("Init User TCP Server on %s:%d", SERVER_HOST, SERVER_TCP_PORT)
+	# Setup servers
+	logger.info("Init Raw TCP Server on %s:%d", SERVER_HOST, SERVER_TCP_PORT)
 	tcp_coro = asyncio.start_server(tcp_handler, SERVER_HOST, SERVER_TCP_PORT, loop=loop)
 	tcp_server = loop.run_until_complete(tcp_coro)
 
-	logger.info("Init User WebSocket Server on %s:%d", SERVER_HOST, SERVER_WS_PORT)
+	logger.info("Init Raw WebSocket Server on %s:%d", SERVER_HOST, SERVER_WS_PORT)
 	ws_coro = websockets.serve(ws_handler, SERVER_HOST, SERVER_WS_PORT, loop=loop)
 	ws_server = loop.run_until_complete(ws_coro)
 
