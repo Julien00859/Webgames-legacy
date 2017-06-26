@@ -208,13 +208,13 @@ function getCurrentAccount(req, res) {
 }
 
 function updateAccount(req, res) {
-  User.update(req.body, {where: {u_id: req.user._id}}).spread((countAffected, rowAffected) => {
+  User.update(req.body, {where: {u_id: req.user._id}, fields: Object.keys(req.body), returning: true}).spread((rowAffected, update) => {
     // get updated profile
+    // could maybe use update value instead search the user in db
     User.findById(req.user._id).then(user => {
       const token = generateJWT(user);
-      console.log(token);
       revokeToken(req.user).then(_ => res.status(200).json({token}));
-    }).catch(res.status(500).send({error: error.toString()}));
+    }).catch(error => res.status(500).send({error: error.toString()}));
   }).catch(error => res.status(500).send({error: error.toString()}));
 }
 
