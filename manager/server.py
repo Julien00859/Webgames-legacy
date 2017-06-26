@@ -15,7 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 async def tcp_handler(reader, writer):
-	client = ClientHandler(writer, writer.get_extra_info("peername"), ClientType.user)
+
+	async def send(message: str):
+		writer.send(message.encode())
+		await writer.drain()
+
+	client = ClientHandler(writer.get_extra_info("peername"), ClientType.user, send)
 
 	logger.info("New TCP connection from %s", client)
 	while True:
@@ -42,7 +47,10 @@ async def tcp_handler(reader, writer):
 
 
 async def ws_handler(ws, path):
-	client = ClientHandler(ws, ws.remote_address, ClientType.user)
+	async def send(message: str):
+		await ws.send(message)
+
+	client = ClientHandler(ws.remote_address, ClientType.user, send)
 
 	logger.info("New WS connection from %s", client)
 	while True:

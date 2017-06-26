@@ -27,11 +27,11 @@ class ClientHandler:
         Command("disable", ClientType.api, re.compile("disable (?P<game>\S+"))
     ]
 
-    def __init__(self, socket, peername, clienttype, loop=None):
+    def __init__(self, peername, clienttype, sendfunc, loop=None):
         """Initiate a new client with its socket and peername"""
-        self.socket = socket
         self.peername = peername
         self.clienttype = clienttype
+		self.send = sendfunc
         self.loop = loop if loop is not None else asyncio.get_event_loop()
         self.close = False
 
@@ -40,31 +40,15 @@ class ClientHandler:
         self.ping_delayed = None
         self.pings = deque(maxlen=10)
 
-        if isinstance(socket, asyncio.StreamWriter):
-            self.send = self.send_tcp
-        elif isinstance(socket, WebSocketServerProtocol):
-            self.send = self.send_ws
-        else:
-            raise TypeError("socket type {} not supported".format(type(socket)))
-
         await self.send_ping()
 
     def __str__(self):
-        """Return the peername as "address:port""""
+        """Return the peername as "address:port"""
         return "{}:{}".format(*self.peername)
 
     def __repr__(self):
         return "<{} at {!s}>".format(self.__class__.__name__, self)
     
-    async def send_ws(msg):
-        """Send method to use when the socket is a websocket"""
-        await self.socket.send(msg + "\r\n")
-
-    async def send_tcp(msg):
-        """Send method to use when the socket is a tcp socket"""
-        self.socket.write((msg + "\r\n").encode())
-        await self.socket.drain()
-
     async def evaluate(data):
         for line in data.split("\r\n"):
             for command in self.__class__.commands:
@@ -77,17 +61,17 @@ class ClientHandler:
                             return
                     else:
                         logger.warning("Command \"%s\" not available to %d", command.name, self.clienttype)
-                        await self.send("error command \"{}\" is not available for you".format(command.name))
+                        await self.send("error command \"{}\" is not available for you\r\n".format(command.name))
             else:
                 logger.warning("Command \"%s\" from %s didn't match any", line, repr(self))
-                await self.send("error command \"{}\" didn't match any command available".format(line))
+                await self.send("error command \"{}\" didn't match any command available\r\n".format(line))
     
     async def send_ping(self, value=None):
         """Send a ping request to the client"""
         if value is None:
             value = randint(1000, 9999)
         self.ping = Ping(value, time())
-        await self.send("ping {}".format(value))
+        await self.send("ping {}\r\n".format(value))
 
     async def close(self, reason:str=None):
         """Recieve a close request, mark the client as closed"""
@@ -97,16 +81,16 @@ class ClientHandler:
 
     async def ping(self, value:int):
         """Recieve a ping request from the client, send back a pong"""
-        self.send("pong {}".format(value))
+        self.send("pong {}\r\n".format(value))
 
     async def pong(self, value:int):
         """Recieve a pong answer from the client, validate the pong and update statistics"""
         if self.ping is None:
-            await self.send("close no ping was sent")
+            await self.send("close no ping was sent\r\n")
             self.close()
         
         elif value != self.ping.value:
-            await self.send("close wrong ping value")
+            await self.send("close wrong ping value\r\n")
             self.close()
 
         else:
@@ -124,3 +108,4 @@ class ClientHandler:
 
     async def disable(self, game:str):
         pass
+
