@@ -5,6 +5,7 @@ from websockets.server import WebSocketServerProtocol
 from random import randint
 from time import time
 import re
+from typing import get_type_hints
 
 logger = getLogger(__name__)
 Ping = namedtuple("Ping", ["value", "time_sent"])
@@ -16,14 +17,14 @@ ClientType = enum("ClientType", ["none", "user", "api", "game"])
 
 class ClientHandler:
     commands = [
-        Command("close", ClientType.none, re.compile("close( (?P<reason>.*))?"), {"reason": str},
-        Command("ping", ClientType.none, re.compile("ping (?P<value>[0-9]+)"), {"value": int}),
-        Command("pong", ClientType.none, re.compile("pong (?P<value>[0-9]+)"), {"value": int}),
+        Command("close", ClientType.none, re.compile("close( (?P<reason>.*))?")),
+        Command("ping", ClientType.none, re.compile("ping (?P<value>[0-9]+)")),
+        Command("pong", ClientType.none, re.compile("pong (?P<value>[0-9]+)")),
 
-        Command("auth", ClientType.user, re.compile("auth (?P<jwt>[\w-]+\.[\w-]+\.[\w-]+)"), {"jwt": str}),
+        Command("auth", ClientType.user, re.compile("auth (?P<jwt>[\w-]+\.[\w-]+\.[\w-]+)")),
 
-        Command("enable", ClientType.api, re.compile("enable (?P<game>\S+)"), {"game": str}),
-        Command("disabled", ClientType.api, re.compile("disable (?P<game>\S+"), {"game": str})
+        Command("enable", ClientType.api, re.compile("enable (?P<game>\S+)")),
+        Command("disable", ClientType.api, re.compile("disable (?P<game>\S+"))
     ]
 
     def __init__(self, socket, peername, clienttype, loop=None):
@@ -70,7 +71,8 @@ class ClientHandler:
                 match = command.pattern.match(line)
                 if match:
                     if command.restricted_to == ClientType.none or command.restricted_to == self.clienttype:
-                        await getattr(self, command.name)(**{key: command.types[key](value) for key, value})
+                        func = getattr(self, command.name)
+                        await func(**{key: get_type_hints(func)[key](value) for key, value in math.dictgroup()})
                         if self.close:
                             return
                     else:
@@ -86,13 +88,18 @@ class ClientHandler:
             value = randint(1000, 9999)
         self.ping = Ping(value, time())
         await self.send("ping {}".format(value))
-    
-    # Callback for received commands
-    async def ping(self, value):
+
+    async def close(self, reason:str=None):
+        """Recieve a close request, mark the client as closed"""
+        self.close = True
+        if isinstance(self.ping_delayed, asyncio.Task) and not self.ping_delayed.canceled:
+            self.ping_delayed.cancel()
+
+    async def ping(self, value:int):
         """Recieve a ping request from the client, send back a pong"""
         self.send("pong {}".format(value))
 
-    async def pong(self, value):
+    async def pong(self, value:int):
         """Recieve a pong answer from the client, validate the pong and update statistics"""
         if self.ping is None:
             await self.send("close no ping was sent")
@@ -108,9 +115,12 @@ class ClientHandler:
 
             self.ping_delayed = asyncio.Task(self.send_ping)
             self.loop.call_later(30, self.ping_delayed)
+    
+    async def auth(self, jwt:str):
+        pass
 
-    async def close(self, reason=None):
-        """Recieve a close request, mark the client as closed"""
-        self.close = True
-        if isinstance(self.ping_delayed, asyncio.Task) and not self.ping_delayed.canceled:
-            self.ping_delayed.cancel()
+    async def enable(self, game:str):
+        pass
+
+    async def disable(self, game:str):
+        pass
