@@ -216,4 +216,15 @@ describe('forgot password', _ => {
         done();
       });
   });
+
+  it('should unregister registered user', done => {
+    chai.request(app)
+      .delete('/api/account/unregister')
+      .then(response => {
+        response.should.have.status(200);
+        response.body.should.have.any.keys('success');
+        response.body.success.should.be.eq('désinscription faite !');
+        done();
+      });
+  });
 });

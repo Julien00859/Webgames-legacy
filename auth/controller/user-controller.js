@@ -8,7 +8,7 @@ u_reset_password_token
 u_reset_expiration
 */
 
-const promisify = require('es6-promisify');
+const {promisify} = require('util');
 const fs = require('fs');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
@@ -127,7 +127,7 @@ async function sendMail(mail, options) {
     } : false
   });
 
-  const template = await promisify(fs.readFile, fs)('./templates/email.hbs', 'utf-8');
+  const template = await promisify(fs.readFile)('./templates/email.hbs', 'utf-8');
   const emailHtml = handlebars.compile(template)(options);
 
   const mailOptions = {
@@ -137,7 +137,7 @@ async function sendMail(mail, options) {
     html: emailHtml
   };
 
-  return promisify(transporter.sendMail, transporter)(mailOptions);
+  return promisify(transporter.sendMail)(mailOptions);
 }
 
 function resetPasswordForm(req, res) {
@@ -207,7 +207,7 @@ function getCurrentAccount(req, res) {
 }
 
 function updateAccount(req, res) {
-  User.update(req.body, {where: {u_id: req.user._id}}).then(([rowAffected]) => {
+  User.update(req.body, {where: {u_id: req.user._id}}).spread((countAffected, rowAffected) => {
     // get updated profile
     User.findById(req.user._id).then(user => {
       const token = generateJWT(user);
@@ -224,6 +224,12 @@ function revokeToken(user) {
 function logout(req, res) {
   revokeToken(req.user)
     .then(_ => res.status(200).send('disconnected').redirect('/'));
+}
+
+function unregister(req, res) {
+  User.destroy({where: {u_id: req.user._id}}).then(rowAffected => {
+    res.status(200).json({success: 'désinscription faite !'});
+  }).catch(error => res.status(500).send({error}));
 }
 
 module.exports = {

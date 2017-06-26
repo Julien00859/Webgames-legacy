@@ -6,7 +6,7 @@ u_reset_password_token
 u_reset_expiration
 */
 
-const promisify = require('es6-promisify');
+const {promisify} = require('util');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Sequelize = require('sequelize');
@@ -48,14 +48,14 @@ const User = sequelize.define('user', {
 });
 
 function hashPassword(password) {
-  return promisify(bcrypt.genSalt, bcrypt)(10)
+  return promisify(bcrypt.genSalt)(10)
     .then(salt => bcrypt.hash(password, salt))
     .then(hash => hash)
     .catch(error => error);
 }
 
 function verifyPassword(sentPassword, dbPassword) {
-  return promisify(bcrypt.compare, bcrypt)(sentPassword, dbPassword)
+  return promisify(bcrypt.compare)(sentPassword, dbPassword)
     .then(response => response)
     .catch(error => error);
 
