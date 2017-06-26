@@ -241,5 +241,6 @@ module.exports = {
   getAccount,
   getCurrentAccount,
   updateAccount,
-  logout
+  logout,
+  unregister
 }
