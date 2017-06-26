@@ -39,12 +39,12 @@ class ClientHandler:
         self.ping_delayed = None
         self.pings = deque(maxlen=10)
 
-		if isinstance(socket, asyncio.StreamWriter):
-			self.send = self.send_tcp
-		elif isinstance(socket, WebSocketServerProtocol):
-			self.send = self.send_ws
-		else:
-			raise TypeError("socket type {} not supported".format(type(socket)))
+        if isinstance(socket, asyncio.StreamWriter):
+            self.send = self.send_tcp
+        elif isinstance(socket, WebSocketServerProtocol):
+            self.send = self.send_ws
+        else:
+            raise TypeError("socket type {} not supported".format(type(socket)))
 
         await self.send_ping()
 
@@ -55,17 +55,17 @@ class ClientHandler:
     def __repr__(self):
         return "<{} at {!s}>".format(self.__class__.__name__, self)
     
-	async def send_ws(msg):
+    async def send_ws(msg):
         """Send method to use when the socket is a websocket"""
-		await self.socket.send(msg + "\r\n")
+        await self.socket.send(msg + "\r\n")
 
-	async def send_tcp(msg):
+    async def send_tcp(msg):
         """Send method to use when the socket is a tcp socket"""
-		self.socket.write((msg + "\r\n").encode())
-		await self.socket.drain()
+        self.socket.write((msg + "\r\n").encode())
+        await self.socket.drain()
 
     async def evaluate(data):
-		for line in data.split("\r\n"):
+        for line in data.split("\r\n"):
             for command in self.__class__.commands:
                 match = command.pattern.match(line)
                 if match:
@@ -76,9 +76,9 @@ class ClientHandler:
                     else:
                         logger.warning("Command \"%s\" not available to %d", command.name, self.clienttype)
                         await self.send("error command \"{}\" is not available for you".format(command.name))
-			else:
-				logger.warning("Command \"%s\" from %s didn't match any", line, repr(self))
-				await self.send("error command \"{}\" didn't match any command available".format(line))
+            else:
+                logger.warning("Command \"%s\" from %s didn't match any", line, repr(self))
+                await self.send("error command \"{}\" didn't match any command available".format(line))
     
     async def send_ping(self, value=None):
         """Send a ping request to the client"""
