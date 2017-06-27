@@ -20,26 +20,31 @@ async def tcp_handler(reader, writer):
 		writer.send(message.encode())
 		await writer.drain()
 
-	client = ClientHandler(writer.get_extra_info("peername"), ClientType.user, send)
+	def close():
+		writer.close()
+
+	client = ClientHandler(writer.get_extra_info("peername"), send, close)
 
 	logger.info("New TCP connection from %s", client)
 	while True:
 		try:
 			data = await reader.read(65536).decode()
 		except ConnectionResetError as e:
-			logger.warning("Connection reset by peer %s:%d", client)
+			if not client.closed:
+				logger.warning("Connection reset by peer %s", client)
 			break
 		except:
-			logger.exception("Exception while reading data from %s:%d.", client)
+			if not client.closed:
+				logger.exception("Exception while reading data from %s.", client)
 			break
 
-		logger.debug("Message from %s:%d: %s", client, msg)
+		logger.debug("Message from %s: %s", client, msg)
 		if msg == "":
-			logger.warning("Empty payload from %s:%d. Assume connection closed by peer", client)
+			logger.warning("Empty payload from %s. Assume connection closed by peer", client)
 			break
 
 		client.evaluate(msg)
-		if client.close:
+		if client.closed:
 			break
 		
 	writer.close()
@@ -50,7 +55,10 @@ async def ws_handler(ws, path):
 	async def send(message: str):
 		await ws.send(message)
 
-	client = ClientHandler(ws.remote_address, ClientType.user, send)
+	async def close():
+		await ws.close()
+
+	client = ClientHandler(ws.remote_address, send, close)
 
 	logger.info("New WS connection from %s", client)
 	while True:
@@ -62,6 +70,7 @@ async def ws_handler(ws, path):
 			if data is bytes:
 				data = data.decode()
 		except websockets.exceptions.ConnectionClosed:
+			if not client.closed:
 			logger.warning("Connection closed by peer %s", client)
 			break
 		except:
@@ -69,7 +78,7 @@ async def ws_handler(ws, path):
 			break
 
 		client.evaluate(data)
-		if client.close:
+		if client.closed:
 			break
 
 	await ws.close()
