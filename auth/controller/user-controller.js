@@ -97,7 +97,7 @@ function getResetToken(req, res) {
     user.update({
       u_reset_password_token: token,
       u_reset_expiration: Date.now() + 3600000
-    }).then((rowAffected) => {
+    }).then(rowAffected => {
       // envoi du mail avec le id utilisateur + token
       // title, content, url, action
       const id = user.u_id;
@@ -160,16 +160,16 @@ function resetPasswordForm(req, res) {
     }
 
     // Could change...
-    res.status(200).send('authorization to change your password').redirect('/account/forgot/form');
+    res.status(200).send({id, token}).redirect('/account/forgot/form');
   }).catch(error => {
     res.status(500).json({error});
   });
 }
 
 function resetPassword(req, res) {
-  const {mail, password} = req.body;
+  const {id, token, password} = req.body;
 
-  User.find({wbere: {u_email: mail}}).then(user => {
+  User.find({wbere: {u_id: id, u_reset_password_token: token, u_reset_expiration: {$gte: Date.now()}}}).then(user => {
     if (!user) {
       res.status(404).json({error: "Cette e-mail n'appartient à aucun compte utilisateur."});
       return;
@@ -177,9 +177,9 @@ function resetPassword(req, res) {
 
     hashPassword(password)
     .then(hash => {
-      user.updateAttributes({
+      user.update({
         u_hash: hash
-      }).then(update => {
+      }).then(rowAffected => {
         res.status(200).json({success: 'mot de passe changé avec succès !'});
       }).catch(error => {
         res.status(500).json({error});
