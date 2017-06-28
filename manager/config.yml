@@ -1,0 +1,13 @@
+API_URL: "https://api.webgames."
+
+SERVER_HOST: "0.0.0.0"
+SERVER_TCP_PORT: 4170
+SERVER_WS_PORT: 4171
+
+JWT_EXPIRATION_TIME: "12h"
+
+PING_HEART_BEAT: "1m"
+PING_TIMEOUT: "5s"
+
+SSL_CERT_FILE: "/tmp/cert.pem"
+SSL_KEY_FILE: "/tmp/key.pem"
