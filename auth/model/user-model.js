@@ -63,11 +63,12 @@ function verifyPassword(sentPassword, dbPassword) {
 
 function generateJWT(user) {
   return jwt.sign({
-      _id: user.u_id,
-      username: user.u_name,
+      id: user.u_id,
+      type: 'user',
+      name: user.u_name,
       mail: user.u_email
   }, process.env.SECRET, {
-    expiresIn: '1h',
+    expiresIn: '12h',
     subject: 'webgames'
   });
 }

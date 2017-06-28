@@ -4,7 +4,7 @@ Service de jeux multi-joueur web-friendly
 ## Requirement
 - docker >= 1.11
 - docker-compose
-- node >= 7.5
+- node >= 8.0
 
 ## API EndPoints :
 

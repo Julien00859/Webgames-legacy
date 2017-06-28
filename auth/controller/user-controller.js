@@ -208,10 +208,10 @@ function getCurrentAccount(req, res) {
 }
 
 function updateAccount(req, res) {
-  User.update(req.body, {where: {u_id: req.user._id}, fields: Object.keys(req.body), returning: true}).spread((rowAffected, update) => {
+  User.update(req.body, {where: {u_id: req.user.id}, fields: Object.keys(req.body), returning: true}).spread((rowAffected, update) => {
     // get updated profile
     // could maybe use update value instead search the user in db
-    User.findById(req.user._id).then(user => {
+    User.findById(req.user.id).then(user => {
       const token = generateJWT(user);
       revokeToken(req.user).then(_ => res.status(200).json({token}));
     }).catch(error => res.status(500).send({error: error.toString()}));
@@ -228,7 +228,7 @@ function logout(req, res) {
 }
 
 function unregister(req, res) {
-  User.destroy({where: {u_id: req.user._id}}).then(rowAffected => {
+  User.destroy({where: {u_id: req.user.id}}).then(rowAffected => {
     res.status(200).json({success: 'désinscription faite !'});
   }).catch(error => res.status(500).send({error}));
 }
