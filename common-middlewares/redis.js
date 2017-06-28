@@ -5,8 +5,9 @@ const redis = session({
   secret: process.env.SECRET,
   name: 'local',
   store: new RedisStore({
-    host: '127.0.0.1',
-    port: 6379
+    host: process.env.REDIS_HOST,
+    port: 6379,
+    db: 1
   }),
   proxy: false,
   resave: false,
