@@ -10,7 +10,7 @@ const {promisify} = require('util');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Sequelize = require('sequelize');
-const sequelize = require('../postgres');
+const sequelize = require('../../postgres');
 
 const User = sequelize.define('user', {
   u_id: {

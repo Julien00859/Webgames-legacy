@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const sequelize = require('../postgres');
+const sequelize = require('../../postgres');
 
 const Game = sequelize.define('game', {
   g_name: {
