@@ -1,35 +1,46 @@
 from collections import namedtuple, deque
+from datetime import datetime
 from logging import getLogger
-import asyncio
 from random import randint
 from time import time
-import re
 from typing import get_type_hints
+import asyncio
+import re
+
 import jwt
+
+from config import *
 
 logger = getLogger(__name__)
 Ping = namedtuple("Ping", ["value", "time_sent"])
 Command = namedtuple("Command", ["restricted_to", "pattern"])
 command_re = re.compile("[\w-]+\.[\w-]+\.[\w-]+ \w+( .*)?")
 commands = {
-    "quit":     Command(None, re.compile("(?P<reason>.*))?")),
+    "quit":     Command(None, re.compile("(?P<reason>.*)?")),
     "ping":     Command(None, re.compile("(?P<value>[0-9]+)")),
     "pong":     Command(None, re.compile("(?P<value>[0-9]+)")),
 
-    "add":      Command("api", re.compile("(<?P<game>\S+)")),
-    "remove":   Command("api", re.compile("(<?P<game>\S+)"))
+    "add":      Command("api", re.compile("(?P<game>\S+)")),
+    "remove":   Command("api", re.compile("(?P<game>\S+)")),
     "enable":   Command("api", re.compile("(?P<game>\S+)")),
-    "disable":  Command("api", re.compile("(?P<game>\S+")),
+    "disable":  Command("api", re.compile("(?P<game>\S+)")),
 
-    "join":     Command("user", re.compile("(?P<queue>\S+")),
-    "leave":    Command("user", re.compile("(?P<queue>\S+"))
+    "join":     Command("user", re.compile("(?P<queue>\S+)")),
+    "leave":    Command("user", re.compile("(?P<queue>\S+)"))
+}
+
+jwt_claims = lambda: {
+    "iss": "manager",
+    "sub": "webgames",
+    "iat": datetime.utcnow(), 
+    "exp": datetime.utcnow() + JWT_EXPIRATION_TIME
 }
 
 class ClientHandler:
     def __init__(self, peername, sendfunc, closefunc, loop=None):
         """Initiate a new client with its socket and peername"""
         self.peername = peername
-		self.send = sendfunc
+        self.send = sendfunc
         self.close = closefunc
 
         self.loop = loop if loop is not None else asyncio.get_event_loop()
@@ -41,12 +52,15 @@ class ClientHandler:
         self.delais = deque(maxlen=10)
 
         self.call_laters = {
-            "ping" = self.loop.call_soon(self.send_ping)
+            "ping": self.loop.create_task(self.send_ping())
         }
 
     def __str__(self):
-        return "{type} {name}#{id} at {host}:{port}".format(
-            self.jwt["type"].title(),
+        if self.jwt is None:
+            return "undefined client at {}:{}".format(*self.peername)
+
+        return "{} {}#{} at {}:{}".format(
+            self.jwt["type"],
             self.jwt["name"],
             self.jwt["id"],
             *self.peername)
@@ -66,13 +80,14 @@ class ClientHandler:
                 self.jwt = jwt.decode(jwt_payload)
             except Exception as e:
                 await self.kick(e.message)
+                return
 
-            if command not in commands
+            if command not in commands:
                 logger.warning("%s sent an unknown command: %s", str(self), line)
                 await self.send("error command \"{}\" not found\r\n".format(line))
                 continue
 
-            if commands[command].restricted_to not in [None, jwt.clienttype]:
+            if commands[command].restricted_to not in [None, jwt.type]:
                 logger.warning("%s tried to use the command \"%s\"", str(self), command)
                 await self.send("error command \"{}\" is not available for you\r\n".format(command))
                 continue
@@ -84,7 +99,13 @@ class ClientHandler:
                 continue
 
             func = getattr(self, command)
-            await func(jwt, **{key: get_type_hints(func)[key](value) if value is not None else "" for key, value in match.groupdict().items()})
+            kwargs = {key: get_type_hints(func)[key](value) if value is not None else "" for key, value in match.groupdict().items()}
+            logger.debug("Call %s with args %s", str(func), str(kwargs))
+            if asyncio.iscoroutinefunction(func):
+                await func(**kwargs)
+            else:
+                func(**kwargs)
+
     
     async def send_ping(self, value=None):
         """Send a ping request to the client"""
@@ -94,8 +115,11 @@ class ClientHandler:
         if value is None:
             value = randint(1000, 9999)
         self.ping = Ping(value, time())
+
+        logger.debug("Send ping to %s", str(self))
         await self.send("ping {}\r\n".format(value))
 
+        logger.debug("Schedule kick for ping timeout in ")
         self.call_laters["kick"] = self.loop.call_later(30, self.kick, "ping timeout")
 
     async def kick(self, reason: str=""):
