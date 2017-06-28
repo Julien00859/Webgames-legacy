@@ -10,4 +10,4 @@ socket.connect(SOCKET_PORT, SOCKET_HOST, _ => {
 
 socket.on('end', _ => console.log('[WebGames] TCP Socket disconnected.'));
 
-module.exports = server;
+module.exports = socket;

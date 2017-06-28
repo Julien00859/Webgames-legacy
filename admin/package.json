@@ -1,24 +1,25 @@
 {
-  "name": "webgames-queue",
+  "name": "webgames-admin",
   "version": "1.0.0",
-  "description": "Webgames - api pour la file d'attente",
+  "description": "Webgames api - admin",
   "main": "index.js",
   "scripts": {
     "bump": "npm version patch",
     "test": "mocha test",
     "server": "nodemon index.js"
   },
+  "keywords": [
+    "admin"
+  ],
   "repository": "git@github.com:EPHEC-TI/WebGames.git",
   "author": "Mathieu-R <mathieu0709@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "adaro": "^1.0.4",
     "body-parser": "^1.17.2",
-    "connect-redis": "^3.3.0",
-    "dotenv": "^4.0.0",
+    "compression": "^1.6.2",
     "express": "^4.15.3",
-    "express-jwt": "^5.3.0",
-    "express-session": "^1.15.3",
-    "express-validator": "^3.2.0",
-    "sequelize": "^4.2.0"
+    "sequelize": "^4.2.0",
+    "serve-static": "^1.12.3"
   }
 }
