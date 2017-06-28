@@ -16,12 +16,6 @@ const Game = sequelize.define('game', {
   },
   g_executable: {
     type: Sequelize.STRING
-  },
-  g_tcp_port_count: {
-    type: Sequelize.INTEGER
-  },
-  g_udp_port_count: {
-    type: Sequelize.INTEGER
   }
 });
 

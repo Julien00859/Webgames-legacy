@@ -1,0 +1,14 @@
+{
+  "name": "webgames-queue",
+  "version": "1.0.0",
+  "description": "Webgames - api pour la file d'attente",
+  "main": "index.js",
+  "scripts": {
+    "bump": "npm version patch",
+    "test": "mocha test",
+    "server": "nodemon index.js"
+  },
+  "repository": "git@github.com:EPHEC-TI/WebGames.git",
+  "author": "Mathieu-R <mathieu0709@gmail.com>",
+  "license": "MIT"
+}
