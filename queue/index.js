@@ -13,7 +13,6 @@ const dotenv = require('dotenv').config({
 
 const app = express();
 const router = express.Router();
-const PORT = process.env.PORT || 5001;
 postgres.sync();
 
 router.use(bodyParser.json());
@@ -32,9 +31,5 @@ router.post('/api/queue/command', jwt, onSocketCommand);
 router.delete('/api/queue/remove', jwt, removeGame);
 
 app.use(router);
-
-http.createServer(app).listen(PORT, _ => {
-  console.log(`[WebGames] API listening on http://localhost:${PORT}`);
-});
 
 module.exports = app;

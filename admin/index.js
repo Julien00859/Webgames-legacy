@@ -8,9 +8,11 @@ const compression = require('compression');
 const serveStatic = require('serve-static');
 const app = express();
 const router = express.Router();
+const jwt = require('../common-middlewares/jwt');
+const jwtAdmin = require('../commom-middlewares/admin');
+const {getAllGames} = require('./controller/admin-controller');
 
 const production = process.env.NODE_ENV === 'production';
-const PORT = process.env.PORT || 5002;
 const staticPath = './static';
 const templatePath = './template';
 
@@ -51,12 +53,8 @@ router.get('/login', (req, res) => {
 router.get('/admin', jwt, (req, res) => {
   res.status(200).render('sections/admin',
   Object.assign(viewOptions, {
-    // db info
+    games: getAllGames()
   }));
-});
-
-http.createServer(app).listen(PORT, _ => {
-  console.log(`[WebGames] Admin page running on http://localhost:${PORT}`);
 });
 
 app.use(router);

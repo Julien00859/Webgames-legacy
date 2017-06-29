@@ -1,19 +1,25 @@
 {
-  "name": "webgames-auth",
+  "name": "webgames-api",
   "version": "1.0.0",
-  "description": "auth for webgames",
-  "main": "index.js",
+  "description": "Webgames api",
+  "main": "server.js",
   "scripts": {
     "bump": "npm version patch",
-    "test": "mocha test",
-    "server": "nodemon index.js"
+    "test-auth": "mocha auth/test",
+    "server": "nodemon server.js"
   },
+  "keywords": [
+    "webgames",
+    "api"
+  ],
   "repository": "git@github.com:EPHEC-TI/WebGames.git",
   "author": "Mathieu-R <mathieu0709@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "adaro": "^1.0.4",
     "bcrypt": "^1.0.2",
     "body-parser": "^1.17.2",
+    "compression": "^1.6.2",
     "connect-redis": "^3.3.0",
     "es6-promisify": "^5.0.0",
     "express": "^4.15.3",
@@ -28,7 +34,8 @@
     "passport-local": "^1.0.0",
     "pg": "^6.2.4",
     "pg-hstore": "^2.3.2",
-    "sequelize": "^4.1.0"
+    "sequelize": "^4.2.0",
+    "serve-static": "^1.12.3"
   },
   "devDependencies": {
     "chai": "^4.0.2",

@@ -1,6 +1,7 @@
 /*
 User
 u_id
+u_admin
 u_name
 u_email
 u_hash
@@ -75,6 +76,29 @@ function login(req, res) {
 
     if (!user) {
       return res.status(404).json({error: `utilisateur (${username}) non trouvé / mauvais mot de passe.`});
+    }
+
+    const token = generateJWT(user);
+    res.status(200).json({token});
+    //return res.redirect('/');
+  })(req, res);
+}
+
+function loginAdmin(req, res) {
+  const {username, password} = req.body;
+
+  passport.authenticate('local',
+    {successRedirect: '/admin', failureRedirect: '/login'}, (error, user) => {
+    if (error) {
+      return res.status(500).json({error});
+    }
+
+    if (!user) {
+      return res.status(404).json({error: `utilisateur (${username}) non trouvé / mauvais mot de passe.`});
+    }
+
+    if (!user.u_admin) {
+      return res.status(404).json({error: `admin only !`});
     }
 
     const token = generateJWT(user);
@@ -236,6 +260,7 @@ function unregister(req, res) {
 module.exports = {
   register,
   login,
+  loginAdmin,
   resetPasswordForm,
   resetPassword,
   getResetToken,

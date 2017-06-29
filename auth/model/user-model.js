@@ -19,6 +19,11 @@ const User = sequelize.define('user', {
     defaultValue: Sequelize.UUIDV4,
     allowNull: false
   },
+  u_admin {
+    type: Sequelize.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
   u_name: {
     type: Sequelize.STRING(24),
     allowNull: false,
@@ -64,6 +69,7 @@ function verifyPassword(sentPassword, dbPassword) {
 function generateJWT(user) {
   return jwt.sign({
       id: user.u_id,
+      admin: user.u_admin,
       type: 'user',
       name: user.u_name,
       mail: user.u_email

@@ -6,12 +6,12 @@ const Game = sequelize.define('game', {
     primaryKey: true,
     type: Sequelize.STRING(24)
   },
-  g_enabled: {
+  g_status: {
     type: Sequelize.BOOLEAN,
     allowNull: false,
     defaultValue: true
   },
-  g_directory: {
+  g_path: {
     type: Sequelize.STRING
   },
   g_executable: {

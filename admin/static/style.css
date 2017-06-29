@@ -1,0 +1,81 @@
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+.game {
+  height: 200px;
+  width: 100%;
+  padding: 10px 20px
+}
+
+.game::before {
+  content: '';
+  display: block;
+  margin: 0 auto;
+  height: 2px;
+  width: 90%;
+}
+
+.game-name {
+  font-size: 24px;
+}
+
+.game-path, .game-executable {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  border: none;
+  box-shadow: inset 2px 2px 2px rgba(0,0,0,0.3);
+  border-radius: 3px;
+}
+
+.toggle-switch {
+  position: relative;
+}
+
+.toggle-switch .toggle-switch-rectangle {
+  background: #ccc;
+  border-radius: 5px;
+  height: 5px;
+  width: 20px;
+}
+
+.toggle-switch .toggle-switch-round {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 7px;
+  width: 7px;
+  background: #ddd;
+  border-radius: 50%;
+}
+
+.toggle-switch .toggle-switch-round.activated {
+  background: #388E3C;
+  transform: translateX(100%);
+  animation-name: toggle-switch-pop;
+  animation-duration: 0.5s;
+  animation-fill-mode: linear;
+}
+
+.game-update {
+  height: 50px;
+  width: 200px;
+  border-radius: 3px;
+  background: #388E3C;
+  border: none;
+}
+
+@keyframes toggle-switch-pop {
+  0% {
+    transform: translateX(100%) scale(1);
+  }
+
+  50% {
+    transform: translateX(100%) scale(1.1);
+  }
+
+  100% {
+    transform: translateX(100%) scale(1);
+  }
+}
