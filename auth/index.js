@@ -1,50 +1,23 @@
 const http = require('http');
 const express = require('express');
 const path = require('path');
-const bodyParser = require('body-parser');
-const postgres = require('../postgres');
-const validator = require('express-validator');
-const redis = require('../common-middlewares/redis');
-const passport = require('passport');
-const blacklist = require('express-jwt-blacklist');
 const jwt = require('../common-middlewares/jwt');
 const {validateLogin, validateRegister, validateForgot, validateReset} = require('./middlewares/validator');
 const {register, login, loginAdmin, resetPasswordForm, resetPassword, getResetToken, getCurrentAccount, getAccount, updateAccount, logout, unregister} = require('./controller/user-controller');
-const dotenv = require('dotenv').config({
-  path: path.resolve(__dirname, '..')
-});
-
 const app = express();
 const router = express.Router();
-postgres.sync();
 
-router.use(passport.initialize());
-router.use(bodyParser.json());
-router.use(validator());
-router.use(bodyParser.urlencoded({
-  extended: true
-}));
-
-router.use(redis);
-
-blacklist.configure({
-  store: {
-    type: 'redis'
-  }
-});
-
-router.get('/check', (_, res) => res.send('api server ok.'));
-router.get('/api/account', jwt, getCurrentAccount);
-router.get('/api/account/reset', resetPasswordForm);
-router.get('/api/account/:id', getAccount);
-router.post('/api/register', validateRegister, register);
-router.post('/api/login', validateLogin, login);
-router.post('/api/login/admin', validateLogin, loginAdmin);
-router.post('/api/forgot', validateForgot, getResetToken);
-router.put('/api/account/reset', validateReset, resetPassword);
-router.put('/api/account/update', jwt, updateAccount);
-router.delete('/api/logout', jwt, logout);
-router.delete('/api/account/unregister', jwt, unregister);
+router.get('/account', jwt, getCurrentAccount);
+router.get('/account/reset', resetPasswordForm);
+router.get('/account/:id', getAccount);
+router.post('/register', validateRegister, register);
+router.post('/login', validateLogin, login);
+router.post('/login/admin', validateLogin, loginAdmin);
+router.post('/forgot', validateForgot, getResetToken);
+router.put('/account/reset', validateReset, resetPassword);
+router.put('/account/update', jwt, updateAccount);
+router.delete('/logout', jwt, logout);
+router.delete('/account/unregister', jwt, unregister);
 
 app.use(router);
 

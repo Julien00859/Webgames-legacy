@@ -44,18 +44,18 @@ router.use((err, req, res, next) => {
 
 // routes
 // login is handled by auth api.
-router.get('/', (req, res) => res.redirect('/admin'));
-
-router.get('/login', (req, res) => {
-  res.status(200).render('sections/login');
-});
-
-router.get('/admin', jwt, (req, res) => {
+router.get('/', jwt, jwtAdmin, (req, res) => {
   res.status(200).render('sections/admin',
   Object.assign(viewOptions, {
     games: getAllGames()
   }));
 });
+
+router.get('/login', (req, res) => {
+  res.status(200).render('sections/login');
+});
+
+
 
 app.use(router);
 
