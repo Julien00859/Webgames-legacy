@@ -4,7 +4,7 @@ const sequelize = require('../../postgres');
 const Game = sequelize.define('game', {
   g_name: {
     primaryKey: true,
-    type: Sequelize.STRING(24)
+    type: Sequelize.STRING(50)
   },
   g_status: {
     type: Sequelize.BOOLEAN,

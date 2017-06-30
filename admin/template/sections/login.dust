@@ -1,0 +1,14 @@
+{>"base"/}
+
+{<section}
+<div class="login-container">
+  <div class="login-modal">
+    <h1>Admin</h1>
+    <form>
+      <input type="text" class="user" placeholder="admin...">
+      <input type="password" class="password" placeholder="mot de passe">
+    </form>
+    <button type="submit" class="submit-login">LOGIN</button>
+  </div>
+</div>
+{/section}

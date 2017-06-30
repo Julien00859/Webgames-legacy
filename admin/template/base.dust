@@ -26,5 +26,13 @@
   <body>
     {+section/}
     <script defer src="{script}"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/admin/sw.js', {scope: '/admin/'})
+          .then(reg => console.log('[SW] Ready for offline-first.'))
+          .catch(error => console.error(error));
+      }
+    </script>
+
   </body>
 </html>

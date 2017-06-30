@@ -19,7 +19,7 @@ const User = sequelize.define('user', {
     defaultValue: Sequelize.UUIDV4,
     allowNull: false
   },
-  u_admin {
+  u_admin: {
     type: Sequelize.BOOLEAN,
     allowNull: false,
     defaultValue: false

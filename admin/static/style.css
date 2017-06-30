@@ -1,69 +1,130 @@
-.content {
+.login-container {
+  height: 100%;
   display: flex;
+  justify-content: center;
+  align-items: center;
   flex-direction: column;
 }
 
-.game {
-  height: 200px;
-  width: 100%;
-  padding: 10px 20px
+.admin-container {
+
 }
 
-.game::before {
-  content: '';
-  display: block;
-  margin: 0 auto;
-  height: 2px;
-  width: 90%;
+.login-modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 3px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
+  width: 300px;
+}
+
+.login-modal form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+}
+
+.login-modal h1 {
+
+}
+
+.login-modal .user, .login-modal .password {
+  width: 100%;
+  height: 40px;
+  border-radius: 3px;
+  margin: 5px 0;
+  padding-left: 10px;
+  box-shadow: inset 1px 1px 0px 0px rgba(0, 0, 0, 0.3);
+  border: 1px solid lightgray;
+  font-size: 16px;
+}
+
+
+.login-modal .submit-login {
+
+}
+
+.admin-title {
+  text-align: center;
+}
+
+.game {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  padding: 10px 20px;
+  margin: 5px 0;
 }
 
 .game-name {
   font-size: 24px;
+  width: 200px;
 }
 
 .game-path, .game-executable {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 18px;
+  font-size: 16px;
+  color: #555;
+  padding-left: 5px;
+  margin: 0 5px;
+  height: 40px;
   border: none;
   box-shadow: inset 2px 2px 2px rgba(0,0,0,0.3);
   border-radius: 3px;
 }
 
+.game-update {
+  font-size: 18px;
+  font-family: Helvetica;
+  color: #FFF;
+  height: 50px;
+  width: 150px;
+  border-radius: 3px;
+  background: #283593;
+  border: none;
+}
+
 .toggle-switch {
   position: relative;
+  outline: none;
 }
 
 .toggle-switch .toggle-switch-rectangle {
-  background: #ccc;
+  background: #939393;
   border-radius: 5px;
-  height: 5px;
-  width: 20px;
+  height: 10px;
+  width: 30px;
 }
 
 .toggle-switch .toggle-switch-round {
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 7px;
-  width: 7px;
-  background: #ddd;
+  top: -5px;
+  left: -5px;
+  height: 20px;
+  width: 20px;
+  background: #FAFAFA;
   border-radius: 50%;
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
+  transition: transform 0.3s cubic-bezier(0,0,0.3,1);
+  will-change: transform;
 }
 
-.toggle-switch .toggle-switch-round.activated {
-  background: #388E3C;
+.toggle-switch.enabled .toggle-switch-rectangle {
+  background: #5C6BC0;
+}
+
+.toggle-switch.enabled .toggle-switch-round {
+  background: #283593;
   transform: translateX(100%);
   animation-name: toggle-switch-pop;
   animation-duration: 0.5s;
-  animation-fill-mode: linear;
-}
-
-.game-update {
-  height: 50px;
-  width: 200px;
-  border-radius: 3px;
-  background: #388E3C;
-  border: none;
+  animation-iteration-count: linear;
 }
 
 @keyframes toggle-switch-pop {
