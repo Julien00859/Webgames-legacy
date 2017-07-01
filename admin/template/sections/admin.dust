@@ -6,7 +6,7 @@
   {#games}
   <div class="game">
     <h2 class="game-name">{g_name}</h2>
-    <form class="game-form">
+    <form method="put" action="/admin/update" class="game-form">
       <input type="text" name="g_path" class="game-path" value={g_path}>
       <input type="text" name="g_executable" class="game-executable" value={g_executable}>
       <button type="submit" class="game-update" tabindex="0">update</button>

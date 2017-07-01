@@ -14,7 +14,7 @@ class Admin {
 
     const {g_path, g_executable} = evt.target;
 
-    fetch('/api/admin/update', {
+    fetch('/admin/update', {
       method: 'post',
       body: {
         g_path,
@@ -33,10 +33,10 @@ class Admin {
     target.classList.toggle('enabled');
     target.dataset.enabled = !isEnabled;
 
-    fetch('/api/admin/status', {
+    fetch('/admin/update', {
       method: 'post',
       body: {
-        enabled: !isEnabled
+        g_status: !isEnabled
       }
     }).then(response => {
       console.log('status changé');
@@ -44,7 +44,7 @@ class Admin {
   }
 
   addEventListeners() {
-    this.gamesUpdate.forEach(gameUpdate => gameUpdate.addEventListener('submit', this.updateGame));
+    //this.gamesUpdate.forEach(gameUpdate => gameUpdate.addEventListener('submit', this.updateGame));
     this.gamesStatus.forEach(gameStatus => gameStatus.addEventListener('click', this.toggleStatus));
   }
 }

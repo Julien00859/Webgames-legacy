@@ -4,7 +4,7 @@
 <div class="login-container">
   <div class="login-modal">
     <h1>Admin</h1>
-    <form>
+    <form method="post" action"/auth/login/admin">
       <input type="text" class="user" placeholder="admin...">
       <input type="password" class="password" placeholder="mot de passe">
     </form>
