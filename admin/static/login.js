@@ -12,8 +12,6 @@ class Login {
     const username = evt.target.username.value;
     const password = evt.target.password.value;
 
-    console.log(JSON.stringify({username, password}));
-
     fetch('/auth/login/admin', {
       method: 'POST',
       body: JSON.stringify({
