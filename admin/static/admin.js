@@ -12,40 +12,61 @@ class Admin {
   updateGame(evt) {
     evt.preventDefault();
 
-    const {g_path, g_executable} = evt.target;
+    const g_path = evt.target.g_path;
+    const g_executable = evt.target.g_executable;
 
     fetch('/admin/update', {
-      method: 'post',
-      body: {
+      method: 'put',
+      headers: {
+        'authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({
+        g_name,
         g_path,
         g_executable
-      }
-    }).then(response => {
-      console.log('jeu mis à jour');
-    }).catch(error => console.error(error));
+      })
+    }).then(response => response.json())
+      .then(response => Toast.Push(response.success))
+      .catch(error => console.error(error));
   }
 
   toggleStatus(evt) {
-    console.log(evt)
-    const target = evt.currentTarget;
-    const isEnabled = target.dataset.enabled;
-
-    target.classList.toggle('enabled');
-    target.dataset.enabled = !isEnabled;
+    const target = evt.currentTarget.querySelector('.toggle-switch-checkbox');
 
     fetch('/admin/update', {
-      method: 'post',
-      body: {
-        g_status: !isEnabled
-      }
-    }).then(response => {
-      console.log('status changé');
-    }).catch(error => console.error(error));
+      method: 'put',
+      headers: {
+        'authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({
+        g_name : target.name,
+        g_status: target.checked
+      })
+    }).then(response => response.json())
+      .then(response => Toast.Push(response.success))
+      .catch(error => console.error(error));
   }
 
   addEventListeners() {
-    //this.gamesUpdate.forEach(gameUpdate => gameUpdate.addEventListener('submit', this.updateGame));
-    this.gamesStatus.forEach(gameStatus => gameStatus.addEventListener('click', this.toggleStatus));
+    this.gamesUpdate.forEach(gameUpdate => gameUpdate.addEventListener('submit', this.updateGame));
+    //this.gamesStatus.forEach(gameStatus => gameStatus.addEventListener('click', this.toggleStatus));
+  }
+}
+
+class Toast {
+  static Push(message, options = {duration: 3000}) {
+    const container = document.querySelector('.toast-container');
+    const toast = document.createElement('div');
+    const toastContent = document.createElement('p');
+    toast.classList.add('toast');
+    toastContent.classList.add('toast-content');
+    toastContent.textContent = message;
+
+    container.appendChild(toast);
+    toast.appendChild(toastContent);
+
+    setTimeout(() => toast.classList.add('hide'), options.duration);
+    toast.addEventListener('transitionend', evt => evt.target.parentNode.removeChild(evt.target));
   }
 }
 

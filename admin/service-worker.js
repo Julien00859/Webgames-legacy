@@ -5,6 +5,7 @@ const static = [
   '/admin/login',
   '/admin/static/admin.js',
   '/admin/static/login.js',
+  '/admin/static/lib/idb-keyval-min.js',
   '/admin/static/style.css'
 ];
 

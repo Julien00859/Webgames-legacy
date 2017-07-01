@@ -50,7 +50,7 @@ router.use((err, req, res, next) => {
 
 // routes
 // login is handled by auth api.
-router.get('/', /*jwt, jwtAdmin,*/ (req, res) => {
+router.get('/',/*jwtAdmin,*/ (req, res) => {
   Game.findAll().then(games => {
     if (!games) {
       res.status(404).send({error: "Aucun jeux n'existe..."});
@@ -74,7 +74,7 @@ router.get('/login', (req, res) => {
   }));
 });
 
-router.put('/update', updateGame);
+router.put('/update', jwt, jwtAdmin, updateGame);
 
 app.use(router);
 

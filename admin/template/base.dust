@@ -25,6 +25,7 @@
   </style>
   <body>
     {+section/}
+    <div class="toast-container"></div>
     <script defer src="{script}"></script>
     <script>
       if ('serviceWorker' in navigator) {

@@ -4,11 +4,11 @@
 <div class="login-container">
   <div class="login-modal">
     <h1>Admin</h1>
-    <form method="post" action"/auth/login/admin">
-      <input type="text" class="user" placeholder="admin...">
-      <input type="password" class="password" placeholder="mot de passe">
+    <form class="login-form">
+      <input type="text" class="user" name="username" placeholder="admin..." required>
+      <input type="password" class="password" name="password" placeholder="mot de passe" required>
+      <button type="submit" class="submit-login" >LOGIN</button>
     </form>
-    <button type="submit" class="submit-login">LOGIN</button>
   </div>
 </div>
 {/section}

@@ -5,16 +5,16 @@
   <h1 class="admin-title">WebGames - Admin page</h1>
   {#games}
   <div class="game">
-    <h2 class="game-name">{g_name}</h2>
-    <form method="put" action="/admin/update" class="game-form">
-      <input type="text" name="g_path" class="game-path" value={g_path}>
-      <input type="text" name="g_executable" class="game-executable" value={g_executable}>
+    <form class="game-form">
+      <h2 class="game-name">{g_name}</h2>
+      <input type="text" name="g_path" class="game-path" value={g_path} required>
+      <input type="text" name="g_executable" class="game-executable" value={g_executable} required>
       <button type="submit" class="game-update" tabindex="0">update</button>
     </form>
-    <div class="game-toggle-status toggle-switch" role="button" tabindex="-1" data-enabled={g_status}>
-      <div class="toggle-switch-rectangle"></div>
-      <div class="toggle-switch-round"></div>
-    </div>
+    <label for="status" class="game-toggle-status toggle-switch" role="button" tabindex="-1">
+    <input id="status" type="checkbox" class="toggle-switch-checkbox" name="{g_name}" {?g_status}checked{/g_status}>
+      Status
+    </label>
   </div>
   {/games}
 </div>
