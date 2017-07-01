@@ -22,7 +22,7 @@ class Login {
     }).then(response => response.json())
       .then(response => {
         if (response.error) {
-          Toast.Push(response.error.join('')); /// to change :)
+          Toast.Push(response.error); /// to change :)
           return;
         }
         this.saveToken(response.token)
