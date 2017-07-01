@@ -18,6 +18,7 @@ class Admin {
     fetch('/admin/update', {
       method: 'put',
       headers: {
+        'Content-Type': 'application/json',
         'authorization': `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify({
@@ -36,6 +37,7 @@ class Admin {
     fetch('/admin/update', {
       method: 'put',
       headers: {
+        'Content-Type': 'application/json',
         'authorization': `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify({

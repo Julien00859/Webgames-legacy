@@ -14,6 +14,7 @@ class Login {
 
     fetch('/auth/login/admin', {
       method: 'POST',
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         username,
         password
@@ -24,13 +25,12 @@ class Login {
           Toast.Push(response.error.join('')); /// to change :)
           return;
         }
-        saveToken(response.token)
+        this.saveToken(response.token)
       })
       .catch(error => console.error(error));
   }
 
   saveToken(token) {
-    console.log(token);
     localStorage.setItem('token', token);
   }
 
