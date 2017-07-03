@@ -9,12 +9,13 @@ import ssl
 import aiohttp
 import uvloop
 import websockets
+import aioredis
 
 from clients_handler import ClientHandler
 from config import *
+from database import connect
 
 logger = logging.getLogger(__name__)
-
 
 async def tcp_handler(reader, writer):
 
@@ -127,6 +128,15 @@ def main():
                                ssl=sc if SSL else None,
                                loop=loop)
     ws_server = loop.run_until_complete(ws_coro)
+
+    # Connect databases
+    logger.info("Connect to %s Redis Server at %s:%d on database %d %s password",
+                "Secure" if SSL else "Insecure",
+                REDIS_HOST, 
+                REDIS_PORT,
+                REDIS_DATABASE
+                "without" if REDIS_PASSWORD is None else "using")
+    connect(sc if SSL else None, loop)
 
     # Handle SIGTERM
     stop = asyncio.Future()

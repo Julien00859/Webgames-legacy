@@ -11,16 +11,9 @@ from itertools import count
 import jwt
 
 from config import *
+from tools import *
 
 counter = count()
-
-async def call_later_coro(timeout, coro, *args, **kwargs):
-    call_id = next(counter)
-    logger.debug("Schedule async call for %s with args %s %s in %d secondes (Call ID #%d)", coro, args, kwargs, timeout, call_id)
-    await asyncio.sleep(timeout)
-    logger.debug("Await call ID #%d", call_id)
-    await coro(*args, **kwargs)
-    logger.debug("Call ID #%d awaited", call_id)
 
 logger = getLogger(__name__)
 Ping = namedtuple("Ping", ["value", "time_sent"])
@@ -37,9 +30,10 @@ commands = {
     "disable":  Command("api", re.compile("(?P<game>\S+)")),
 
     "join":     Command("user", re.compile("(?P<queue>\S+)")),
-    "leave":    Command("user", re.compile("(?P<queue>\S+)"))
-}
+    "leave":    Command("user", re.compile("(?P<queue>\S+)")),
 
+    "gameover": Command("game", re.compile("(?<gameid>[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12})"))
+}
 jwt_claims = lambda: {
     "iss": "manager",
     "sub": "webgames",
@@ -110,7 +104,7 @@ class ClientHandler:
                 continue
 
             func = getattr(self, command)
-            kwargs = {key: get_type_hints(func)[key](value) if value is not None else "" for key, value in match.groupdict().items()}
+            kwargs = cast_using_type_hints(get_type_hints(func), match.groupdict())
             logger.debug("Call %s with args %s", str(func), str(kwargs))
             if asyncio.iscoroutinefunction(func):
                 await func(**kwargs)
@@ -186,7 +180,7 @@ class ClientHandler:
         pass
 
     async def join(self, queue: str):
-        pass
+        # redis
 
     async def leave(self, queue: str):
         pass

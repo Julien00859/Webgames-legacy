@@ -15,7 +15,9 @@ config_cast = {
     "JWT_EXPIRATION_TIME": lambda value: timedelta(seconds=timeparse(value)),
     "PING_TIMEOUT": timeparse,
     "PING_HEARTBEAT": timeparse,
-    "SSL": bool
+    "SSL": bool,
+    "REDIS_PORT": int,
+    "REDIS_DATABASE": int
 }
 
 for key, value in config_file.items():
