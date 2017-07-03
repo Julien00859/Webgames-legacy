@@ -45,7 +45,7 @@ async def tcp_handler(reader, writer):
             logger.warning("Empty payload from %s. Assume connection closed by peer", str(client))
             break
 
-        client.evaluate(msg)
+        await client.evaluate(msg)
         if client.closed:
             break
         
@@ -79,7 +79,7 @@ async def ws_handler(ws, path):
             logger.exception("Exception while reading data from %s.", str(client))
             break
 
-        client.evaluate(data)
+        await client.evaluate(data)
         if client.closed:
             break
 
@@ -91,7 +91,7 @@ def main():
     # Setup logging
     logging.root.level = logging.NOTSET
     stdout = logging.StreamHandler()
-    stdout.level = getattr(logging, environ.get("LOG_LEVEL", "DEBUG"))
+    stdout.level = LOG_LEVEL
     stdout.formatter =  logging.Formatter(
         "{asctime} [{levelname}] <{name}:{funcName}> {message}", style="{")
     logging.root.addHandler(stdout)
@@ -101,16 +101,31 @@ def main():
     loop = asyncio.get_event_loop()
 
     # Setup SSL
-    sc = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    sc.load_cert_chain(SSL_CERT_FILE, SSL_KEY_FILE)
+    if SSL:
+        sc = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        sc.load_cert_chain(SSL_CERT_FILE, SSL_KEY_FILE)
 
     # Setup servers
-    logger.info("Init Secure TCP Server on %s:%d", SERVER_HOST, SERVER_TCP_PORT)
-    tcp_coro = asyncio.start_server(tcp_handler, SERVER_HOST, SERVER_TCP_PORT, ssl=sc, loop=loop)
+    logger.info("Init %s TCP Server on %s:%d", 
+                "Secure" if SSL else "Insecure",
+                SERVER_HOST, 
+                SERVER_TCP_PORT)
+    tcp_coro = asyncio.start_server(tcp_handler,
+                                    SERVER_HOST, 
+                                    SERVER_TCP_PORT, 
+                                    ssl=sc if SSL else None, 
+                                    loop=loop)
     tcp_server = loop.run_until_complete(tcp_coro)
 
-    logger.info("Init Secure WebSocket Server on %s:%d", SERVER_HOST, SERVER_WS_PORT)
-    ws_coro = websockets.serve(ws_handler, SERVER_HOST, SERVER_WS_PORT, loop=loop)
+    logger.info("Init %s WebSocket Server on %s:%d", 
+                "Secure" if SSL else "Insecure",
+                SERVER_HOST, 
+                SERVER_WS_PORT)
+    ws_coro = websockets.serve(ws_handler,
+                               SERVER_HOST,
+                               SERVER_WS_PORT,
+                               ssl=sc if SSL else None,
+                               loop=loop)
     ws_server = loop.run_until_complete(ws_coro)
 
     # Handle SIGTERM

@@ -6,10 +6,21 @@ from time import time
 from typing import get_type_hints
 import asyncio
 import re
+from itertools import count
 
 import jwt
 
 from config import *
+
+counter = count()
+
+async def call_later_coro(timeout, coro, *args, **kwargs):
+    call_id = next(counter)
+    logger.debug("Schedule async call for %s with args %s %s in %d secondes (Call ID #%d)", coro, args, kwargs, timeout, call_id)
+    await asyncio.sleep(timeout)
+    logger.debug("Await call ID #%d", call_id)
+    await coro(*args, **kwargs)
+    logger.debug("Call ID #%d awaited", call_id)
 
 logger = getLogger(__name__)
 Ping = namedtuple("Ping", ["value", "time_sent"])
@@ -70,16 +81,16 @@ class ClientHandler:
             match = command_re.match(line)
             if not match:
                 logger.warning("Syntax error for line: %s", line)
-                await self.send("error syntax error for line: %s", line)
+                await self.send("error syntax error for line: " + line)
                 continue
 
             jwt_payload, command, args = line.split(" ", 2)
             args = args if args else ""
 
             try:
-                self.jwt = jwt.decode(jwt_payload)
+                self.jwt = jwt.decode(jwt_payload, JWT_SECRET)
             except Exception as e:
-                await self.kick(e.message)
+                await self.kick(e)
                 return
 
             if command not in commands:
@@ -87,7 +98,7 @@ class ClientHandler:
                 await self.send("error command \"{}\" not found\r\n".format(line))
                 continue
 
-            if commands[command].restricted_to not in [None, jwt.type]:
+            if commands[command].restricted_to not in [None, self.jwt["type"]]:
                 logger.warning("%s tried to use the command \"%s\"", str(self), command)
                 await self.send("error command \"{}\" is not available for you\r\n".format(command))
                 continue
@@ -119,8 +130,7 @@ class ClientHandler:
         logger.debug("Send ping to %s", str(self))
         await self.send("ping {}\r\n".format(value))
 
-        logger.debug("Schedule kick for ping timeout in ")
-        self.call_laters["kick"] = self.loop.call_later(30, self.kick, "ping timeout")
+        self.call_laters["kick"] = self.loop.create_task(call_later_coro(PING_TIMEOUT, self.kick, "ping timeout"))
 
     async def kick(self, reason: str=""):
         logger.warning("%s is kicked because of: %s", str(self), reason or "-no reason given-")
@@ -129,7 +139,7 @@ class ClientHandler:
         else:
             await self.send("close\r\n")
 
-        for call in self.call_laters.value():
+        for call in self.call_laters.values():
             call.cancel()
         self.closed = True
 
@@ -140,8 +150,8 @@ class ClientHandler:
 
     def quit(self, reason: str=""):
         """Recieve a close request, mark the client as closed"""
-        logger.info("%s has closed the connexion: %s", str(self), reason or "-no reason given-")
-        for call in self.call_laters.value():
+        logger.info("%s has closed the connection: %s", str(self), reason or "-no reason given-")
+        for call in self.call_laters.values():
             call.cancel()
         self.closed = True
 
@@ -158,9 +168,10 @@ class ClientHandler:
             await self.kick("wrong ping value")
 
         else:
-            self.delais.append(time() - self.ping.time)
+            self.delais.append(time() - self.ping.time_sent)
             self.ping = None
-            self.call_laters["ping"] = self.loop.call_later(30, self.send_ping)
+            self.call_laters["kick"].cancel()
+            self.call_laters["ping"] = self.loop.create_task(call_later_coro(PING_HEARTBEAT, self.send_ping))
     
     async def enable(self, game: str):
         pass
