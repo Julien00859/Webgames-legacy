@@ -3,9 +3,7 @@ const version = '1.0';
 
 const static = [
   '/admin/login',
-  '/admin/static/admin.js',
-  '/admin/static/login.js',
-  '/admin/static/lib/idb-keyval-min.js',
+  '/admin/static/bundle.js',
   '/admin/static/style.css'
 ];
 

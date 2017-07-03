@@ -1,3 +1,6 @@
+import Toast from './toast.js';
+import cookies from 'js-cookie';
+
 class Login {
   constructor() {
     this.form = document.querySelector('.login-form');
@@ -25,13 +28,14 @@ class Login {
           Toast.Push(response.error); /// to change :)
           return;
         }
-        this.saveToken(response.token)
+        Toast.Push(response.success, {duration: 5000});
+        this.saveToken(response.token);
       })
       .catch(error => console.error(error));
   }
 
   saveToken(token) {
-    localStorage.setItem('token', token);
+    cookies.set('token', token, {expires: 1});
   }
 
   addEventListeners() {
@@ -39,21 +43,4 @@ class Login {
   }
 }
 
-class Toast {
-  static Push(message, options = {duration: 3000}) {
-    const container = document.querySelector('.toast-container');
-    const toast = document.createElement('div');
-    const toastContent = document.createElement('p');
-    toast.classList.add('toast');
-    toastContent.classList.add('toast-content');
-    toastContent.textContent = message;
-
-    container.appendChild(toast);
-    toast.appendChild(toastContent);
-
-    setTimeout(() => toast.classList.add('hide'), options.duration);
-    toast.addEventListener('transitionend', evt => evt.target.parentNode.removeChild(evt.target));
-  }
-}
-
-window.addEventListener('load', _ => new Login());
+export default Login;

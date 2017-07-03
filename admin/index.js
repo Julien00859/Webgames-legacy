@@ -25,7 +25,8 @@ const dustOptions = {
 };
 
 const viewOptions = {
-  style: '/admin/static/style.css'
+  style: '/admin/static/style.css',
+  script: '/admin/static/bundle.js'
 };
 
 app.engine('dust', adaro.dust(dustOptions));
@@ -50,28 +51,21 @@ router.use((err, req, res, next) => {
 
 // routes
 // login is handled by auth api.
-router.get('/', jwtAdmin, (req, res) => {
-  Game.findAll().then(games => {
+router.get('/', jwt, jwtAdmin, (req, res) => {
+  Game.findAll({order: [['g_name', 'ASC']]}).then(games => {
     if (!games) {
       res.status(404).send({error: "Aucun jeux n'existe..."});
       return;
     }
     res.status(200).render('sections/admin',
     Object.assign(viewOptions, {
-      script: '/admin/static/admin.js',
       games
     }));
   }).catch(error => res.status(500).json({error}));
-
-
-
 });
 
 router.get('/login', (req, res) => {
-  res.status(200).render('sections/login',
-  Object.assign(viewOptions, {
-    script: '/admin/static/login.js'
-  }));
+  res.status(200).render('sections/login', viewOptions);
 });
 
 router.put('/update', jwt, jwtAdmin, updateGame);

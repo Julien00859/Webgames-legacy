@@ -56,7 +56,6 @@ function saveUserInDb(req, res, hash) {
       return res.status(400).json({error: `le nom d'utilisateur ${user.u_name} est déjà utilisé.`});
     }
     res.status(200).json({success: 'Utilisateur créé avec succès !'});
-    //return res.redirect('/');
   }).catch(error => {
     return res.status(500).send({error});
   });
@@ -80,7 +79,6 @@ function login(req, res) {
 
     const token = generateJWT(user);
     res.status(200).json({token});
-    //return res.redirect('/');
   })(req, res);
 }
 
@@ -102,8 +100,7 @@ function loginAdmin(req, res) {
     }
 
     const token = generateJWT(user);
-    res.status(200).json({token});
-    //return res.redirect('/');
+    res.status(200).json({success: "Connecté en tant qu'admin", token});
   })(req, res);
 }
 
