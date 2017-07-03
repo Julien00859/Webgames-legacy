@@ -10,15 +10,25 @@ Service de jeux multi-joueur web-friendly
 
 | Resource URL | Methods | Description | Requires Token | More information |
 | -------- | ------------- | --------- |--------------- | ---------------- |
-| `/api/register` | POST | login register | FALSE | 
-| `/api/login` | GET | local login | FALSE | 
-| `/api/logout`| GET | local logout | TRUE |
-| `/api/forgot` | POST | give your email and get a url in your email to change password | FALSE |
-| `/api/account/reset/:id/:token` | GET | link receive via e-mail to change password | FALSE | token is a reset token |
-| `/api/account/reset` | POST | change password | TRUE | 
-| `/api/account`| GET | current user profile | TRUE |
-| `/api/account/:u_id` | GET | specifice user profile | FALSE | public informations |
-| `/api/accound/update` | PUT | update user profile | TRUE |
+| `/auth/account`| GET | current user profile | TRUE |
+| `/auth/account/reset/` | GET | link receive via e-mail to change password | FALSE | 
+| `/auth/account/:id` | GET | specifice user profile | FALSE | public informations |
+| `/auth/register` | POST | local register | FALSE | 
+| `/auth/login` | POST | local login | FALSE | 
+| `/auth/login/admin` | POST | local login admin| FALSE | 
+| `/auth/forgot` | POST | give your email and get a url in your email to change password | FALSE |
+| `/auth/account/reset` | PUT | change effectively your password | TRUE | 
+| `/auth/accound/update` | PUT | update user profile | TRUE |
+| `/auth/logout`| DELETE | local logout | TRUE |
+| `/auth/unregister`| DELETE | unregister user | TRUE | remove all informations about the user |
+| `/queue/states` | GET | get the states about all games | TRUE |
+| `/queue/state/:name` | GET | get the state about a specific game | TRUE |
+| `/queue/command` | POST | send a command (ws) to manager | TRUE |
+| `/queue/remove` | DELETE | remove a game | TRUE | 
+| `/admin` | GET | admin page | TRUE (admin) |
+| `/admin/login` | GET | admin login page | FALSE |
+| `/admin/update` | PUT | update game | TRUE (admin) |     
+
 ## Installation step
 
 #### Clone the repo
@@ -39,7 +49,7 @@ yarn (or npm install)
 
 #### Init the developpment database
 ```yml
-# api/docker-compose.yml
+# docker-compose.yml
 
 version: '2'
 
@@ -55,11 +65,10 @@ services:
 ```
 
 ```
-cd api && docker-compose up -d
+docker-compose up -d
 ```
 
-#### Launch the api server and launch test (why not)
+#### Launch the api server 
 ```
 yarn server (or npm run server)
-yarn test (or npm run test)
 ```
