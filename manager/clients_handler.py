@@ -1,28 +1,25 @@
-from collections import namedtuple, deque
 from datetime import datetime
 from logging import getLogger
 from random import randint
 from time import time
-from typing import get_type_hints
+from typing import get_type_hints, NamedTuple
 import asyncio
 import re
-from itertools import count
 
 import jwt
 
 from config import *
 from tools import *
 
-counter = count()
-
 logger = getLogger(__name__)
-Ping = namedtuple("Ping", ["value", "time_sent"])
-Command = namedtuple("Command", ["restricted_to", "pattern"])
-command_re = re.compile("[\w-]+\.[\w-]+\.[\w-]+ \w+( .*)?")
+Ping = NamedTuple("Ping", [("value": int), ("time_sent": int)])
+Command = NamedTuple("Command", [("restricted_to": str), ("pattern": re.compile)])
+command_re = re.compile("[\w-]+\.[\w-]+\.[\w-]+ [a-z0-9_]+( .*)?")
+uuid = "[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}"
 commands = {
     "quit":     Command(None, re.compile("(?P<reason>.*)?")),
-    "ping":     Command(None, re.compile("(?P<value>[0-9]+)")),
-    "pong":     Command(None, re.compile("(?P<value>[0-9]+)")),
+    "ping":     Command(None, re.compile("(?P<value>[0-9]{4})")),
+    "pong":     Command(None, re.compile("(?P<value>[0-9]{4})")),
 
     "add":      Command("api", re.compile("(?P<game>\S+)")),
     "remove":   Command("api", re.compile("(?P<game>\S+)")),
@@ -32,7 +29,7 @@ commands = {
     "join":     Command("user", re.compile("(?P<queue>\S+)")),
     "leave":    Command("user", re.compile("(?P<queue>\S+)")),
 
-    "gameover": Command("game", re.compile("(?<gameid>[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12})"))
+    "gameover": Command("game", re.compile("(?<gameid>{})".format(uuid)))
 }
 jwt_claims = lambda: {
     "iss": "manager",
@@ -54,7 +51,6 @@ class ClientHandler:
         self.jwt = None
 
         self.ping = None
-        self.delais = deque(maxlen=10)
 
         self.call_laters = {
             "ping": self.loop.create_task(self.send_ping())
@@ -162,7 +158,6 @@ class ClientHandler:
             await self.kick("wrong ping value")
 
         else:
-            self.delais.append(time() - self.ping.time_sent)
             self.ping = None
             self.call_laters["kick"].cancel()
             self.call_laters["ping"] = self.loop.create_task(call_later_coro(PING_HEARTBEAT, self.send_ping))
