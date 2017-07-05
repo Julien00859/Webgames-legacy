@@ -11,6 +11,10 @@ const Game = sequelize.define('game', {
     allowNull: false,
     defaultValue: true
   },
+  g_numbers_players_needed: {
+    type: Sequelize.INT,
+    allowNull: false
+  },
   g_path: {
     type: Sequelize.STRING
   },
