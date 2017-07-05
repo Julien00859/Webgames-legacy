@@ -10,7 +10,6 @@ const router = express.Router();
 // routes
 router.get('/states', jwt, getAllStates);
 router.get('/state/:name', jwt, getState);
-router.post('/command', jwt, onSocketCommand);
 router.delete('/remove', jwt, removeGame);
 
 app.use(router);
