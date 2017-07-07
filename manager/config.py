@@ -17,7 +17,8 @@ config_cast = {
     "PING_HEARTBEAT": timeparse,
     "SSL": bool,
     "REDIS_PORT": int,
-    "REDIS_DATABASE": int
+    "REDIS_DATABASE": int,
+    "REDIS_PASSWORD": lambda value: None if value is None else value
 }
 
 for key, value in config_file.items():
