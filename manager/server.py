@@ -5,17 +5,21 @@ import asyncio
 import logging
 import signal
 import ssl
+from uuid import uuid4
 
+from aiohttp import ClientSession
+from aioredis import create_redis
 import aiohttp
+import ujson
 import uvloop
 import websockets
-import aioredis
 
 from clients_handler import ClientHandler
 from config import *
-from database import connect
 
 logger = logging.getLogger(__name__)
+
+manager_id = uuid4()
 
 async def tcp_handler(reader, writer):
 
@@ -23,10 +27,7 @@ async def tcp_handler(reader, writer):
         writer.send(message.encode())
         await writer.drain()
 
-    def close():
-        writer.close()
-
-    client = ClientHandler(writer.get_extra_info("peername"), send, close)
+    client = ClientHandler(writer.get_extra_info("peername"), send)
 
     logger.info("New TCP connection from %s:%d", *client.peername)
     while True:
@@ -46,7 +47,7 @@ async def tcp_handler(reader, writer):
             logger.warning("Empty payload from %s. Assume connection closed by peer", str(client))
             break
 
-        await client.evaluate(msg)
+        await client.dispatch(msg)
         if client.closed:
             break
         
@@ -58,10 +59,7 @@ async def ws_handler(ws, path):
     async def send(message: str):
         await ws.send(message)
 
-    async def close():
-        await ws.close()
-
-    client = ClientHandler(ws.remote_address, send, close)
+    client = ClientHandler(ws.remote_address, send)
 
     logger.info("New WS connection from %s", str(client))
     while True:
@@ -80,7 +78,7 @@ async def ws_handler(ws, path):
             logger.exception("Exception while reading data from %s.", str(client))
             break
 
-        await client.evaluate(data)
+        await client.dispatch(data)
         if client.closed:
             break
 
@@ -96,6 +94,8 @@ def main():
     stdout.formatter =  logging.Formatter(
         "{asctime} [{levelname}] <{name}:{funcName}> {message}", style="{")
     logging.root.addHandler(stdout)
+
+    logger.info("Manager ID: %s", manager_id)
     
     # Setup asyncio
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -107,6 +107,9 @@ def main():
         sc.load_cert_chain(SSL_CERT_FILE, SSL_KEY_FILE)
 
     # Setup servers
+    global tcp_server, ws_server, redis, http
+
+    # TCP
     logger.info("Init %s TCP Server on %s:%d", 
                 "Secure" if SSL else "Insecure",
                 SERVER_HOST, 
@@ -118,6 +121,7 @@ def main():
                                     loop=loop)
     tcp_server = loop.run_until_complete(tcp_coro)
 
+    # WebSocket
     logger.info("Init %s WebSocket Server on %s:%d", 
                 "Secure" if SSL else "Insecure",
                 SERVER_HOST, 
@@ -129,14 +133,23 @@ def main():
                                loop=loop)
     ws_server = loop.run_until_complete(ws_coro)
 
-    # Connect databases
+    # Redis
     logger.info("Connect to %s Redis Server at %s:%d on database %d %s password",
                 "Secure" if SSL else "Insecure",
                 REDIS_HOST, 
                 REDIS_PORT,
-                REDIS_DATABASE
-                "without" if REDIS_PASSWORD is None else "using")
-    connect(sc if SSL else None, loop)
+                REDIS_DATABASE,
+                "without" if REDIS_PASSWORD is None else "with")
+    redis_coro = create_redis((REDIS_HOST, REDIS_PORT),
+                               db=REDIS_DATABASE,
+                               password=REDIS_PASSWORD,
+                               ssl=sc if SSL else None,
+                               loop=loop)
+    redis = loop.run_until_complete(redis_coro)
+
+    # HTTP
+    logger.info("Setup HTTP Client session")
+    http = ClientSession(json_serialize=ujson.dumps, loop=loop)
 
     # Handle SIGTERM
     stop = asyncio.Future()
@@ -156,8 +169,11 @@ def main():
     logger.info("Shutting down servers")
     tcp_server.close()
     ws_server.close()
+    redis.close()
+    http.close()
     loop.run_until_complete(tcp_server.wait_closed())
     loop.run_until_complete(ws_server.wait_closed())
+    loop.run_until_complete(redis.wait_closed())
     loop.close()
 
 if __name__ == "__main__":
