@@ -40,6 +40,16 @@ async def run_redis_script(script_name, keys, args):
         script = open(pathjoin("redis_scripts", script_name), "r").read()
         return await shared.redis.eval(script, keys, args)
 
+def asyncpartial(func, *args, **keywords):
+    async def newfunc(*fargs, **fkeywords):
+        newkeywords = keywords.copy()
+        newkeywords.update(fkeywords)
+        return await func(*args, *fargs, **newkeywords)
+    newfunc.func = func
+    newfunc.args = args
+    newfunc.keywords = keywords
+    return newfunc
+
 if __name__ == "__main__":
     from sys import argv
     from contextlib import suppress

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 async def tcp_handler(reader, writer):
     async def send(message: str):
+        logger.debug("Send %s to %s", message.splitlines(), str(client))
         writer.write(message.encode())
         await writer.drain()
 
@@ -47,7 +48,6 @@ async def tcp_handler(reader, writer):
                 logger.exception("Exception while reading data from %s.", str(client))
             break
 
-        logger.debug("Message from %s: %s", str(client), msg)
         if msg == "":
             logger.warning("Empty payload from %s. Assume connection closed by peer", str(client))
             break
@@ -64,6 +64,7 @@ async def tcp_handler(reader, writer):
 
 async def ws_handler(ws, path):
     async def send(message: str):
+        logger.debug("Send %s to %s", message.splitlines(), str(client))
         await ws.send(message)
 
     client = ClientHandler(ws.remote_address, send)
@@ -163,7 +164,7 @@ def main():
     async def get_queues():
         async with shared.http.get(API_URL + "/queues") as resp:
             assert resp.status == 200
-            shared.queues = set(await resp.json(loads=ujson.loads))
+            shared.queues = await resp.json(loads=ujson.loads)
     loop.run_until_complete(get_queues())
     
 

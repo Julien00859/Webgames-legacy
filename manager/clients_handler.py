@@ -17,8 +17,8 @@ from games import run as run_game
 
 logger = getLogger(__name__)
 Ping = NamedTuple("Ping", [("value", int), ("time_sent", int)])
-JWTData = namedtuple("JWTData", ["type", "clientid"])
-GameData = namedtuple("GameData", ["port_count", "enabled", "threshold"])
+JWTData = namedtuple("JWTData", ["type", "id"])
+GameData = namedtuple("GameData", ["name", "ports", "enabled", "threshold"])
 Command = namedtuple("Command", ["restricted_to", "pattern", "callback"])
 command_re = re.compile("[\w-]+\.[\w-]+\.[\w-]+ [a-z0-9_]+( .*)?")
 
@@ -79,6 +79,7 @@ class ClientHandler(metaclass=DispatcherMeta):
         Dispatch each command to the correct method
         """
         for line in filter(bool, data.splitlines()):
+            logger.debug("Message from %s: %s", str(client), line)
             match = command_re.match(line)
             if not match:
                 logger.warning("Syntax error for line: %s", line)
@@ -90,7 +91,7 @@ class ClientHandler(metaclass=DispatcherMeta):
 
             try:
                 newjwt = jwt.decode(jwt_payload, JWT_SECRET)
-                self.jwtdata = JWTData(type=newjwt["type"], clientid=newjwt["id"])
+                self.jwtdata = JWTData(type=newjwt["type"], id=newjwt["id"])
             except jwt.InvalidTokenError as e:
                 await self.kick(e)
                 return
@@ -125,11 +126,11 @@ class ClientHandler(metaclass=DispatcherMeta):
 
             try:
                 if asyncio.iscoroutinefunction(cmd.callback):
-                    await cmd.callback(self, self.jwtdata.clientid, **kwargs)
+                    await cmd.callback(self, self.jwtdata.id, **kwargs)
                 else:
-                    cmd.callback(self, self.jwtdata.clientid, **kwargs)
+                    cmd.callback(self, self.jwtdata.id, **kwargs)
             except:
-                logging.exception("Hem")
+                logger.exception("Error in dispatched command")
                 await self.send("error internal error please retry later...")
 
 
@@ -145,7 +146,6 @@ class ClientHandler(metaclass=DispatcherMeta):
             value = randint(1000, 9999)
         self.ping = Ping(value, time())
 
-        logger.debug("Send ping to %s", str(self))
         await self.send("ping {}\r\n".format(value))
 
         self.call_laters["ping-timeout"] = self.loop.create_task(
@@ -166,9 +166,11 @@ class ClientHandler(metaclass=DispatcherMeta):
         logger.debug("Set %s as closed", str(self))
         for call in self.call_laters.values():
             call.cancel()
-        #if self.jwtdata is not None and self.jwtdata.type == "user":
-        #    logger.debug("Remove user from cache")
-        #    await run_redis_script("remove_player.lua", [self.jwtdata.clientid])
+        if self.jwtdata is not None and self.jwtdata.type == "user":
+            logger.debug("Remove user from cache")
+            await run_redis_script("remove_player.lua", 
+                                   [self.jwtdata.id], 
+                                   shared.queues)
         self.closed = True
         shared.clients.remove(self)
 
@@ -222,6 +224,11 @@ async def disable(client, clientid, game: str):
 
 @ClientHandler.register("user", re.compile("(?P<queue>\S+)"))
 async def join(client, clientid, queue: str):
+    if (await shared.redis.exists("players:%s:game" % clientid)):
+        logger.warning("%s tried to join a queue while beeing in game", str(client))
+        await client.send("error cannot join a queue while in game")
+        return
+
     if queue not in shared.queues:
         logger.warning("%s tried to join the queue %s", str(client), queue)
         await client.send("error this game is not available")
@@ -229,19 +236,22 @@ async def join(client, clientid, queue: str):
 
     async with shared.http.get(API_URL + "/queues/" + queue) as resp:
         if resp.status != 200:
-            logging.error("Status code for '{}' is not 200: {}", API_URL + "/queues" + queue, resp.status)
+            logging.error("Status code for '%s' is not 200: %d", API_URL + "/queues" + queue, resp.status)
             await client.send("error internal error")
             return
 
-        game = GameData(**(await resp.json(loads=ujsonloads)))
+        game = GameData(name=queue, **(await resp.json(loads=ujsonloads)))
 
-    players = await run_redis_script("add_player_in_queue.lua", 
-                         [queue, clientid, game.threshold], [])
+    players_ids = await run_redis_script("add_player_in_queue.lua", 
+                                         [queue, clientid, game.threshold],
+                                         shared.queues)
 
     logger.info("%s joined queue %s", str(client), queue)
 
-    if players is not None:
-        game_start(game, players)
+    if players_ids is not None:
+        players_ids = list(map(lambda b: b.decode(), players_ids))
+        logger.info("Game '%s' filled with %d players", queue, game.threshold)
+        client.loop.create_task(run_game(game, players_ids))
 
 @ClientHandler.register("user", None)
 async def leave(client, clientid):

@@ -4,5 +4,5 @@ redis = None
 http = None
 clients = set()
 manager_id = None
-queues = set()
+queues = list()
 redis_scripts = {}

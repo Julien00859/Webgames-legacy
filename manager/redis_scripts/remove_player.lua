@@ -1,7 +1,7 @@
-local queues = KEYS[1]
-local playerid = KEYS[2]
+local playerid = KEYS[1]
 
 redis.call("DEL", "players:" .. playerid .. ":queues")
-for queue in queues.split(",") do
+redis.call("DEL", "players:" .. playerid .. ":game")
+for idx, queue in pairs(ARGV) do
     redis.call("SREM", "queues:" .. queue, playerid)
 end

@@ -2,29 +2,40 @@ from config import *
 from collections import deque
 from random import shuffle
 from logging import getLogger
-from shared import *
+import shared
+import asyncio
+from tools import *
+from uuid import uuid4
+import jwt
+from datetime import datetime
+from functools import partial
 
 logger = getLogger(__name__)
 ports = deque(range(45000, 46000))
 shuffle(ports)
 
-games = {}
-
-async def run(game, playersid):
+async def run(game, players_ids):
     gid = str(uuid4())
-    glogger = getLogger(__name__ + "." + gid)
+    glogger = getLogger("{}.{}.{}".format(__name__, game.name, gid))
     logger.info("Init new %s with id %s", game.name, gid)
+    await shared.redis.rpush("games:" + gid + ":players", *players_ids)
 
-    logger.debug("Get players")
-    players = []
-    for client in clients:
+    glogger.debug("Get players")
+    my_players = []
+    their_players = []
+    for client in shared.clients:
         if not client.closed \
-           and client.type == "user" \
-           and client.id is not None \
-           and client.id in players:
-            players.append(client)
+           and client.jwtdata is not None \
+           and client.jwtdata.type == "user":
+            if client.jwtdata.id in players_ids:
+                logger.debug("Found %s", str(client))
+                my_players.append(client)
+            else:
+                logger.debug("Skip %s", str(client))
+                their_players.append(client)
+    send_to_all_ = asyncpartial(send_to_all, my_players, their_players)
 
-    logger.debug("Generate JSON Web Token")
+    glogger.debug("Generate JSON Web Token")
     gjwt = jwt.encode({
         "iss": "manager",
         "sub": "webgames",
@@ -35,33 +46,32 @@ async def run(game, playersid):
         "name": game.name
     }, JWT_SECRET)
 
-    logger.debug("Register game in API")
-    http.post(API_URL + "/games", json={
+    glogger.debug("Register in Web API")
+    await shared.http.post(API_URL + "/games", json={
         "name": game.name,
         "id": gid,
-        "players": players
+        "players": players_ids
     })
 
-    logger.debug("Start game")
-    # TODO
-    # lancer le container
+    global ports
+    myports = [ports.pop() for n in range(len(game.ports))]
+    myports_str = " ".join([game.ports[n][1] + ":" + str(myports[n]) for n in range(len(myports))])
 
-    logger.debug("Invite players")
-    for player in players:
-        player.queue = None
-        player.gameid = gid
-        await player.send("gamestart")
+    await send_to_all_("gamestart {} {} {}".format(game.name, gid, myports_str))
 
-    # TODO
-    # afficher les logs
-
-    logger.info("Stopping...")
-    # TODO
-    # lorsque le jeu s'arrête
-
-    logger.debug("Free players")
-    for player in players:
-        player.gameid = None
-        await player.send("gameover")
-
+    glogger.info("Start game")
+    await asyncio.sleep(2)
+    glogger.info("Stop game")
     
+    await shared.redis.delete("games:" + gid + ":players")
+    for pid in players_ids:
+        await run_redis_script("remove_player.lua", [pid], shared.queues)
+    
+    await send_to_all_("gameover {} {}".format(game.name, gid))
+
+async def send_to_all(my_players, their_players, message):
+    for player in my_players:
+        if not player.closed:
+            await player.send(message)
+    
+    # Message Queue
