@@ -79,7 +79,6 @@ class ClientHandler(metaclass=DispatcherMeta):
         Dispatch each command to the correct method
         """
         for line in filter(bool, data.splitlines()):
-            logger.debug("Message from %s: %s", str(client), line)
             match = command_re.match(line)
             if not match:
                 logger.warning("Syntax error for line: %s", line)
@@ -88,11 +87,15 @@ class ClientHandler(metaclass=DispatcherMeta):
 
             jwt_payload, command, *args = line.split(" ", 2)
             args = args[0] if args else ""
+            logger.debug("Message from %s: <jwt> %s %s", str(self), command, args)
 
             try:
                 newjwt = jwt.decode(jwt_payload, JWT_SECRET)
-                self.jwtdata = JWTData(type=newjwt["type"], id=newjwt["id"])
-            except jwt.InvalidTokenError as e:
+                if self.jwtdata is None:
+                    self.jwtdata = JWTData(type=newjwt["type"], id=newjwt["id"])
+                else:
+                    assert self.jwtdata.id == newjwt["id"]
+            except (jwt.InvalidTokenError, AssertionError) as e:
                 await self.kick(e)
                 return
 

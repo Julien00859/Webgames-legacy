@@ -20,7 +20,7 @@ async def run(game, players_ids):
     logger.info("Init new %s with id %s", game.name, gid)
     await shared.redis.rpush("games:" + gid + ":players", *players_ids)
 
-    glogger.debug("Get players")
+    glogger.debug("Getting players...")
     my_players = []
     their_players = []
     for client in shared.clients:
@@ -28,10 +28,10 @@ async def run(game, players_ids):
            and client.jwtdata is not None \
            and client.jwtdata.type == "user":
             if client.jwtdata.id in players_ids:
-                logger.debug("Found %s", str(client))
+                glogger.debug("Found %s", str(client))
                 my_players.append(client)
             else:
-                logger.debug("Skip %s", str(client))
+                glogger.debug("Skip %s", str(client))
                 their_players.append(client)
     send_to_all_ = asyncpartial(send_to_all, my_players, their_players)
 
