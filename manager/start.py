@@ -14,17 +14,15 @@ import ujson
 import uvloop
 import websockets
 
+import shared
 from clients_handler import ClientHandler
 from config import *
 
 logger = logging.getLogger(__name__)
 
-manager_id = uuid4()
-
 async def tcp_handler(reader, writer):
-
     async def send(message: str):
-        writer.send(message.encode())
+        writer.write(message.encode())
         await writer.drain()
 
     client = ClientHandler(writer.get_extra_info("peername"), send)
@@ -32,11 +30,18 @@ async def tcp_handler(reader, writer):
     logger.info("New TCP connection from %s:%d", *client.peername)
     while True:
         try:
-            data = await reader.read(65536).decode()
+            data = await reader.read(4096)
         except ConnectionResetError as e:
             if not client.closed:
                 logger.warning("Connection reset by %s", str(client))
             break
+        
+        if reader.at_eof():
+            logger.debug("EOF reveived from %s", str(client))
+            break
+        
+        try:
+            msg = data.decode()
         except:
             if not client.closed:
                 logger.exception("Exception while reading data from %s.", str(client))
@@ -50,7 +55,9 @@ async def tcp_handler(reader, writer):
         await client.dispatch(msg)
         if client.closed:
             break
-        
+    
+    if not client.closed:
+        await client.close()
     writer.close()
     logger.info("Connection with %s closed", str(client))
 
@@ -81,12 +88,16 @@ async def ws_handler(ws, path):
         await client.dispatch(data)
         if client.closed:
             break
-
+    
+    if not client.closed:
+        await client.close()
     await ws.close()
     logger.info("Connection with %s closed", str(client))
-            
+
 
 def main():
+    shared.manager_id = uuid4()
+
     # Setup logging
     logging.root.level = logging.NOTSET
     stdout = logging.StreamHandler()
@@ -95,7 +106,7 @@ def main():
         "{asctime} [{levelname}] <{name}:{funcName}> {message}", style="{")
     logging.root.addHandler(stdout)
 
-    logger.info("Manager ID: %s", manager_id)
+    logger.info("Manager ID is %s", shared.manager_id)
     
     # Setup asyncio
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -107,8 +118,6 @@ def main():
         sc.load_cert_chain(SSL_CERT_FILE, SSL_KEY_FILE)
 
     # Setup servers
-    global tcp_server, ws_server, redis, http
-
     # TCP
     logger.info("Init %s TCP Server on %s:%d", 
                 "Secure" if SSL else "Insecure",
@@ -133,6 +142,7 @@ def main():
                                loop=loop)
     ws_server = loop.run_until_complete(ws_coro)
 
+    # Setup clients
     # Redis
     logger.info("Connect to %s Redis Server at %s:%d on database %d %s password",
                 "Secure" if SSL else "Insecure",
@@ -145,13 +155,19 @@ def main():
                                password=REDIS_PASSWORD,
                                ssl=sc if SSL else None,
                                loop=loop)
-    redis = loop.run_until_complete(redis_coro)
+    shared.redis = loop.run_until_complete(redis_coro)
 
     # HTTP
     logger.info("Setup HTTP Client session")
-    http = ClientSession(json_serialize=ujson.dumps, loop=loop)
+    shared.http = ClientSession(json_serialize=ujson.dumps, loop=loop)
+    async def get_queues():
+        async with shared.http.get(API_URL + "/queues") as resp:
+            assert resp.status == 200
+            shared.queues = set(await resp.json(loads=ujson.loads))
+    loop.run_until_complete(get_queues())
+    
 
-    # Handle SIGTERM
+    # Handle SIGTERM for clean exit
     stop = asyncio.Future()
     loop.add_signal_handler(signal.SIGTERM, stop.set_result, None)
 
@@ -166,14 +182,21 @@ def main():
     else:
         logger.info("SIGTERM received")
 
+    async def kick_all_clients():
+        kicking = [client.kick("Server is shutting down...", level=logging.DEBUG) for client in shared.clients.copy()]
+        await asyncio.wait(kicking)
+    if len(shared.clients) > 0:
+        logger.info("Kicking clients...")
+        loop.run_until_complete(kick_all_clients())
+
     logger.info("Shutting down servers")
     tcp_server.close()
     ws_server.close()
-    redis.close()
-    http.close()
+    shared.redis.close()
+    shared.http.close()
     loop.run_until_complete(tcp_server.wait_closed())
     loop.run_until_complete(ws_server.wait_closed())
-    loop.run_until_complete(redis.wait_closed())
+    loop.run_until_complete(shared.redis.wait_closed())
     loop.close()
 
 if __name__ == "__main__":
