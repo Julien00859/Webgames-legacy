@@ -23,6 +23,7 @@ Service de jeux multi-joueur web-friendly
 | `/auth/unregister`| DELETE | unregister user | TRUE | remove all informations about the user |
 | `/queue/states` | GET | get the states about all games | TRUE |
 | `/queue/state/:name` | GET | get the state about a specific game | TRUE |
+| `/queue/actives` | GET | get all the actives games (only names) | TRUE |
 | `/queue/remove` | DELETE | remove a game | TRUE | 
 | `/admin` | GET | admin page | TRUE (admin) |
 | `/admin/login` | GET | admin login page | FALSE |
