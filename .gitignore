@@ -1,8 +1,8 @@
 manager/venv/
-.vscode/
+api/.vscode/
 *.pyc
-node_modules
-.env
-yarn-error.log
-docker-compose.yml
+api/node_modules
+api/.env
+api/yarn-error.log
+api/docker-compose.yml
 .DS_Store
