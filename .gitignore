@@ -1,2 +1,8 @@
 manager/venv/
+.vscode/
 *.pyc
+node_modules
+.env
+yarn-error.log
+docker-compose.yml
+.DS_Store
