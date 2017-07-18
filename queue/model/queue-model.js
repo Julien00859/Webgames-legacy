@@ -20,6 +20,10 @@ const Game = sequelize.define('game', {
   },
   g_executable: {
     type: Sequelize.STRING
+  },
+  g_ports: {
+    type: Sequelize.JSON,
+    allowNull: false
   }
 });
 

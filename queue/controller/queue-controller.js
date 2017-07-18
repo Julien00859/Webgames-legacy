@@ -13,7 +13,13 @@ function getAllStates(req, res) {
       res.status(404).send({error: "Aucun jeux n'existe..."});
       return;
     }
-    const states = games.map(game => game.g_status);
+    const states = games.map(game => {
+      return {
+        g_name: game.g_name,
+        g_status: game.g_status,
+        g_numbers_players_needed: game.g_numbers_players_needed
+      }
+    });
     res.status(200).json(states);
   }).catch(error => res.status(500).json({error}));
 }
@@ -29,6 +35,17 @@ function getState(req, res) {
   }).catch(error => res.status(500).json({error}));
 }
 
+function getActives(req, res) {
+  Game.findAll().then(games => {
+    if (!games) {
+      res.status(404).send({error: "Aucun jeux n'existe..."});
+      return;
+    }
+    const games = games.filter(game => game.g_status);
+    res.status(200).json(states);
+  }).catch(error => res.status(500).json({error}));
+}
+
 function removeGame(req, res) {
   const {name} = req.body;
   Game.destroy({where: {g_name: name}}).then(rowAffected => {
@@ -39,6 +56,6 @@ function removeGame(req, res) {
 module.exports = {
   getAllStates,
   getState,
-  onSocketCommand,
+  getActives,
   removeGame
 }
