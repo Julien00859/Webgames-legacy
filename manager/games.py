@@ -1,14 +1,18 @@
-from config import *
+"""Use docker to start games"""
+
 from collections import deque
-from random import shuffle
-from logging import getLogger
-import shared
-import asyncio
-from tools import *
-from uuid import uuid4
-import jwt
 from datetime import datetime
 from functools import partial
+from logging import getLogger
+from random import shuffle
+from uuid import uuid4
+
+import asyncio
+import jwt
+
+from config import JWT_EXPIRATION_TIME, JWT_SECRET, API_URL
+from tools import asyncpartial, run_redis_script
+import shared
 
 logger = getLogger(__name__)
 ports = deque(range(45000, 46000))
@@ -39,7 +43,7 @@ async def run(game, players_ids):
     gjwt = jwt.encode({
         "iss": "manager",
         "sub": "webgames",
-        "iat": datetime.utcnow(), 
+        "iat": datetime.utcnow(),
         "exp": datetime.utcnow() + JWT_EXPIRATION_TIME,
         "type": "game",
         "id": gid,
@@ -62,16 +66,15 @@ async def run(game, players_ids):
     glogger.info("Start game")
     await asyncio.sleep(2)
     glogger.info("Stop game")
-    
+
     await shared.redis.delete("games:" + gid + ":players")
-    for pid in players_ids:
-        await run_redis_script("remove_player.lua", [pid], shared.queues)
-    
+    await run_redis_script("remove_player_from_queues.lua", players_ids, shared.queues)
+
     await send_to_all_("gameover {} {}".format(game.name, gid))
 
 async def send_to_all(my_players, their_players, message):
     for player in my_players:
         if not player.closed:
             await player.send(message)
-    
+
     # Message Queue

@@ -1,29 +1,36 @@
 #!./venv/bin/python
 
-from config import *
+"""TCP Client for testing the server"""
 
 from socket import socket, timeout
 from threading import Thread, Event
 from contextlib import suppress
 from sys import argv
+from time import sleep
+
+from config import MANAGER_HOST, MANAGER_TCP_PORT
 
 class Client(Thread):
+    """Interface for communicate with the server"""
     def __init__(self, jwt):
+        """Initiate the socket and some event"""
         self.jwt = jwt
         self.socket = socket()
         self.socket.settimeout(1)
         Thread.__init__(self)
         self.stopevt = Event()
         self.connectedevt = Event()
-    
-    def quit(self):
+
+    def bye(self):
+        """Send 'quit' command to the server and stop the loop"""
         self.send("quit")
         self.stopevt.set()
 
     def run(self):
+        """Listen the socket"""
         self.stopevt.clear()
         self.connectedevt.clear()
-        self.socket.connect((SERVER_HOST, SERVER_TCP_PORT))
+        self.socket.connect((MANAGER_HOST, MANAGER_TCP_PORT))
         while not self.stopevt.is_set():
             with suppress(timeout):
                 data = self.socket.recv(1024).decode()
@@ -41,25 +48,27 @@ class Client(Thread):
         print("Disconnected")
 
     def send(self, cmd):
+        """Send a command to the server, include the JWT and the CRLF"""
         self.socket.send("{} {}\r\n".format(self.jwt, cmd).encode())
-           
-jwt = argv[1] if len(argv) >= 2 else input("JWT: ")
 
-c = Client(jwt)
-c.start()
+the_jwt = argv[1] if len(argv) >= 2 else input("JWT: ")
+
+client = Client(the_jwt)
+client.start()
 
 print("Connecting...")
-c.connectedevt.wait()
+client.connectedevt.wait()
 print("Connected")
 
 while True:
-    line = input("> ")
-    if c.stopevt.is_set():
+    cli = input("> ")
+    if client.stopevt.is_set():
         break
-    if line.split(" ")[0] == "quit":
-        c.quit()
+    if cli.split(" ")[0] == "quit":
+        client.bye()
         break
     else:
-        c.send(line)
+        client.send(cli)
+        sleep(0.05)
 
-c.join()
+client.join()
