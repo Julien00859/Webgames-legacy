@@ -189,7 +189,7 @@ class ClientHandler(metaclass=DispatcherMeta):
 @ClientHandler.register(None, r"(?P<command>\S+)?")
 async def help_(client, jwtdata, command: str = ""):
     """
-    Show command list or help about a specific command.
+    Get command list or full help about a specific command.
     """
     cmds = []
     if command:
@@ -208,7 +208,7 @@ async def help_(client, jwtdata, command: str = ""):
 @ClientHandler.register(None, r"(?P<reason>.*)?")
 async def quit_(client, jwtdata, reason: str = ""):
     """
-    Disconnect from the server.
+    Close the connection, the socket must be closed right after sending or receiving the command.
     """
     logger.info("%s has closed the connection: %s", str(client), reason or "-no reason given-")
     await client.close()
@@ -216,14 +216,14 @@ async def quit_(client, jwtdata, reason: str = ""):
 @ClientHandler.register(None, r"(?P<value>[0-9]{4})")
 async def ping(client, jwtdata, value: int):
     """
-    Send a ping request with a four digit value.
+    Send a ping request with a 4 digit random value
     """
     await client.send("pong {}\r\n".format(value))
 
 @ClientHandler.register(None, r"(?P<value>[0-9]{4})")
 async def pong(client, jwtdata, value: int):
     """
-    Response a ping request sent by the server.
+    Reply to a ping, the value must be the same has the one sent in along the ping command.
     """
     if client.ping is None:
         await client.kick("no ping was sent")
@@ -290,9 +290,9 @@ async def join(client, jwtdata, queue: str):
         logger.info("Game '%s' filled with %d players", queue, game.threshold)
         client.loop.create_task(run_game(game, players_ids))
 
-@ClientHandler.register("user", None)
+@ClientHandler.register("user", "(?P<queue>\w+)?")
 async def leave(client, jwtdata):
     """
-    Leave a queue.
+    Leave a specific queue if a queue is given or all queues otherwise.
     """
     raise NotImplementedError()

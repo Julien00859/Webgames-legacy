@@ -29,6 +29,23 @@ Service de jeux multi-joueur web-friendly
 | `/admin/login` | GET | admin login page | FALSE |
 | `/admin/update` | PUT | update game | TRUE (admin) |     
 
+## Manager Commands:
+
+| Name | Usage | Description | Usable by |
+| ---- | ----- | ----------- | --------- |
+| help | `help (?P<command>)?` | Get command list or full help about a specific command. | Clients |
+| help | `help command list:( (?P<command>\w+))+` | Give the list of available commands (reply of `help` without command) | Server |
+| help | `help (?P<command>\w+) (?P<infos>.*) Usage: (?P<usage>.*)` | Give command informations (reply of `help` with a command) | Server |
+| ping | `ping (?P<value>[0-9]{4})` | Send a ping request with a 4 digit random value | Everybody |
+| pong | `pong (?P<value>[0-9]{4})` | Reply to a ping, the value must be the same has the one sent in along the ping command. | Everybody |
+| quit | `quit (?P<reason>.*)?` | Close the connection, the socket must be closed right after sending or receiving the command. | Everybody |
+| error | `error (?P<message>.*)` | informate the client its command failed | Server |
+| enable | `enable (?P<game>\w+)` | Enable a game by allowing players to join its queue. | Web API |
+| disable | `disable (?P<game>\w+)` | Disable a game by kicking players from its queue and disallow players to join it. | Web API |
+| join | `join (?P<queue>\w+)` | Join a game by first joining its queue. | User |
+| leave | `leave (?P<queue>\w+)?` | Leave a specific queue if a queue is given or all queues otherwise. | User |
+
+
 ## Installation step
 
 #### Clone the repo
@@ -42,33 +59,9 @@ DBURL=postgres://username:password@host:port/database
 SECRET=mysecret
 ```
 
-#### Install the dependencies
-```
-yarn (or npm install)
-```
-
-#### Init the developpment database
-```yml
-# docker-compose.yml
-
-version: '2'
-
-services:
-  db:
-    image: postgres
-    environment:
-      - POSTGRES_USER=<user>
-      - POSTGRES_PASSWORD=<password>
-      - POSTGRES_DB=<db_name>
-    ports:
-      - 5432:5432
-```
+#### Start all the services at once
 
 ```
 docker-compose up -d
 ```
 
-#### Launch the api server 
-```
-yarn server (or npm run server)
-```
