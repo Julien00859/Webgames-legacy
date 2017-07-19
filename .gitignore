@@ -1,8 +1,17 @@
-manager/venv/
-api/.vscode/
-*.pyc
-api/node_modules
+# Secret configuration
 .env
+
+# Virtual Environements
+api/node_modules
+manager/venv/
+
+# Editors
+.vscode/
+
+# Python cached compiled files
+manager/__pycache__
+manager/*.pyc
+
+# Others
 api/yarn-error.log
-docker-compose.yml
 .DS_Store

@@ -1,0 +1,22 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:alpine
+  redis:
+    image: redis:aline
+  webapi:
+    build: ./api
+    links: 
+      - postgres:postgres
+    ports:
+      80:80
+      443:443
+  manager:
+    build: ./manager
+    links:
+      - redis:redis
+    depends_on:
+      - webapi
+    ports:
+      4170:4170
+      4171:4171
