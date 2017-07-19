@@ -5,7 +5,7 @@ function getJWT() {
   return jwt.sign({
     id: 1,
     type: 'api'
-  }, process.env.SECRET, {
+  }, process.env.JWT_SECRET, {
     expiresIn: '12h',
     subject: 'webgames'
   });
