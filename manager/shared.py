@@ -1,4 +1,4 @@
-# Shared object to avoid import loop
+"""Shared object to avoid import loop"""
 
 redis = None
 http = None
