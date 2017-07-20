@@ -19,4 +19,3 @@ RUN tar -C /usr/local/bin -xzf dockerize-alpine-linux-amd64-v0.5.0.tar.gz
 RUN rm dockerize-alpine-linux-amd64-v0.5.0.tar.gz
 
 EXPOSE 5000
-CMD ["npm", "run", "server"]

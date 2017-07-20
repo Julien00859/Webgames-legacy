@@ -21,7 +21,7 @@ services:
       - 5000:5000
     volumes:
       - ./api:/usr/src/app
-    command: ["dockerize", "-wait", "tcp://postgres:5432", "npm", "run", "server.js"]
+    command: ["dockerize", "-wait", "tcp://postgres:5432", "yarn", "server"]
   manager:
     build: ./manager
     links:
