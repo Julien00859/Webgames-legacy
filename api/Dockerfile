@@ -7,9 +7,8 @@ WORKDIR /usr/src/app
 # Copy all stuff
 COPY . .
 
-# Update npm and install dependencies
-RUN npm install --global npm
-RUN npm install
+# Install dependencies
+RUN yarn
 
 # Install dockerise
 RUN apk update \
