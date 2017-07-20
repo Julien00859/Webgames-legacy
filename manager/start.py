@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import pickle
 import signal
 import ssl
 from uuid import uuid4
@@ -13,9 +14,10 @@ import uvloop
 import websockets
 
 import shared
+from tools import DispatcherMeta
 from clients_handler import ClientHandler
 from config import LOG_LEVEL, API_URL, \
-                   MANAGER_HOST, MANAGER_TCP_PORT, MANAGER_WS_PORT, \
+                   MANAGER_HOST, MANAGER_TCP_PORT, MANAGER_WS_PORT, UDP_BROADCASTER_PORT, \
                    USE_SSL, SSL_CERT_FILE, SSL_KEY_FILE, \
                    REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DATABASE
 
@@ -104,6 +106,44 @@ async def ws_handler(ws, path):
     await ws.close()
     logger.info("Connection with %s closed", str(client))
 
+class UDPBroadcaster(metaclass=DispatcherMeta):
+    def connection_made(self, transport):
+        """on connection made"""
+        port = transport.get_extra_info("sockname")[1]
+        action = "listening" if port == UDP_BROADCASTER_PORT else "connected"
+        logger.debug("%s %s on port %i", self.__class__.__name__, action, port)
+
+    def datagram_received(self, data, addr):
+        """on datagram reveived"""
+        did, *objs = pickle.loads(data)
+        logger.debug("Datagram id '%s' from %s:%d", did, *addr)
+        func = self.__callbacks__.get(did)
+        if not func:
+            logger.error("%s is not registered as callback", did)
+            return
+        elif asyncio.iscoroutinefunction(func):
+            asyncio.ensure_future(func(*objs))
+        else:
+            func(*objs)
+
+    def connection_lost(self, exc):
+        """on connection lost"""
+        if exc:
+            logger.error("Err", exc_info=exc)
+
+@UDPBroadcaster.register()
+async def relay_to_players(players_ids, payload):
+    """Relay message to our players"""
+    for client in shared.clients:
+        if not client.closed \
+           and client.jwtdata is not None \
+           and client.jwtdata.type == "user":
+            if client.jwtdata.id in players_ids:
+                logger.debug("Relay to %s: %s", str(client), payload)
+                await client.send(payload)
+            else:
+                logger.debug("Skip user %s", str(client))
+
 
 def main():
     """Main function called at script startup"""
@@ -152,6 +192,22 @@ def main():
                                ssl=sc if USE_SSL else None,
                                loop=loop)
     ws_server = loop.run_until_complete(ws_coro)
+
+    # UDP Broadcaster
+    logger.info("Init UPD Broadcaster on port %i", UDP_BROADCASTER_PORT)
+    udpb_client_coro = loop.create_datagram_endpoint(
+        UDPBroadcaster,
+        remote_addr=("255.255.255.255", UDP_BROADCASTER_PORT),
+        allow_broadcast=True
+    )
+    udpb_server_coro = loop.create_datagram_endpoint(
+        UDPBroadcaster,
+        local_addr=("0.0.0.0", UDP_BROADCASTER_PORT),
+        allow_broadcast=True
+    )
+    udpb_client, _ = loop.run_until_complete(udpb_client_coro)
+    udpb_server, _ = loop.run_until_complete(udpb_server_coro)
+    shared.udpbroadcaster = udpb_client
 
     # Setup clients
     # Redis
@@ -204,11 +260,15 @@ def main():
     logger.info("Shutting down servers")
     tcp_server.close()
     ws_server.close()
+    udpb_client.close()
+    udpb_server.close()
     shared.redis.close()
     shared.http.close()
-    loop.run_until_complete(tcp_server.wait_closed())
-    loop.run_until_complete(ws_server.wait_closed())
-    loop.run_until_complete(shared.redis.wait_closed())
+    loop.run_until_complete(asyncio.wait([
+        tcp_server.wait_closed(),
+        ws_server.wait_closed(),
+        shared.redis.wait_closed()
+    ]))
     loop.close()
 
 if __name__ == "__main__":

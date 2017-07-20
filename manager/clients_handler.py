@@ -11,7 +11,7 @@ import jwt
 from ujson import loads as ujsonloads
 
 from config import PING_TIMEOUT, PING_HEARTBEAT, JWT_SECRET, API_URL
-from tools import cast_using_type_hints, run_redis_script, call_later_coro
+from tools import cast_using_type_hints, run_redis_script, call_later_coro, DispatcherMeta
 import shared
 from games import run as run_game
 
@@ -24,7 +24,7 @@ command_re = re.compile(r"[\w-]+\.[\w-]+\.[\w-]+ [a-z0-9_]+( .*)?")
 spaces_re = re.compile(r"\s+")
 
 
-class DispatcherMeta(type):
+class CommandDispatcherMeta(type):
     """Dispatcher Pattern"""
     def __new__(mcs, name, bases, attrs):
         callbacks = ChainMap()
@@ -37,7 +37,6 @@ class DispatcherMeta(type):
         attrs["dispatcher"] = property(lambda obj: callbacks)
         cls = super().__new__(mcs, name, bases, attrs)
         return cls
-
     def set_callbacks(cls, restricted_to, pattern, callback):
         """Register a callback"""
         cls.__callbacks__[callback.__name__.strip("_")] = \
@@ -51,7 +50,7 @@ class DispatcherMeta(type):
         return wrapper
 
 
-class ClientHandler(metaclass=DispatcherMeta):
+class ClientHandler(metaclass=CommandDispatcherMeta):
     """Handle a client, verify the JWT, dispatch the command"""
     def __init__(self, peername, sendfunc, loop=None):
         """

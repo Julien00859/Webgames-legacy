@@ -11,7 +11,7 @@ import asyncio
 import jwt
 
 from config import JWT_EXPIRATION_TIME, JWT_SECRET, API_URL
-from tools import asyncpartial, run_redis_script
+from tools import asyncpartial, run_redis_script, udpbroadcaster_send
 import shared
 
 logger = getLogger(__name__)
@@ -20,24 +20,10 @@ shuffle(ports)
 
 async def run(game, players_ids):
     gid = str(uuid4())
-    glogger = getLogger("{}.{}.{}".format(__name__, game.name, gid))
+    glogger = getLogger(f"{__name__}.{game.name}.{gid}")
     logger.info("Init new %s with id %s", game.name, gid)
     await shared.redis.rpush("games:" + gid + ":players", *players_ids)
-
-    glogger.debug("Getting players...")
-    my_players = []
-    their_players = []
-    for client in shared.clients:
-        if not client.closed \
-           and client.jwtdata is not None \
-           and client.jwtdata.type == "user":
-            if client.jwtdata.id in players_ids:
-                glogger.debug("Found %s", str(client))
-                my_players.append(client)
-            else:
-                glogger.debug("Skip %s", str(client))
-                their_players.append(client)
-    send_to_all_ = asyncpartial(send_to_all, my_players, their_players)
+    relay_to_players = partial(udpbroadcaster_send, "relay_to_players", players_ids)
 
     glogger.debug("Generate JSON Web Token")
     gjwt = jwt.encode({
@@ -51,30 +37,23 @@ async def run(game, players_ids):
     }, JWT_SECRET)
 
     glogger.debug("Register in Web API")
-    await shared.http.post(API_URL + "/games", json={
+    await shared.http.post(f"{API_URL}/games", json={
         "name": game.name,
         "id": gid,
         "players": players_ids
     })
 
-    global ports
     myports = [ports.pop() for n in range(len(game.ports))]
     myports_str = " ".join([game.ports[n][1] + ":" + str(myports[n]) for n in range(len(myports))])
 
-    await send_to_all_("gamestart {} {} {}".format(game.name, gid, myports_str))
+    relay_to_players(f"gamestart {game.name} {gid} {myports_str}")
 
     glogger.info("Start game")
     await asyncio.sleep(2)
     glogger.info("Stop game")
 
-    await shared.redis.delete("games:" + gid + ":players")
+    await shared.redis.delete(f"games:{gid}:players")
     await run_redis_script("remove_player_from_queues.lua", players_ids, shared.queues)
 
-    await send_to_all_("gameover {} {}".format(game.name, gid))
-
-async def send_to_all(my_players, their_players, message):
-    for player in my_players:
-        if not player.closed:
-            await player.send(message)
-
-    # Message Queue
+    await shared.http.delete(f"{API_URL}/games/{gid}")
+    relay_to_players(f"gameover {game.name} {gid}")

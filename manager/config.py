@@ -9,7 +9,7 @@ from pytimeparse import parse as timeparse
 from yaml import load as yaml_load
 
 __all__ = ["LOG_LEVEL", "API_URL",
-           "MANAGER_HOST", "MANAGER_TCP_HOST", "MANAGER_WS_HOST",
+           "MANAGER_HOST", "MANAGER_TCP_HOST", "MANAGER_WS_HOST", "UDP_BROADCASTER_PORT",
            "JWT_EXPIRATION_TIME", "JWT_SECRET",
            "PING_HEARTBEAT", "PING_TIMEOUT",
            "USE_SSL", "SSL_CERT_FILE", "SSL_KEY_FILE",
@@ -22,6 +22,7 @@ def parse_config():
         "LOG_LEVEL": lambda value: getattr(logging, value),
         "MANAGER_TCP_PORT": int,
         "MANAGER_WS_PORT": int,
+        "UDP_BROADCASTER_PORT": int,
         "JWT_EXPIRATION_TIME": lambda value: timedelta(seconds=timeparse(value)),
         "PING_TIMEOUT": timeparse,
         "PING_HEARTBEAT": timeparse,
