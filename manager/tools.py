@@ -1,11 +1,13 @@
 #!./venv/bin/python
 
 from asyncio import sleep as asyncsleep
+from collections import ChainMap
 from functools import partial
 from hashlib import sha1
 from logging import getLogger
 from os import listdir
 from os.path import join as pathjoin
+from pickle import dumps as pickle_dumps
 from typing import get_type_hints
 from aioredis.errors import ReplyError
 import shared
@@ -16,6 +18,39 @@ redis_scripts_hashes = {
     for file in listdir("redis_scripts")
 }
 
+class DispatcherMeta(type):
+    """Dispatcher Pattern"""
+    def __new__(mcs, name, bases, attrs):
+        callbacks = ChainMap()
+        maps = callbacks.maps
+        for base in bases:
+            if isinstance(base, DispatcherMeta):
+                maps.extend(base.__callbacks__.maps)
+
+        attrs["__callbacks__"] = callbacks
+        attrs["dispatcher"] = property(lambda obj: callbacks)
+        cls = super().__new__(mcs, name, bases, attrs)
+        return cls
+
+    def set_callbacks(cls, callback):
+        """Register a callback"""
+        cls.__callbacks__[callback.__name__.strip("_")] = callback
+        return callback
+
+    def register(cls):
+        """Decorator for register a callback"""
+        def wrapper(callback):
+            return cls.set_callbacks(callback)
+        return wrapper
+
+
+def udpbroadcaster_send(datagram_id, *args):
+    if not shared.udpbroadcaster or shared.udpbroadcaster.is_closing():
+        raise OSError("Socket closed")
+
+    shared.udpbroadcaster.sendto(pickle_dumps((datagram_id, *args)))
+
+
 def cast_using_type_hints(type_hints: dict, kwargs: dict):
     """
     Given type_hints of function and some key word arguments,
@@ -25,6 +60,7 @@ def cast_using_type_hints(type_hints: dict, kwargs: dict):
     return {key: None if value is None else type_hints[key](value)
             for key, value in kwargs.items()}
 
+
 async def call_later_coro(delay, coro, *args, **kwargs):
     """Asyncio.call_later but call a coroutine using await"""
     logger.debug("Schedule async call for '%s' with args %s %s in %d secondes",
@@ -33,18 +69,20 @@ async def call_later_coro(delay, coro, *args, **kwargs):
     logger.debug("Call '%s' with args %s %s", coro.__name__, args, kwargs)
     await coro(*args, **kwargs)
 
+
 async def run_redis_script(script_name, keys, args):
     """Run redis script, try for a cached version, if fail upload the script"""
     sha = redis_scripts_hashes[script_name]
     try:
-        logger.debug("Run cached script %s with keys: %s, args: %s", script_name, keys, args)
+        logger.debug("Run cached script '%s' with keys: %s, args: %s", script_name, keys, args)
         return await shared.redis.evalsha(sha, keys, args)
     except ReplyError as err:
         if not err.args[0].startswith("NOSCRIPT"):
             raise
-        logger.debug("No cached script found. Upload full version")
+        logger.debug("No cached script found or '%s'. Upload full version", script_name)
         script = open(pathjoin("redis_scripts", script_name), "r").read()
         return await shared.redis.eval(script, keys, args)
+
 
 def asyncpartial(func, *args, **keywords):
     """functools.partial for async function"""
@@ -57,6 +95,7 @@ def asyncpartial(func, *args, **keywords):
     newfunc.args = args
     newfunc.keywords = keywords
     return newfunc
+
 
 if __name__ == "__main__":
     # Some useful tools
