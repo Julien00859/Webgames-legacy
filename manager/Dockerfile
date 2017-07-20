@@ -1,7 +1,7 @@
 FROM python:latest
 
 # Create app directory
-RUN mkdir /usr/src/app
+RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 # Install app dependencies
