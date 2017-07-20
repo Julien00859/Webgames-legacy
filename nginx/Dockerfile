@@ -1,17 +1,6 @@
-FROM node:alpine
+FROM nginx:alpine
 
-# Create app directory
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-
-# Install app dependencies
-COPY package.json /usr/src/app/
-RUN npm install
-
-# Bundle app source
-COPY . /usr/src/app
-
-# Install dockerise
+# Install dockerize
 RUN apk update \
 	&& apk add ca-certificates wget \
 	&& update-ca-certificates
@@ -19,5 +8,3 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/v0.5.0/dockerize
 RUN tar -C /usr/local/bin -xzf dockerize-alpine-linux-amd64-v0.5.0.tar.gz
 RUN rm dockerize-alpine-linux-amd64-v0.5.0.tar.gz
 
-EXPOSE 5000
-CMD ["npm", "run", "server"]

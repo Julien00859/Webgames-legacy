@@ -1,13 +1,9 @@
 server {
 	server_name api.webgames.ephec-ti.be;
 
-	{{ if exists "/etc/letsencrypt/live/api.webgames.ephec-ti.be" }}
-		listen 443 ssl;
-		ssl_certificate /etc/letsencrypt/live/api.webgames.ephec-ti.be/fullchain.pem;
-		ssl_certificate_key /etc/letsencrypt/live/api.webgames.ephec-ti.be/privkey.pem;
-	{{ else }}
+	
 		listen 80;
-	{{ end }}
+	
 
 	location / {
 		proxy_set_header Host $http_host;
@@ -15,3 +11,4 @@ server {
 		proxy_pass http://webapi:5000;
 	}
 }
+

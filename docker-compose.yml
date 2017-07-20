@@ -3,19 +3,35 @@ services:
   postgres:
     image: postgres:alpine
   redis:
-    image: redis:aline
+    image: redis:alpine
+  nginx:
+    build: ./nginx
+    links:
+      - webapi:webapi
+    volumes:
+      - ./nginx/www:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - /etc/letsencrypt/live:/etc/letsencrypt/live
+    command: ["dockerize", "-template", "/etc/nginx/conf.d:/etc/nginx/conf.d", "-wait", "http://webapi:5000", "nginx", "-g", "daemon off;"]
   webapi:
     build: ./api
     links:
       - postgres:postgres
     ports:
-      5000:5000
+      - 5000:5000
+    volumes:
+      - ./api:/usr/src/app
+    command: ["dockerize", "-wait", "tcp://postgres:5432", "npm", "run", "server.js"]
   manager:
     build: ./manager
     links:
       - redis:redis
-    depends_on:
-      - webapi
+      - nginx:nginx
+      - nginx:api.webgames.ephec-ti.be
     ports:
-      4170:4170
-      4171:4171
+      - 4170:4170
+      - 4171:4171
+    volumes:
+      - ./manager:/usr/src/app
+    command: ["dockerize", "-wait", "tcp://redis:6379", "-wait", "http://api.webgames.ephec-ti.be", "python", "start.py"]
+
