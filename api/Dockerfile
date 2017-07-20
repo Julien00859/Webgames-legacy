@@ -1,15 +1,15 @@
-FROM node:alpine
+FROM alpine-node:latest
 
 # Create app directory
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
-# Install app dependencies
-COPY package.json /usr/src/app/
-RUN npm install
+# Copy all stuff
+COPY . .
 
-# Bundle app source
-COPY . /usr/src/app
+# Update npm and install dependencies
+RUN npm install --global npm
+RUN npm install
 
 # Install dockerise
 RUN apk update \
