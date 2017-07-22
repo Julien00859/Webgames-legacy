@@ -1,5 +1,6 @@
 # Secret configuration
 .env
+nginx/conf.d/*.conf
 
 # Virtual Environements
 api/node_modules
