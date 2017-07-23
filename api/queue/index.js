@@ -2,6 +2,7 @@ const http = require('http');
 const express = require('express');
 const path = require('path');
 const jwt = require('../common-middlewares/jwt');
+const jwtAdmin = require('../common-middlewares/admin');
 const {getAllStates, getState, getActives, removeGame} = require('./controller/queue-controller');
 
 const app = express();

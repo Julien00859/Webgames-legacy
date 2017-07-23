@@ -10,7 +10,7 @@ const {Game} = require('../model/queue-model');
 function getAllStates(req, res) {
   Game.findAll().then(games => {
     if (!games) {
-      res.status(404).send({error: "Aucun jeux n'existe..."});
+      res.status(204).send({error: "No games..."});
       return;
     }
     const states = games.map(game => {
@@ -28,7 +28,7 @@ function getState(req, res) {
   const {name} = req.params;
   Game.find({where: {g_name: name}}).then(game => {
     if (!game) {
-      res.status(404).send({error: `Le jeu ${name} n'existe pas.`});
+      res.status(204).send({error: `Game ${name} does not exist.`});
       return;
     }
     res.status(200).json(game.g_state);
@@ -38,18 +38,18 @@ function getState(req, res) {
 function getActives(req, res) {
   Game.findAll().then(games => {
     if (!games) {
-      res.status(404).send({error: "Aucun jeux n'existe..."});
+      res.status(204).send({error: "No games..."});
       return;
     }
-    const games = games.filter(game => game.g_status);
-    res.status(200).json(states);
+    const actives = games.filter(game => game.g_status);
+    res.status(200).json(actives);
   }).catch(error => res.status(500).json({error}));
 }
 
 function removeGame(req, res) {
   const {name} = req.body;
   Game.destroy({where: {g_name: name}}).then(rowAffected => {
-    res.status(200).json({success: 'jeu supprimé'});
+    res.status(200).json({success: 'game deleted'});
   }).catch(error => res.status(500).send({error}));
 }
 
