@@ -19,7 +19,7 @@ class Admin {
     const g_path = evt.target.g_path.value;
     const g_executable = evt.target.g_executable.value;
 
-    fetch('/admin/update', {
+    fetch(`/queue/${g_name}`, {
       method: 'put',
       headers: {
         'Content-Type': 'application/json',
@@ -38,7 +38,7 @@ class Admin {
   toggleStatus(evt) {
     const target = evt.target;
 
-    fetch('/admin/update', {
+    fetch(`/queue/${g_name}`, {
       method: 'put',
       headers: {
         'Content-Type': 'application/json',

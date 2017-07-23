@@ -11,14 +11,11 @@ const Game = sequelize.define('game', {
     allowNull: false,
     defaultValue: true
   },
-  g_numbers_players_needed: {
+  g_numbers_needed_count: {
     type: Sequelize.INT,
     allowNull: false
   },
   g_image: {
-    type: Sequelize.STRING
-  },
-  g_executable: {
     type: Sequelize.STRING
   },
   g_ports: {

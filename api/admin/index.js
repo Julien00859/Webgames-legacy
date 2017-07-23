@@ -10,7 +10,6 @@ const app = express();
 const router = express.Router();
 const jwt = require('../common-middlewares/jwt');
 const jwtAdmin = require('../common-middlewares/admin');
-const {updateGame, updateStatus} = require('./controller/admin-controller');
 const {Game} = require('../queue/model/queue-model.js');
 
 const production = process.env.NODE_ENV === 'production';
@@ -67,8 +66,6 @@ router.get('/', jwt, jwtAdmin, (req, res) => {
 router.get('/login', (req, res) => {
   res.status(200).render('sections/login', viewOptions);
 });
-
-router.put('/update', jwt, jwtAdmin, updateGame);
 
 app.use(router);
 
