@@ -15,7 +15,7 @@ const Game = sequelize.define('game', {
     type: Sequelize.INT,
     allowNull: false
   },
-  g_path: {
+  g_image: {
     type: Sequelize.STRING
   },
   g_executable: {
