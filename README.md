@@ -21,13 +21,16 @@ Service de jeux multi-joueur web-friendly
 | `/auth/accound/update` | PUT | update user profile | TRUE |
 | `/auth/logout`| DELETE | local logout | TRUE |
 | `/auth/unregister`| DELETE | unregister user | TRUE | remove all informations about the user |
-| `/queue/states` | GET | get the states about all games | TRUE |
-| `/queue/state/:name` | GET | get the state about a specific game | TRUE |
-| `/queue/actives` | GET | get all the actives games (only names) | TRUE |
-| `/queue/remove` | DELETE | remove a game | TRUE | 
+| `/queue/` | GET | get the whole queue | TRUE (admin) | queue is all the games available on Webgames |
+| `/queue/actives` | GET | get all the actives games (only names) | TRUE (admin) |
+| `/admin/:name` | GET | get all the informations about a game | TRUE (admin) | 
+| `/admin/:name/:attr` | GET | get attribute of a game (e.g.: max players) | TRUE (admin) | 
+| `/queue/:name` | POST | add game | TRUE (admin) | 
+| `/queue/:name` | PUT | update game | TRUE (admin) |  
+| `/queue/:name` | DELETE | delete game | TRUE (admin) | 
 | `/admin` | GET | admin page | TRUE (admin) |
 | `/admin/login` | GET | admin login page | FALSE |
-| `/admin/update` | PUT | update game | TRUE (admin) |     
+   
 
 ## Installation step
 
