@@ -22,7 +22,6 @@ router.use(bodyParser.urlencoded({
   extended: true
 }));
 
-
 postgres.sync();
 
 blacklist.configure({

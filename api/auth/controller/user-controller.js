@@ -180,7 +180,6 @@ function resetPasswordForm(req, res) {
       return;
     }
 
-    // Could change...
     res.status(200).redirect('/account/forgot/form');
   }).catch(error => {
     res.status(500).json({error});

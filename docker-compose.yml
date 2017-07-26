@@ -1,0 +1,50 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+  redis:
+    image: redis:alpine
+  nginx:
+    build: ./nginx
+    links:
+      - webapi:webapi
+    volumes:
+      - ./nginx/www:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - /etc/letsencrypt/live:/etc/letsencrypt/live
+    command: ["dockerize", "-template", "/etc/nginx/conf.d:/etc/nginx/conf.d", "-wait", "http://webapi:5000", "nginx", "-g", "daemon off;"]
+  webapi:
+    build: ./api
+    environment:
+      - DBURL=${DBURL}
+      - REDIS_SECRET=${REDIS_SECRET}
+      - REDIS_HOST=${REDIS_HOST}
+      - JWT_SECRET=${JWT_SECRET}
+      - SOCKET_HOST=${SOCKET_HOST}
+      - SOCKET_PORT=${SOCKET_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - NODE_ENV=${NODE_ENV}
+    links:
+      - postgres:postgres
+    ports:
+      - 5000:5000
+    command: ["dockerize", "-wait", "tcp://postgres:5432", "yarn", "server:prod"]
+  manager:
+    build: ./manager
+    links:
+      - redis:redis
+      - nginx:nginx
+      - nginx:api.webgames.ephec-ti.be
+    ports:
+      - 4170:4170
+      - 4171:4171
+    volumes:
+      - ./manager:/usr/src/app
+    command: ["dockerize", "-wait", "tcp://redis:6379", "-wait", "http://api.webgames.ephec-ti.be", "python", "start.py"]
+

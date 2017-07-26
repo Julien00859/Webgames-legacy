@@ -2,7 +2,7 @@ const session = require('express-session');
 const RedisStore = require('connect-redis')(session);
 
 const redis = session({
-  secret: process.env.JWT_SECRET,
+  secret: process.env.REDIS_SECRET,
   name: 'local',
   store: new RedisStore({
     host: process.env.REDIS_HOST,

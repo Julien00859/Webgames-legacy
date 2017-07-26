@@ -12,6 +12,7 @@ class Admin {
     this.addEventListeners();
   }
 
+
   async updateGame(evt) {
     evt.preventDefault();
 

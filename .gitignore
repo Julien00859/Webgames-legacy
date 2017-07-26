@@ -1,6 +1,21 @@
-node_modules
+# Secret configuration
 .env
 api/.env
 yarn-error.log
 docker-compose.yml
+nginx/conf.d/*.conf
+
+# Virtual Environements
+api/node_modules
+manager/venv/
+
+# Editors
+.vscode/
+
+# Python cached compiled files
+manager/__pycache__
+manager/*.pyc
+
+# Others
+api/yarn-error.log
 .DS_Store
