@@ -7,7 +7,7 @@
     "bump": "npm version patch",
     "test-auth": "mocha auth/test",
     "server": "nodemon server.js",
-    "server:prod": "node server.js",
+    "server:prod": "npm run build && node server.js",
     "watch": "rollup -wc admin/rollup.config.js",
     "build": "rollup -c admin/rollup.config.production.js"
   },
