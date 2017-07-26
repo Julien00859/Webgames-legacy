@@ -19,7 +19,7 @@ const nodemail = require('nodemailer');
 const handlebars = require('handlebars');
 const blacklist = require('express-jwt-blacklist');
 const {User, hashPassword, verifyPassword, generateJWT} = require('../model/user-model');
-const production = process.env.NODE_ENV === 'production';
+const {USE_SSL, MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASSWORD} = require("../../config")
 
 passport.use(new LocalStrategy({
     usernameField: 'username',
@@ -139,13 +139,13 @@ function getResetToken(req, res) {
 
 async function sendMail(mail, options) {
   const transporter = nodemail.createTransport({
-    host: production ? process.env.HOSTMAIL : 'localhost',
-    port: production ? 465 : 1025, // port pour maildev
-    secure: production ? true : false,
-    ignoreTLS: production ? false : true,
-    auth: production ? {
-      user: process.env.USERMAIL,
-      pass: process.env.PASSMAIL
+    host: MAIL_HOST,
+    port: MAIL_PORT, // port pour maildev
+    secure: USE_SSL,
+    ignoreTLS: !USE_SSL,
+    auth: MAIL_USER && MAIL_PASSWORD ? {
+      user: MAIL_USER,
+      pass: MAIL_PASSWORD
     } : false
   });
 

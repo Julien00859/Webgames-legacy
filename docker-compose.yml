@@ -3,9 +3,9 @@ services:
   postgres:
     image: postgres:alpine
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_USER=webgames
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_DB=webgames
   redis:
     image: redis:alpine
   nginx:
@@ -16,27 +16,31 @@ services:
       - ./nginx/www:/var/www
       - ./nginx/conf.d:/etc/nginx/conf.d
       - /etc/letsencrypt/live:/etc/letsencrypt/live
-    command: ["dockerize", "-template", "/etc/nginx/conf.d:/etc/nginx/conf.d", "-wait", "http://webapi:5000", "nginx", "-g", "daemon off;"]
+    ports:
+      - 80:80
+      - 443:443
+    command: ["dockerize", "-template", "/etc/nginx/conf.d/redirect.conf.tmpl:/etc/nginx/conf.d/redirect.conf", "-template", "/etc/nginx/conf.d/webapi.conf.tmpl:/etc/nginx/conf.d/webapi.conf", "-wait", "http://webapi:5000/check", "nginx", "-g", "daemon off;"]
   webapi:
     build: ./api
     environment:
-      - DBURL=${DBURL}
-      - REDIS_SECRET=${REDIS_SECRET}
-      - REDIS_HOST=${REDIS_HOST}
-      - JWT_SECRET=${JWT_SECRET}
-      - SOCKET_HOST=${SOCKET_HOST}
-      - SOCKET_PORT=${SOCKET_PORT}
-      - POSTGRES_USER=${POSTGRES_USER}
+      - USE_SSL=false
+      - NODE_ENV=production
+      - POSTGRES_HOST=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - NODE_ENV=${NODE_ENV}
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - MANAGER_HOST=manager
+      - JWT_SECRET=${JWT_SECRET}
     links:
       - postgres:postgres
-    ports:
-      - 5000:5000
-    command: ["dockerize", "-wait", "tcp://postgres:5432", "yarn", "server:prod"]
+      - redis:redis
+    command: ["dockerize", "-wait", "tcp://postgres:5432", "-wait", "tcp://redis:6379", "yarn", "server:prod"]
   manager:
     build: ./manager
+    environment:
+      - API_URL=http://api.webgames.ephec-ti.be
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
     links:
       - redis:redis
       - nginx:nginx
@@ -46,5 +50,5 @@ services:
       - 4171:4171
     volumes:
       - ./manager:/usr/src/app
-    command: ["dockerize", "-wait", "tcp://redis:6379", "-wait", "http://api.webgames.ephec-ti.be", "python", "start.py"]
+    command: ["dockerize", "-wait", "tcp://redis:6379", "-wait", "http://api.webgames.ephec-ti.be/check", "python", "start.py"]
 

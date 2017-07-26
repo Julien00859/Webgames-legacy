@@ -1,11 +1,12 @@
 const {Game} = require('../../queue/model/queue-model.js');
+const {JWT_SECRET} = require("../../config")
 //const socket = require('../../socket');
 
 function getJWT() {
   return jwt.sign({
     id: 1,
     type: 'api'
-  }, process.env.JWT_SECRET, {
+  }, JWT_SECRET, {
     expiresIn: '12h',
     subject: 'webgames'
   });

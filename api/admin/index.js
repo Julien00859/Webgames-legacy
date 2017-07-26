@@ -10,8 +10,9 @@ const app = express();
 const router = express.Router();
 const admin = require('../common-middlewares/admin');
 const {Game} = require('../queue/model/queue-model.js');
+const {NODE_ENV} = require("../config");
 
-const production = process.env.NODE_ENV === 'production';
+const production = NODE_ENV === 'production';
 const staticPath = path.resolve(__dirname, 'static');
 const swPath = path.resolve(__dirname, 'service-worker.js');
 const templatePath = path.resolve(__dirname, 'template');

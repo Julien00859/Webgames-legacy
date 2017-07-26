@@ -11,7 +11,7 @@ const postgres = require('./postgres');
 const app = express();
 const router = express.Router();
 
-const PORT = process.env.PORT || 5000;
+const {API_PORT} = require("./config");
 
 router.use(passport.initialize());
 router.use(redis);
@@ -35,8 +35,8 @@ router.use('/auth', require('./auth'));
 router.use('/queue', require('./queue'));
 router.use('/admin', require('./admin'));
 
-http.createServer(app).listen(PORT, _ => {
-  console.log(`[WebGames] Admin page running on http://localhost:${PORT}`);
+http.createServer(app).listen(API_PORT, _ => {
+  console.log(`[WebGames] Admin page running on port ${API_PORT}`);
 });
 
 app.use(router);

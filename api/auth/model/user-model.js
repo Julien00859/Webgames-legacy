@@ -11,6 +11,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Sequelize = require('sequelize');
 const sequelize = require('../../postgres');
+const JWT_SECRET = require("../../config")
 
 const User = sequelize.define('user', {
   u_id: {
@@ -73,7 +74,7 @@ function generateJWT(user) {
       type: 'user',
       name: user.u_name,
       mail: user.u_email
-  }, process.env.SECRET, {
+  }, JWT_SECRET, {
     expiresIn: '12h',
     subject: 'webgames'
   });

@@ -15,6 +15,13 @@ __all__ = ["LOG_LEVEL", "API_URL",
            "USE_SSL", "SSL_CERT_FILE", "SSL_KEY_FILE",
            "REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD", "REDIS_DATABASE"]
 
+def parse_bool(data):
+    if isinstance(data, bool):
+        return data
+    if not isinstance(data, str):
+        return False
+    return data in ["yes", "y", "true", "1"]
+
 def parse_config():
     """Parse the environ and the config file to set options in globals"""
     config_file = yaml_load(open("config.yml", "r"))
@@ -26,9 +33,9 @@ def parse_config():
         "JWT_EXPIRATION_TIME": lambda value: timedelta(seconds=timeparse(value)),
         "PING_TIMEOUT": timeparse,
         "PING_HEARTBEAT": timeparse,
-        "USE_SSL": bool,
+        "USE_SSL": parse_bool,
         "REDIS_PORT": int,
-        "REDIS_DATABASE": int,
+        "REDIS_DB_MANAGER": int,
         "REDIS_PASSWORD": lambda value: None if value is None else value
     }
 

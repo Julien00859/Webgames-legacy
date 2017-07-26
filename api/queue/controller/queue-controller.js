@@ -1,5 +1,6 @@
 const {Game} = require('../model/queue-model');
 const socket = require('../../socket');
+const {JWT_SECRET} = require("../../config.")
 
 function getAllQueues(req, res) {
   Game.findAll().then(games => {
@@ -83,7 +84,7 @@ function getJWT() {
   return jwt.sign({
     id: 1,
     type: 'api'
-  }, process.env.SECRET, {
+  }, JWT_SECRET, {
     expiresIn: '12h',
     subject: 'webgames'
   });
