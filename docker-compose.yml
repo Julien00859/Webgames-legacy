@@ -8,6 +8,9 @@ services:
       - POSTGRES_DB=webgames
   redis:
     image: redis:alpine
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: "redis-server --requirepass $REDIS_PASSWORD"
   nginx:
     build: ./nginx
     links:
@@ -41,6 +44,7 @@ services:
       - API_URL=http://api.webgames.ephec-ti.be
       - JWT_SECRET=${JWT_SECRET}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     links:
       - redis:redis
       - nginx:nginx
