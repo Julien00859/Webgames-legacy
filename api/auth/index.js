@@ -8,7 +8,7 @@ const app = express();
 const router = express.Router();
 
 router.get('/account', jwt, getCurrentAccount);
-router.get('/account/reset', resetPasswordForm);
+router.get('/account/:id/reset/:token', resetPasswordForm);
 router.get('/account/:id', getAccount);
 router.post('/register', validateRegister, register);
 router.post('/login', validateLogin, login);

@@ -9,6 +9,9 @@ const redis = session({
     port: 6379,
     db: 1
   }),
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 12
+  },
   proxy: false,
   resave: false,
   saveUninitialized: false

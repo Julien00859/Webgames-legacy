@@ -1,5 +1,8 @@
 # Secret configuration
 .env
+api/.env
+yarn-error.log
+docker-compose.yml
 nginx/conf.d/*.conf
 
 # Virtual Environements

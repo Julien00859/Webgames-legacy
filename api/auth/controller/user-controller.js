@@ -25,7 +25,7 @@ passport.use(new LocalStrategy({
     usernameField: 'username',
     passwordField: 'password',
     passReqToCallback: false,
-    session: false
+    session: true
   }, (username, password, done) => {
     User.find({where: {u_name: username}}).then(user => {
       if (!user) return done(null, false); // no user
@@ -126,7 +126,7 @@ function getResetToken(req, res) {
         title: 'Réinitialisation du mot de passe',
         content: `Vous recevez ce mail car vous avez perdu votre mot de passe,
           cliquez sur le lien ci-dessous pour changer de mot de passe.`,
-        url: `http://${req.hostname}/api/account/reset?id=${id}&token=${token}`,
+        url: `http://${req.hostname}/api/account/${id}/reset/${token}`,
         action: 'Changer de mot de passe'
       };
 
@@ -163,7 +163,7 @@ async function sendMail(mail, options) {
 }
 
 function resetPasswordForm(req, res) {
-  const {id, token} = req.query;
+  const {id, token} = req.params;
   User.findById(id).then(user => {
     if (!user) {
       res.status(404).json({error: 'utilisateur non trouvé... Hack ?'});
@@ -180,8 +180,7 @@ function resetPasswordForm(req, res) {
       return;
     }
 
-    // Could change...
-    res.status(200).send({id, token}).redirect('/account/forgot/form');
+    res.status(200).redirect('/account/forgot/form');
   }).catch(error => {
     res.status(500).json({error});
   });
@@ -214,7 +213,7 @@ function resetPassword(req, res) {
 function getAccount(req, res) {
   const {id} = req.query;
   User.findById(id).then(user => {
-    res.status(200).json(user);
+    res.status(200).json(userJSON(user));
   }).catch(error => {
     res.status(500).json({error});
   });
@@ -226,6 +225,14 @@ function getCurrentAccount(req, res) {
     mail: req.user.mail
   }
   res.status(200).json(simpleUserJson);
+}
+
+function userJSON(user) {
+  return {
+    admin: user.u_admin,
+    username: user.u_name,
+    mail: user.u_email
+  }
 }
 
 function updateAccount(req, res) {
@@ -243,9 +250,15 @@ function revokeToken(user) {
   return new Promise(r => blacklist.revoke(user, r));
 }
 
+function destroySession(req) {
+  return new Promise(r => req.logout(r))
+}
+
 function logout(req, res) {
-  revokeToken(req.user)
-    .then(_ => res.status(200).send('disconnected').redirect('/'));
+  Promise.all([
+    revokeToken(req.user),
+    destroySession(req)
+  ]).then(_ => res.status(200).send('disconnected').redirect('/'));
 }
 
 function unregister(req, res) {
