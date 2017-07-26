@@ -1,0 +1,125 @@
+<!DOCTYPE hml>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {
+                font-family: monospace;
+                display: flex;
+            }
+            form > fieldset {
+                width: calc(1920px / 6);
+            }
+            fieldset {
+                display: flex;
+                flex-direction: column;
+            }
+            #logs {
+                flex: 2 0px;
+                align-items: stretch;
+            }
+            #sendform {
+                width: 100%;
+            }
+            .js {
+                color: blue;
+            }
+            .wgrecv, .wgsent {
+                color: grey;
+            }
+            .error {
+                color: crimson;
+            }
+            label, input[type=button], input[type=submit] {
+                margin-top: 0.5em;
+            }
+            label > *{
+                vertical-align: middle;
+            }
+            
+        </style>
+        <script>
+            function log(msg, klass) {
+                console.log(msg);
+                p = document.createElement("p");
+                p.className = klass;
+                p.appendChild(document.createTextNode(msg))
+                document.getElementById("logs").insertBefore(p, document.getElementById("sendform"));
+            }
+            function Connection(connstr, jwt) {
+                this.jwt = jwt;
+                this.ws = new WebSocket(connstr);
+                this.ws.onopen = function() {
+                    log("Connected", "js");
+                    document.getElementById("connsub").setAttribute("disabled", true);
+                    document.getElementById("sendform").removeAttribute("disabled");
+                }
+                this.ws.onclose = function() {
+                    log("Closed", "js");
+                    document.getElementById("connsub").removeAttribute("disabled");
+                    document.getElementById("sendform").setAttribute("disabled", true);
+                }
+                this.ws.onmessage = function({data}) {
+                    log("< " + data, "wgrecv");
+                    args = data.split(" ");
+                    switch (args[0]) {
+                        case "ping":
+                            if (frm.autopong.checked)
+                                this.send("pong", args[1]);
+                            break;
+                        case "close":
+                            this.ws.close();
+                            break;
+                        case "error":
+                            console.warn(args.slice(1).join(" "));
+                        default:
+                            log("unknown command: " + args[0]);
+                    }
+                }.bind(this);
+                this.ws.onerror = function(data) {
+                    log(data, "error");
+                }
+                this.send = function send(...data) {
+                    args = data.join(" ")
+                    log("> " + Nargs, "wgsent");
+                    this.ws.send(this.jwt + " " + args + "\r\n");
+                }.bind(this);
+            }
+            var conn;
+            var frm;
+            function connect(evt) {
+                evt.preventDefault();
+                frm = document.getElementById("fconn");
+                conn = new Connection(frm.connstr.value, frm.jwt.value);
+            }
+            function main() {
+                document.getElementById("fconn").onsubmit = connect;
+                document.getElementById("sendform").onkeydown = function(evt) {
+                    if (evt.keyCode == 10 || evt.keyCode == 13) {
+                        conn.send(this.value);
+                        this.value = "";
+                    }
+                }
+                document.getElementById("connsub").removeAttribute("disabled");
+                document.getElementById("sendform").setAttribute("disabled", true);
+            }
+        </script>
+    </head>
+    <body onload="main()">
+        <form id=fconn>
+            <fieldset>
+                <legend>Options</legend>
+                <label for=connstr>Connection String: </label>
+                <input type=text name=connstr id=connstr placeholder="schema://host:port" value="ws://localhost:4171">
+                <label for=jwt>JSON Web Token: </label>
+                <textarea name=jwt id=jwt rows="5" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoianVsaWVuIiwidHlwZSI6InVzZXIiLCJpZCI6MX0.oWExEIgFesraztY6MNMVhmMMkhDIeNUdvQVgoZfFXuo"></textarea>
+                <input type=submit value="Se connecter" id="connsub">
+                <label for=autopong>Auto pong <input type=checkbox name=autopong checked></label>
+            </fieldset>
+        </form>
+        <fieldset id=logs>
+            <legend>Logs</legend>
+            <input type=text id=sendform placeholder=">" disabled>
+        </fieldset>
+    </body>
+</html>
