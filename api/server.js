@@ -14,16 +14,16 @@ const router = express.Router();
 const PORT = process.env.PORT || 5000;
 
 router.use(passport.initialize());
+router.use(redis);
+router.use(passport.session());
 router.use(bodyParser.json());
 router.use(validator());
 router.use(bodyParser.urlencoded({
   extended: true
 }));
-router.use(redis);
+
 
 postgres.sync();
-
-//require('./data/insert-data')(); // dev only
 
 blacklist.configure({
   store: {

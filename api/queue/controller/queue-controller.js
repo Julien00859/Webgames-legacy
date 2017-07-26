@@ -1,5 +1,5 @@
 const {Game} = require('../model/queue-model');
-const socket = require('../../socket');
+//const socket = require('../../socket');
 
 function getAllQueues(req, res) {
   Game.findAll().then(games => {

@@ -1,5 +1,5 @@
 import Toast from './toast.js';
-import cookies from 'js-cookie';
+import idbKeyval from 'idb-keyval';
 
 class Login {
   constructor() {
@@ -34,8 +34,8 @@ class Login {
       .catch(error => console.error(error));
   }
 
-  saveToken(token) {
-    cookies.set('token', token, {expires: 1});
+  async saveToken(token) {
+    await idbKeyval.set('token', token);
   }
 
   addEventListeners() {

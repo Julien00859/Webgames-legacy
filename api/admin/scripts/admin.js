@@ -1,5 +1,5 @@
 import Toast from './toast.js';
-import cookies from 'js-cookie';
+import idbKeyval from 'idb-keyval';
 
 class Admin {
   constructor() {
@@ -12,7 +12,7 @@ class Admin {
     this.addEventListeners();
   }
 
-  updateGame(evt) {
+  async updateGame(evt) {
     evt.preventDefault();
 
     const g_name = evt.target.querySelector('.game-name').dataset.gameName;
@@ -23,7 +23,7 @@ class Admin {
       method: 'put',
       headers: {
         'Content-Type': 'application/json',
-        'authorization': `Bearer ${cookies.get('token')}`
+        'authorization': `Bearer ${await idbKeyval.get('token')}`
       },
       body: JSON.stringify({
         g_name,
@@ -35,14 +35,14 @@ class Admin {
       .catch(error => console.error(error));
   }
 
-  toggleStatus(evt) {
+  async toggleStatus(evt) {
     const target = evt.target;
 
     fetch(`/queue/${g_name}`, {
       method: 'put',
       headers: {
         'Content-Type': 'application/json',
-        'authorization': `Bearer ${cookies.get('token')}`
+        'authorization': `Bearer ${await idbKeyval.get('token')}`
       },
       body: JSON.stringify({
         g_name : target.name,

@@ -25,7 +25,7 @@ passport.use(new LocalStrategy({
     usernameField: 'username',
     passwordField: 'password',
     passReqToCallback: false,
-    session: false
+    session: true
   }, (username, password, done) => {
     User.find({where: {u_name: username}}).then(user => {
       if (!user) return done(null, false); // no user
@@ -232,7 +232,7 @@ function userJSON(user) {
   return {
     admin: user.u_admin,
     username: user.u_name,
-    mail: user.u_email 
+    mail: user.u_email
   }
 }
 
@@ -251,9 +251,15 @@ function revokeToken(user) {
   return new Promise(r => blacklist.revoke(user, r));
 }
 
+function destroySession(req) {
+  return new Promise(r => req.logout(r))
+}
+
 function logout(req, res) {
-  revokeToken(req.user)
-    .then(_ => res.status(200).send('disconnected').redirect('/'));
+  Promise.all([
+    revokeToken(req.user),
+    destroySession(req)
+  ]).then(_ => res.status(200).send('disconnected').redirect('/'));
 }
 
 function unregister(req, res) {

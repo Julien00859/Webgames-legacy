@@ -12,7 +12,7 @@ const Game = sequelize.define('game', {
     defaultValue: true
   },
   g_numbers_needed_count: {
-    type: Sequelize.INT,
+    type: Sequelize.INTEGER,
     allowNull: false
   },
   g_image: {

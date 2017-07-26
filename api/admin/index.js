@@ -8,8 +8,7 @@ const compression = require('compression');
 const serveStatic = require('serve-static');
 const app = express();
 const router = express.Router();
-const jwt = require('../common-middlewares/jwt');
-const jwtAdmin = require('../common-middlewares/admin');
+const admin = require('../common-middlewares/admin');
 const {Game} = require('../queue/model/queue-model.js');
 
 const production = process.env.NODE_ENV === 'production';
@@ -41,16 +40,9 @@ router.use('/sw.js', serveStatic(swPath, {
   maxAge: 0 // never cache the service-worker !
 }));
 
-router.use((err, req, res, next) => {
-  if (err.name === 'UnauthorizedError') {
-    res.status(401).send('invalid token...');
-    res.redirect('/login');
-  }
-});
-
 // routes
 // login is handled by auth api.
-router.get('/', jwt, jwtAdmin, (req, res) => {
+router.get('/', admin, (req, res) => {
   Game.findAll({order: [['g_name', 'ASC']]}).then(games => {
     if (!games) {
       res.status(404).send({error: "Aucun jeux n'existe..."});
