@@ -163,7 +163,7 @@ async function sendMail(mail, options) {
 }
 
 function resetPasswordForm(req, res) {
-  const {id, token} = req.query;
+  const {id, token} = req.params;
   User.findById(id).then(user => {
     if (!user) {
       res.status(404).json({error: 'utilisateur non trouvé... Hack ?'});
@@ -181,7 +181,7 @@ function resetPasswordForm(req, res) {
     }
 
     // Could change...
-    res.status(200).send({id, token}).redirect('/account/forgot/form');
+    res.status(200).redirect('/account/forgot/form');
   }).catch(error => {
     res.status(500).json({error});
   });
@@ -214,7 +214,7 @@ function resetPassword(req, res) {
 function getAccount(req, res) {
   const {id} = req.query;
   User.findById(id).then(user => {
-    res.status(200).json(user);
+    res.status(200).json(userJSON(user));
   }).catch(error => {
     res.status(500).json({error});
   });
@@ -226,6 +226,14 @@ function getCurrentAccount(req, res) {
     mail: req.user.mail
   }
   res.status(200).json(simpleUserJson);
+}
+
+function userJSON(user) {
+  return {
+    admin: user.u_admin,
+    username: user.u_name,
+    mail: user.u_email 
+  }
 }
 
 function updateAccount(req, res) {
