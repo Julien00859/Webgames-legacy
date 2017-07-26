@@ -2,13 +2,22 @@ FROM mhart/alpine-node:latest
 
 # Create app directory
 RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
 
-# Copy all stuff
-COPY . .
+
+# Copy only package.json
+# We leverage the cache
+ADD package.json /tmp/package.json
 
 # Install dependencies
+WORKDIR /tmp
 RUN yarn
+
+# Copy dependencies
+RUN cp -a /tmp/node_modules /usr/src/app
+
+# Copy stuff
+WORKDIR /usr/src/app
+ADD . .
 
 # Install dockerise
 RUN apk update \

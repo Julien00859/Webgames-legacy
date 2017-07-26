@@ -5,8 +5,8 @@ import progress from 'rollup-plugin-progress';
 import cleanup from 'rollup-plugin-cleanup'; // production
 
 export default {
-  entry: 'scripts/app.js',
-  dest: 'static/scripts/bundle.js',
+  entry: './admin/scripts/app.js',
+  dest: './admin/static/bundle.js',
   format: 'cjs',
   plugins: [
     cleanup(),
