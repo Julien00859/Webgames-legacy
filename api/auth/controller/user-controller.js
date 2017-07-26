@@ -126,7 +126,7 @@ function getResetToken(req, res) {
         title: 'Réinitialisation du mot de passe',
         content: `Vous recevez ce mail car vous avez perdu votre mot de passe,
           cliquez sur le lien ci-dessous pour changer de mot de passe.`,
-        url: `http://${req.hostname}/api/account/reset?id=${id}&token=${token}`,
+        url: `http://${req.hostname}/api/account/${id}/reset/${token}`,
         action: 'Changer de mot de passe'
       };
 
