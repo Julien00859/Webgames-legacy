@@ -125,7 +125,7 @@ class Login {
         Toast.Push(response.error);
         return;
       }
-      Toast.Push(response.success, { duration: 15000 });
+      Toast.Push(response.success, { duration: 5000 });
       this.saveToken(response.token);
     }).catch(error => console.error(error));
   }

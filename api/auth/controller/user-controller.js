@@ -98,7 +98,7 @@ function loginAdmin(req, res) {
     if (!user.u_admin) {
       return res.status(403).json({error: `admin only !`});
     }
-    console.log(req.session);
+    console.log(req.session.user);
     const token = generateJWT(user);
     res.status(200).json({success: "Connecté en tant qu'admin", token});
   })(req, res);
