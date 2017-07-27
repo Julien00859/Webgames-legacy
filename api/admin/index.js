@@ -8,6 +8,7 @@ const compression = require('compression');
 const serveStatic = require('serve-static');
 const app = express();
 const router = express.Router();
+const jwt = require('../common-middlewares/jwt');
 const admin = require('../common-middlewares/admin');
 const {Game} = require('../queue/model/queue-model.js');
 const {NODE_ENV} = require("../config");
@@ -43,7 +44,7 @@ router.use('/sw.js', serveStatic(swPath, {
 
 // routes
 // login is handled by auth api.
-router.get('/', admin, (req, res) => {
+router.get('/', jwt, admin, (req, res) => {
   Game.findAll({order: [['g_name', 'ASC']]}).then(games => {
     if (!games) {
       res.status(404).send({error: "Aucun jeux n'existe..."});

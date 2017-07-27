@@ -1,5 +1,6 @@
 import Toast from './toast.js';
 import idbKeyval from 'idb-keyval';
+import cookies from 'js-cookie';
 
 class Admin {
   constructor() {
