@@ -7,7 +7,6 @@ const passport = require('passport');
 const blacklist = require('express-jwt-blacklist');
 const dotenv = require('dotenv').config();
 const redis = require('./common-middlewares/redis');
-const socket = require('./socket'); //
 const postgres = require('./postgres');
 const app = express();
 const router = express.Router();
