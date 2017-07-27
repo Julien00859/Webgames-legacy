@@ -37,6 +37,18 @@ services:
     links:
       - postgres:postgres
       - redis:redis
+    volumes:
+      - ./api/admin:/usr/src/app/admin
+      - ./api/auth:/usr/src/app/auth
+      - ./api/common-middlewares:/usr/src/app/common-middlewares
+      - ./api/data:/usr/src/app/data
+      - ./api/postgres:/usr/src/app/postgres
+      - ./api/queue:/usr/src/app/queue
+      - ./api/socket:/usr/src/app/socket
+      - ./api/config.js:/usr/src/app/config.js
+      - ./api/package.json:/usr/src/app/package.json
+      - ./api/seed.js:/usr/src/app/seed.js
+      - ./api/server.js:/usr/src/app/server.js
     command: ["dockerize", "-wait", "tcp://postgres:5432", "-wait", "tcp://redis:6379", "yarn", "server:prod"]
   manager:
     build: ./manager
