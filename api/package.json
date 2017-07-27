@@ -31,6 +31,7 @@
     "express-session": "^1.15.4",
     "express-validator": "^3.2.0",
     "handlebars": "^4.0.10",
+    "idb-keyval": "^2.3.0",
     "js-cookie": "^2.1.4",
     "jsonwebtoken": "^7.4.1",
     "nodemailer": "^4.0.1",

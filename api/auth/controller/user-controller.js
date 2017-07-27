@@ -74,7 +74,7 @@ function login(req, res) {
     }
 
     if (!user) {
-      return res.status(404).json({error: `utilisateur (${username}) non trouvé / mauvais mot de passe.`});
+      return res.status(204).json({error: `utilisateur (${username}) non trouvé / mauvais mot de passe.`});
     }
 
     const token = generateJWT(user);
@@ -88,17 +88,17 @@ function loginAdmin(req, res) {
   passport.authenticate('local',
     {successRedirect: '/admin', failureRedirect: '/login'}, (error, user) => {
     if (error) {
-      return res.status(500).json({error});
+      return res.status(500).json({error: error.toString()});
     }
 
     if (!user) {
-      return res.status(404).json({error: `utilisateur (${username}) non trouvé / mauvais mot de passe.`});
+      return res.status(204).json({error: `utilisateur (${username}) non trouvé / mauvais mot de passe.`});
     }
 
     if (!user.u_admin) {
-      return res.status(404).json({error: `admin only !`});
+      return res.status(403).json({error: `admin only !`});
     }
-
+    console.log(req.session.user);
     const token = generateJWT(user);
     res.status(200).json({success: "Connecté en tant qu'admin", token});
   })(req, res);
@@ -109,7 +109,7 @@ function getResetToken(req, res) {
   // récupération de l'utilisateur
   User.find({wbere: {u_email: mail}}).then(user => {
     if (!user) {
-      res.status(404).json({error: "Cette e-mail n'appartient à aucun compte utilisateur."});
+      res.status(204).json({error: "Cette e-mail n'appartient à aucun compte utilisateur."});
       return;
     }
 
@@ -166,7 +166,7 @@ function resetPasswordForm(req, res) {
   const {id, token} = req.params;
   User.findById(id).then(user => {
     if (!user) {
-      res.status(404).json({error: 'utilisateur non trouvé... Hack ?'});
+      res.status(204).json({error: 'utilisateur non trouvé... Hack ?'});
       return;
     }
 
@@ -191,7 +191,7 @@ function resetPassword(req, res) {
 
   User.find({wbere: {u_id: id, u_reset_password_token: token, u_reset_expiration: {$gte: Date.now()}}}).then(user => {
     if (!user) {
-      res.status(404).json({error: "Cette e-mail n'appartient à aucun compte utilisateur."});
+      res.status(204).json({error: "Cette e-mail n'appartient à aucun compte utilisateur."});
       return;
     }
 

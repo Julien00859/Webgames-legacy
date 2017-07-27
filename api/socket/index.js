@@ -1,7 +1,7 @@
 const net = require('net');
 const {MANAGER_HOST, MANAGER_PORT} = require("../config");
-
 const socket = new net.Socket();
+let attempt = 0;
 
 socketConnection();
 
@@ -13,7 +13,12 @@ function socketConnection() {
 
 socket.on('error', err => {
   if (err.code === 'ECONNREFUSED') {
-    setTimeout(_ => socketConnection(), 2000);
+    if (attempt <= 5) {
+      setTimeout(_ => socketConnection(), 2000);
+      attempt++;
+    } else {
+      console.error('Impossible to connect to Queue Manager.');
+    }
   }
 });
 

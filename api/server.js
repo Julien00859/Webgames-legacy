@@ -13,8 +13,8 @@ const router = express.Router();
 
 const {API_PORT} = require("./config");
 
-router.use(passport.initialize());
 router.use(redis);
+router.use(passport.initialize());
 router.use(passport.session());
 router.use(bodyParser.json());
 router.use(validator());
@@ -28,6 +28,14 @@ blacklist.configure({
   store: {
     type: 'redis'
   }
+});
+
+passport.serializeUser(function(user, done) {
+  done(null, user.u_id);
+});
+
+passport.deserializeUser(function(id, done) {
+  done(null, id);
 });
 
 router.get('/check', (req, res) => res.send('api server ok.'));

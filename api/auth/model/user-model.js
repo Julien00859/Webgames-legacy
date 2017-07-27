@@ -11,7 +11,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Sequelize = require('sequelize');
 const sequelize = require('../../postgres');
-const JWT_SECRET = require("../../config")
+const {JWT_SECRET} = require("../../config");
 
 const User = sequelize.define('user', {
   u_id: {

@@ -1362,6 +1362,10 @@ iconv-lite@0.4.15:
   version "0.4.15"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.15.tgz#fe265a218ac6a57cfe854927e9d04c19825eddeb"
 
+idb-keyval@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/idb-keyval/-/idb-keyval-2.3.0.tgz#4d444b80c3f86fcbcd51321b4dcbc9247c5948c0"
+
 ignore-by-default@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/ignore-by-default/-/ignore-by-default-1.0.1.tgz#48ca6d72f6c6a3af00a9ad4ae6876be3889e2b09"
