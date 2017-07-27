@@ -37,8 +37,6 @@ services:
     links:
       - postgres:postgres
       - redis:redis
-    volumes:
-      - ./api:/usr/src/app
     command: ["dockerize", "-wait", "tcp://postgres:5432", "-wait", "tcp://redis:6379", "yarn", "server:prod"]
   manager:
     build: ./manager
