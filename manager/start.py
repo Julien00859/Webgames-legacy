@@ -5,10 +5,12 @@ import logging
 import pickle
 import signal
 import ssl
+from datetime import datetime
 from uuid import uuid4
 
 from aiohttp import ClientSession
 from aioredis import create_redis
+import jwt
 import ujson
 import uvloop
 import websockets
@@ -16,10 +18,10 @@ import websockets
 import shared
 from tools import DispatcherMeta
 from clients_handler import ClientHandler
-from config import LOG_LEVEL, API_URL, \
+from config import LOG_LEVEL, API_URL, JWT_SECRET, \
                    MANAGER_HOST, MANAGER_TCP_PORT, MANAGER_WS_PORT, UDP_BROADCASTER_PORT, \
                    USE_SSL, SSL_CERT_FILE, SSL_KEY_FILE, \
-                   REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DATABASE
+                   REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB_MANAGER
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +150,14 @@ async def relay_to_players(players_ids, payload):
 def main():
     """Main function called at script startup"""
     shared.manager_id = uuid4()
+    shared.token = jwt.encode({
+        "iss": "manager",
+        "sub": "webgames",
+        "iat": datetime.utcnow(),
+        "type": "manager",
+        "id": shared.manager_id,
+        "name": shared.manager_id[:6]
+    }, JWT_SECRET)
 
     # Setup logging
     logging.root.level = logging.NOTSET
@@ -215,18 +225,20 @@ def main():
                 "Secure" if USE_SSL else "Insecure",
                 REDIS_HOST,
                 REDIS_PORT,
-                REDIS_DATABASE,
+                REDIS_DB_MANAGER,
                 "without" if REDIS_PASSWORD is None else "with")
     redis_coro = create_redis((REDIS_HOST, REDIS_PORT),
-                              db=REDIS_DATABASE,
+                              db=REDIS_DB_MANAGER,
                               password=REDIS_PASSWORD,
-                              ssl=sc if USE_SSL else None,
                               loop=loop)
     shared.redis = loop.run_until_complete(redis_coro)
 
     # HTTP
     logger.info("Setup HTTP Client session")
-    shared.http = ClientSession(json_serialize=ujson.dumps, loop=loop)
+    shared.http = ClientSession(json_serialize=ujson.dumps,
+                                headers={
+                                    "Authorization": "Bearer " + shared.token.decode()
+                                }, loop=loop)
     async def get_queues():
         async with shared.http.get(API_URL + "/queues") as resp:
             assert resp.status == 200
@@ -272,4 +284,5 @@ def main():
     loop.close()
 
 if __name__ == "__main__":
+    main()
     main()
