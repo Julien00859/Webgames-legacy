@@ -1,28 +1,54 @@
 const net = require('net');
-const {MANAGER_HOST, MANAGER_PORT} = require("../config");
+const jwt = require('jsonwebtoken')
+const {MANAGER_HOST, MANAGER_TCP_PORT, JWT_SECRET} = require("../config");
 const socket = new net.Socket();
-let attempt = 0;
+const token = jwt.sign({id: 1, type: 'api'}, JWT_SECRET);
+let attempt = 5;
+let toSend = [];
 
-socketConnection();
+function tryConnect() {
+  console.log(`Try to connect the Queue Manager at ${MANAGER_HOST}:${MANAGER_TCP_PORT} (${attempt} attemps left)`);
+  socket.connect(MANAGER_TCP_PORT, MANAGER_HOST);
+}
+tryConnect();
 
-function socketConnection() {
-  socket.connect(MANAGER_PORT, MANAGER_HOST, _ => {
-    console.log(`[WebGames] Connected to the Queue Manager.`);
-  });
+function send(line) {
+  if (!socket.connecting)
+    socket.write(`${token} ${line}\r\n`);
+  else
+    toSend.push(line);
 }
 
-socket.on('error', err => {
-  if (err.code === 'ECONNREFUSED' || err.code === 'EADDRNOTAVAIL') {
-    console.log(attempt);
-    if (attempt < 5) {
-      setTimeout(_ => socketConnection(), 2000);
-      attempt++;
-    } else {
-      console.error('Impossible to connect to Queue Manager.');
+socket.on('connect', () => {
+  console.log(`[WebGames] Connected to the Queue Manager.`);
+  if (toSend.length)
+    for (let line of toSend)
+      socket.write(line);
+})
+
+socket.on('data', data => {
+  if (Buffer.isBuffer(data))
+    data = data.toString();
+  for (let line of data.split('\r\n')) {
+    args = line.split(' ');
+    switch (args[0]) {
+      case 'ping':
+        send(`pong ${args[1]}`);
+        break;
     }
   }
 });
 
-socket.on('end', _ => console.log('[WebGames] Queue Manager disconnected.'));
+socket.on('error', err => {
+  if ((err.code === 'ECONNREFUSED' || err.code === 'EADDRNOTAVAIL') && attempt--)
+    setTimeout(tryConnect, 2000);
+  else
+    console.error(`[WebGames] Connection to the Queue Manager closed due to ${err}.`);
+});
+socket.on('close', with_err => {
+  if (!with_err)
+    console.log('[WebGames] Connection to the Queue Manager closed.')
+});
+socket.on('end', _ => console.log('[WebGames] The Queue Manager closed the connection.'));
 
 module.exports = socket;
