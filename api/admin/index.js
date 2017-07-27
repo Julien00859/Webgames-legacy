@@ -41,11 +41,6 @@ router.use('/sw.js', serveStatic(swPath, {
   maxAge: 0 // never cache the service-worker !
 }));
 
-
-// routes
-// login is handled by auth api.
-router.get('/', admin, (req, res) => {
-
 // routes
 // login is handled by auth api.
 router.get('/', admin, (req, res) => {
