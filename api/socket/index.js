@@ -13,7 +13,6 @@ function socketConnection() {
 
 socket.on('error', err => {
   if (err.code === 'ECONNREFUSED' || err.code === 'EADDRNOTAVAIL') {
-    console.log(attempt);
     if (attempt < 5) {
       setTimeout(_ => socketConnection(), 2000);
       attempt++;
