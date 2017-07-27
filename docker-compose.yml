@@ -10,7 +10,7 @@ services:
     image: redis:alpine
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-    command: "redis-server --requirepass $$REDIS_PASSWORD"
+    command: "redis-server --requirepass $REDIS_PASSWORD"
   nginx:
     build: ./nginx
     links:
