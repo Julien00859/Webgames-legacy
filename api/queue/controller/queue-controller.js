@@ -1,6 +1,6 @@
 const {Game} = require('../model/queue-model');
 const socket = require('../../socket');
-const {JWT_SECRET} = require("../../config.")
+const {JWT_SECRET} = require("../../config")
 
 function getAllQueues(req, res) {
   Game.findAll().then(games => {
