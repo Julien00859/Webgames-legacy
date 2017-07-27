@@ -2,6 +2,7 @@ const http = require('http');
 const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const validator = require('express-validator');
 const passport = require('passport');
 const blacklist = require('express-jwt-blacklist');
@@ -15,8 +16,8 @@ const {API_PORT} = require("./config");
 
 router.use(redis);
 router.use(passport.initialize());
-router.use(passport.session());
 router.use(bodyParser.json());
+router.use(cookieParser());
 router.use(validator());
 router.use(bodyParser.urlencoded({
   extended: true
@@ -28,14 +29,6 @@ blacklist.configure({
   store: {
     type: 'redis'
   }
-});
-
-passport.serializeUser(function(user, done) {
-  done(null, user.u_id);
-});
-
-passport.deserializeUser(function(id, done) {
-  done(null, id);
 });
 
 router.get('/check', (req, res) => res.send('api server ok.'));
