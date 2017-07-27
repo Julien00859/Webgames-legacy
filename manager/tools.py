@@ -105,7 +105,19 @@ if __name__ == "__main__":
         if argv[1] == "jwt":
             # Generate a JSON Web Token with a type given by argv[2]
             import jwt
-            from config import JWT_SECRET
+            from config import JWT_SECRET, JWT_EXPIRATION_TIME
             from uuid import uuid4
+            from datetime import datetime
 
-            print(jwt.encode({"type": argv[2], "id": str(uuid4())}, JWT_SECRET).decode())
+            tid = str(uuid4())
+            token = jwt.encode({
+                "iss": "manager",
+                "sub": "webgames",
+                "iat": datetime.utcnow(),
+                "exp": datetime.utcnow() + JWT_EXPIRATION_TIME,
+                "type": "game",
+                "id": tid,
+                "name": tid[:6]
+            }, JWT_SECRET)
+
+            print(token.decode())
