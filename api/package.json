@@ -45,6 +45,7 @@
     "chai": "^4.0.2",
     "chai-http": "^3.0.0",
     "dotenv": "^4.0.0",
+    "eslint-config-google": "^0.9.1",
     "mocha": "^3.4.2",
     "nodemon": "^1.11.0",
     "rollup": "^0.43.0",

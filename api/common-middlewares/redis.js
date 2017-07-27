@@ -1,6 +1,6 @@
 const session = require('express-session');
 const RedisStore = require('connect-redis')(session);
-const {REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB_WEBAPI} = require("../config");
+const {REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB_API} = require("../config");
 
 const redis = session({
   secret: REDIS_PASSWORD,
@@ -8,7 +8,7 @@ const redis = session({
   store: new RedisStore({
     host: REDIS_HOST,
     port: REDIS_PORT,
-    db: REDIS_DB_WEBAPI
+    db: REDIS_DB_API
   }),
   cookie: {
     maxAge: 1000 * 60 * 60 * 12
