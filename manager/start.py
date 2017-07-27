@@ -155,8 +155,8 @@ def main():
         "sub": "webgames",
         "iat": datetime.utcnow(),
         "type": "manager",
-        "id": shared.manager_id,
-        "name": shared.manager_id[:6]
+        "id": str(shared.manager_id),
+        "name": str(shared.manager_id)[:6]
     }, JWT_SECRET)
 
     # Setup logging
