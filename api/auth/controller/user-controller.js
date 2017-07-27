@@ -25,7 +25,7 @@ passport.use(new LocalStrategy({
     usernameField: 'username',
     passwordField: 'password',
     passReqToCallback: false,
-    session: true
+    session: false
   }, (username, password, done) => {
     User.find({where: {u_name: username}}).then(user => {
       if (!user) return done(null, false); // no user
