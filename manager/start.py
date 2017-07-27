@@ -240,7 +240,7 @@ def main():
                                     "Authorization": "Bearer " + shared.token.decode()
                                 }, loop=loop)
     async def get_queues():
-        async with shared.http.get(API_URL + "/queues") as resp:
+        async with shared.http.get(API_URL + "/queue/actives") as resp:
             assert resp.status == 200
             shared.queues = await resp.json(loads=ujson.loads)
     loop.run_until_complete(get_queues())
