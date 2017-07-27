@@ -15,7 +15,6 @@ function validateRegister(req, res, next) {
 }
 
 function validateLogin(req, res, next) {
-  console.log(req.body);
 
   req.checkBody('username', "Le nom d'utilisateur est vide").notEmpty();
   req.checkBody('username', "Le nom d'utilisateur doit être compris entre 3 et 24 caractères").len(3, 24);

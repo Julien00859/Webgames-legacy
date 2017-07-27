@@ -15,7 +15,7 @@ const redis = session({
   },
   proxy: false,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: true
 });
 
 module.exports = redis;

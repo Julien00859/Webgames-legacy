@@ -1,5 +1,6 @@
 import resolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
+import commonjs from 'rollup-plugin-commonjs';
 import filesize from 'rollup-plugin-filesize';
 import progress from 'rollup-plugin-progress';
 import cleanup from 'rollup-plugin-cleanup'; // production
@@ -10,6 +11,7 @@ export default {
   format: 'cjs',
   plugins: [
     cleanup(),
+    commonjs(),
     resolve(),
     babel({
       exclude: 'node_modules/**'
