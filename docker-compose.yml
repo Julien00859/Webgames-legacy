@@ -54,6 +54,7 @@ services:
     build: ./manager
     environment:
       - API_URL=http://api.webgames.ephec-ti.be
+      - LOG_LEVEL=INFO
       - JWT_SECRET=${JWT_SECRET}
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
