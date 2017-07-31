@@ -9,5 +9,6 @@ module.exports = (req, res, next) => {
     res.status(401).send('admin or manager only !');
     return;
   }
+  console.log('admin or manager. You have access.');
   next();
 }
