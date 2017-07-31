@@ -4,7 +4,7 @@ const {JWT_SECRET} = require("../../config")
 
 function getAllQueues(req, res) {
   Game.findAll().then(games => {
-    if (! games) {
+    if (!games) {
       res.status(204);
       return;
     }
@@ -14,12 +14,13 @@ function getAllQueues(req, res) {
 
 function getActivesQueues(req, res) {
   Game.findAll().then(games => {
-    if (! games) {
+    if (!games) {
       res.status(204);
       return;
     }
+    console.log('sending active games...');
     res.status(200).json(games.filter(game => game.g_status).map(game => game.name));
-  }).catch(error => res.status(500).json({error}));
+  }).catch(error => res.status(500).json({error: error.toString()}));
 }
 
 function getQueueObject(req, res) {

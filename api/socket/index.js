@@ -13,23 +13,28 @@ function tryConnect() {
 tryConnect();
 
 function send(line) {
-  if (!socket.connecting)
+  if (!socket.connecting) {
     socket.write(`${token} ${line}\r\n`);
-  else
+  } else {
     toSend.push(line);
+  }
 }
 
-socket.on('connect', () => {
+socket.on('connect', _ => {
   console.log(`[WebGames] Connected to the Queue Manager.`);
-  if (toSend.length)
-    for (let line of toSend)
+  if (toSend.length) {
+    for (const line of toSend) {
       socket.write(line);
+    }
+  }
 })
 
 socket.on('data', data => {
-  if (Buffer.isBuffer(data))
+  if (Buffer.isBuffer(data)) {
     data = data.toString();
-  for (let line of data.split('\r\n')) {
+  }
+
+  for (const line of data.split('\r\n')) {
     args = line.split(' ');
     switch (args[0]) {
       case 'ping':
@@ -40,14 +45,16 @@ socket.on('data', data => {
 });
 
 socket.on('error', err => {
-  if ((err.code === 'ECONNREFUSED' || err.code === 'EADDRNOTAVAIL') && attempt--)
+  if ((err.code === 'ECONNREFUSED' || err.code === 'EADDRNOTAVAIL') && attempt--) {
     setTimeout(tryConnect, 2000);
-  else
+  } else {
     console.error(`[WebGames] Connection to the Queue Manager closed due to ${err}.`);
+  }
 });
 socket.on('close', with_err => {
-  if (!with_err)
-    console.log('[WebGames] Connection to the Queue Manager closed.')
+  if (!with_err) {
+    console.log('[WebGames] Connection to the Queue Manager closed.');
+  }
 });
 socket.on('end', _ => console.log('[WebGames] The Queue Manager closed the connection.'));
 
