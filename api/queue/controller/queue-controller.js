@@ -18,8 +18,7 @@ function getActivesQueues(req, res) {
       res.status(204);
       return;
     }
-    console.log('sending active games...');
-    res.status(200).json(games.filter(game => game.g_status).map(game => game.name));
+    res.status(200).json(games.filter(game => game.g_status).map(game => game.g_name));
   }).catch(error => res.status(500).json({error: error.toString()}));
 }
 
