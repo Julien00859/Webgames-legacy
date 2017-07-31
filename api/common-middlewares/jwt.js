@@ -7,7 +7,6 @@ module.exports = jwt({
   isRevoked: blacklist.isRevoked,
   getToken: function (req) {
     if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-      console.log('Bearer received');
       return req.headers.authorization.split(' ')[1];
     } else if (req.cookies && req.cookies.jwt) {
       return req.cookies.jwt;
