@@ -4,6 +4,7 @@ from logging import getLogger, WARNING
 from random import randint
 from time import time
 from typing import get_type_hints, NamedTuple
+from uuid import UUID
 import asyncio
 import re
 
@@ -22,6 +23,7 @@ GameData = namedtuple("GameData", ["name", "ports", "enabled", "threshold"])
 Command = namedtuple("Command", ["restricted_to", "regexp", "callback"])
 command_re = re.compile(r"[\w-]+\.[\w-]+\.[\w-]+ [a-z0-9_]+( .*)?")
 spaces_re = re.compile(r"\s+")
+uuid_re = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 
 
 class CommandDispatcherMeta(type):
@@ -86,7 +88,7 @@ class ClientHandler(metaclass=CommandDispatcherMeta):
             match = command_re.match(line)
             if not match:
                 logger.warning("Syntax error for line: %s", line)
-                await self.send("error syntax error for line: " + line)
+                await self.send("error syntax error for line: %s" % line)
                 continue
 
             jwt_payload, command, *args = line.split(" ", 2)
@@ -97,6 +99,7 @@ class ClientHandler(metaclass=CommandDispatcherMeta):
                 newjwt = jwt.decode(jwt_payload, JWT_SECRET)
                 if self.jwtdata is None:
                     self.jwtdata = JWTData(type=newjwt["type"], id=newjwt["id"])
+                    logger.info("%s successfully authenticated." % str(self))
                 else:
                     assert self.jwtdata.id == newjwt["id"]
             except (jwt.InvalidTokenError, AssertionError) as err:
@@ -190,7 +193,6 @@ async def help_(client, jwtdata, command: str = ""):
     """
     Show command list or help about a specific command.
     """
-    cmds = []
     if command:
         cmd = client.__callbacks__.get(command)
         if cmd is None:
@@ -295,3 +297,22 @@ async def leave(client, jwtdata):
     Leave a queue.
     """
     raise NotImplementedError()
+
+@ClientHandler.register("user", r"(?P<game_id>{uuid})".format(uuid_re.pattern))
+async def ready(client, game_id: UUID):
+    game, addr = shared.ready_check.get(game_id, (None, None))
+    if game is None:
+        logger.warning("%s is ready for a non available game: %s", str(client), game_id)
+        await client.send(f'error game "{game_id!s}" does not exists.\r\n')
+        return
+
+    isready = game.get(client.JWTData.id)
+    if isready is None:
+        logger.warning('%s tried to join the game "%s" without being invited to.', str(client), game_id)
+        await client.send(f'error you are not invited in tha game "{game_id!s}"')
+        return
+
+    if all(game.values()):
+        if not shared.udpbroadcaster or shared.udpbroadcaster.is_closing():
+            raise OSError("Socket closed")
+        shared.udpbroadcaster.sendto(pickle_dumps(("allready", game_id, len(game))), addr)

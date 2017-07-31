@@ -96,6 +96,15 @@ def asyncpartial(func, *args, **keywords):
     newfunc.keywords = keywords
     return newfunc
 
+def get_connected_users(users):
+    for client in shared.clients:
+        if not client.closed \
+           and client.jwtdata is not None \
+           and client.jwtdata.type == "user":
+            if client.jwtdata.id in users:
+                yield client
+    raise StopIteration()
+
 
 if __name__ == "__main__":
     # Some useful tools

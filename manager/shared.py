@@ -7,3 +7,5 @@ manager_id = None
 queues = list()
 redis_scripts = {}
 udpbroadcaster = None
+ready_check = {}
+games = {}

@@ -16,7 +16,7 @@ import uvloop
 import websockets
 
 import shared
-from tools import DispatcherMeta
+from tools import DispatcherMeta, get_connected_users
 from clients_handler import ClientHandler
 from config import LOG_LEVEL, API_URL, JWT_SECRET, \
                    MANAGER_HOST, MANAGER_TCP_PORT, MANAGER_WS_PORT, UDP_BROADCASTER_PORT, \
@@ -124,7 +124,7 @@ class UDPBroadcaster(metaclass=DispatcherMeta):
             logger.error("%s is not registered as callback", did)
             return
         elif asyncio.iscoroutinefunction(func):
-            asyncio.ensure_future(func(*objs))
+            asyncio.ensure_future(func(addr, *objs))
         else:
             func(*objs)
 
@@ -134,17 +134,26 @@ class UDPBroadcaster(metaclass=DispatcherMeta):
             logger.error("Err", exc_info=exc)
 
 @UDPBroadcaster.register()
-async def relay_to_players(players_ids, payload):
+async def relay_to_players(sender, players_ids, payload):
     """Relay message to our players"""
-    for client in shared.clients:
-        if not client.closed \
-           and client.jwtdata is not None \
-           and client.jwtdata.type == "user":
-            if client.jwtdata.id in players_ids:
-                logger.debug("Relay to %s: %s", str(client), payload)
-                await client.send(payload)
-            else:
-                logger.debug("Skip user %s", str(client))
+    for client in get_connected_users(players_ids):
+        await client.send(payload)
+
+@UDPBroadcaster.register()
+async def ready_check(sender, players_ids, game_name, game_id):
+    shared.ready_check[game_id] = {}, addr
+    for client in get_connected_users(players_ids):
+        shared.ready_check[game_id][client.id] = False
+        await client.send(f"readycheck {game_name} {game_id}\r\n")
+
+@UDPBroadcaster.register()
+async def allready(sender, game_id, player_count):
+    game = shared.games.get(game_id)
+    if game is not None:
+        game.areready += player_count
+        if game.game.thresholh == player_count:
+            game.ready_check_fail_future.cancel()
+            asyncio.ensure_future(rungame(game))
 
 
 def main():
