@@ -124,7 +124,7 @@ if __name__ == "__main__":
                 "sub": "webgames",
                 "iat": datetime.utcnow(),
                 "exp": datetime.utcnow() + JWT_EXPIRATION_TIME,
-                "type": "game",
+                "type": argv[2],
                 "id": tid,
                 "name": tid[:6]
             }, JWT_SECRET)
