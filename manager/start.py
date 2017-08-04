@@ -141,7 +141,7 @@ async def relay_to_players(sender, players_ids, payload):
         await client.send(payload)
 
 @UDPBroadcaster.register()
-async def ready_check(sender, players_ids, game_name, game_id):
+async def readycheck(sender, players_ids, game_name, game_id):
     shared.ready_check[game_id] = {}, sender
     for client in get_connected_users(players_ids):
         shared.ready_check[game_id][0][client.jwtdata.id] = False
@@ -151,10 +151,19 @@ async def ready_check(sender, players_ids, game_name, game_id):
 async def allready(sender, game_id, player_count):
     game = shared.games.get(game_id)
     if game is not None:
-        game.areready += player_count
-        if game.game.thresholh == player_count:
+        game.readycnt += player_count
+        if game.threshold == game.readycnt:
             game.ready_check_fail_future.cancel()
-            asyncio.ensure_future(rungame(game))
+            asyncio.ensure_future(rungame(game_id))
+
+@UDPBroadcaster.register()
+async def readyfail(sender, game_id):
+    game = shared.ready_check.get(game_id)
+    if game is not None:
+        await relay_to_players(sender,
+                               game[0].keys(),
+                               f"readyfail {game_id}\r\n");
+        del shared.ready_check[game_id]
 
 
 def main():

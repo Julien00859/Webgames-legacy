@@ -296,20 +296,23 @@ async def leave(client, jwtdata):
     raise NotImplementedError()
 
 @ClientHandler.register("user", r"(?P<game_id>" + uuid_re.pattern + r")")
-async def ready(client, game_id: UUID):
-    game, addr = shared.ready_check.get(game_id, (None, None))
-    if game is None:
+async def ready(client, jwtdata, game_id: UUID):
+    from pprint import pprint
+    pprint(shared.ready_check)
+    print(game_id in shared.ready_check)
+    users, addr = shared.ready_check.get(game_id, (None, None))
+    if users is None:
         logger.warning("%s is ready for a non available game: %s", str(client), game_id)
         await client.send(f'error game "{game_id!s}" does not exists.\r\n')
         return
 
-    isready = game.get(client.jwtdata.id)
+    isready = users.get(client.jwtdata.id)
     if isready is None:
         logger.warning('%s tried to join the game "%s" without being invited to.', str(client), game_id)
         await client.send(f'error you are not invited in tha game "{game_id!s}"')
         return
 
-    if all(game.values()):
-        udpbroadcaster_send("allready", game_id, len(game), addr=addr)
-        shared.games[game_id].ready_check_fail_future.cancel()
-        client.loop.create_task(run_game(game_id))
+    logger.info(f"{client} is ready.")
+    users[jwtdata.id] = True
+    if all(users.values()):
+        udpbroadcaster_send("allready", game_id, len(users))

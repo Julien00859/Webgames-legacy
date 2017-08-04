@@ -44,11 +44,11 @@ class DispatcherMeta(type):
         return wrapper
 
 
-def udpbroadcaster_send(datagram_id, *args, addr=None):
+def udpbroadcaster_send(datagram_id, *args):
     if not shared.udpbroadcaster or shared.udpbroadcaster.is_closing():
         raise OSError("Socket closed")
 
-    shared.udpbroadcaster.sendto(pickle_dumps((datagram_id, *args)), addr)
+    shared.udpbroadcaster.sendto(pickle_dumps((datagram_id, *args)))
 
 
 def cast_using_type_hints(type_hints: dict, kwargs: dict):

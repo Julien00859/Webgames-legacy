@@ -17,34 +17,35 @@ import shared
 logger = getLogger(__name__)
 ports = deque(range(45000, 46000))
 shuffle(ports)
-Game = namedtuple("Game", ["info", "ready_check_fail_future", "players", "areready"])
+class Game:
+    def __init__(self, info, rcff, players):
+        self.name = info.name
+        self.ports = info.ports
+        self.threshold = info.threshold
+        self.ready_check_fail_future = rcff
+        self.players = players
+        self.readycnt = 0
 
-def ready_check(game, players_ids):
-    loop = asyncio.get_event_loop()
-    game_id = str(uuid4())
-    glogger = getLogger(f"{__name__}.{game_id}")
-    logger.info("Init new %s with id %s", game.name, game_id)
+def ready_check(game_info, players_ids):
+    game_id = uuid4()
+    logger.info("Init new %s with id %s", game_info.name, game_id)
     asyncio.ensure_future(shared.redis.sadd(f"games:{game_id}:players", *players_ids))
-    future = loop.call_later(READY_CHECK_TIMEOUT, ready_check_fail, game_id)
-    shared.games[game_id] = Game(game, future, players_ids, 0)
-    logger.info("Send ready check challenge to users")
-    udpbroadcaster_send("ready_check", players_ids, game.name, game_id)
+    future = asyncio.get_event_loop().call_later(READY_CHECK_TIMEOUT, ready_check_fail, game_id)
+    shared.games[game_id] = Game(game_info, future, players_ids)
+    getLogger(f"{__name__}.{game_id}").info("Send ready check challenge to users")
+    udpbroadcaster_send("readycheck", players_ids, game_info.name, game_id)
 
 def ready_check_fail(game_id):
-    glogger = getLogger(f"{__name__}.{game_id}")
-    glogger.info("Ready check challenge failed")
-    asyncio.ensure_future(run_redis_script("remove_game.lua", [game_id, str(len(shared.games[game_id].players))], []))
+    getLogger(f"{__name__}.{game_id}").info("Ready check challenge failed")
+    asyncio.ensure_future(run_redis_script("remove_game.lua", [str(game_id), str(len(shared.games[game_id].players))], []))
     del shared.games[game_id]
-    udpbroadcaster_send("ready_check_fail", game_id)
+    udpbroadcaster_send("readyfail", game_id)
 
 async def run(game_id):
+    game = shared.games[game_id]
     glogger = getLogger(f"{__name__}.{game_id}")
     glogger.info("Ready check challenge successful !")
-    game = shared.games[game_id].info
-    players_ids = shared.games[game_id].players
-
-    await shared.redis.rpush("games:" + gid + ":players", *players_ids)
-    relay_to_players = partial(udpbroadcaster_send, "relay_to_players", players_ids)
+    relay_to_players = partial(udpbroadcaster_send, "relay_to_players", game.players)
 
     glogger.debug("Generate JSON Web Token")
     gjwt = jwt.encode({
@@ -53,27 +54,27 @@ async def run(game_id):
         "iat": datetime.utcnow(),
         "exp": datetime.utcnow() + JWT_EXPIRATION_TIME,
         "type": "game",
-        "id": gid,
+        "id": str(game_id),
         "name": game.name
     }, JWT_SECRET)
 
     glogger.debug("Register in Web API")
     await shared.http.post(f"{API_URL}/games", json={
         "name": game.name,
-        "id": gid,
-        "players": players_ids
+        "id": str(game_id),
+        "players": game.players
     })
 
     myports = [ports.pop() for n in range(len(game.ports))]
     myports_str = " ".join([game.ports[n][1] + ":" + str(myports[n]) for n in range(len(myports))])
 
-    relay_to_players(f"gamestart {game.name} {gid} {myports_str}")
+    relay_to_players(f"gamestart {game.name} {game_id} {myports_str}")
 
     glogger.info("Start game")
     await asyncio.sleep(2)
     glogger.info("Stop game")
 
-    await run_redis_script("remove_game.lua", [game_id, len(shared.games[game_id].players)])
+    await run_redis_script("remove_game.lua", [str(game_id), len(game.players)], [])
 
-    await shared.http.delete(f"{API_URL}/games/{gid}")
-    relay_to_players(f"gameover {game.name} {gid}")
+    await shared.http.delete(f"{API_URL}/games/{game_id}")
+    relay_to_players(f"gameover {game.name} {game_id}")
