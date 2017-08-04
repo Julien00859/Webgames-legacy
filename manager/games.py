@@ -24,7 +24,7 @@ def ready_check(game, players_ids):
     game_id = str(uuid4())
     glogger = getLogger(f"{__name__}.{game_id}")
     logger.info("Init new %s with id %s", game.name, game_id)
-    loop.create_task(shared.redis.sadd(f"games:{game_id}:players", *players_ids))
+    asyncio.ensure_future(shared.redis.sadd(f"games:{game_id}:players", *players_ids))
     future = loop.call_later(READY_CHECK_TIMEOUT, ready_check_fail, game_id)
     shared.games[game_id] = Game(game, future, players_ids, 0)
     logger.info("Send ready check challenge to users")
