@@ -20,20 +20,29 @@ shuffle(ports)
 Game = namedtuple("Game", ["info", "ready_check_fail_future", "players", "areready"])
 
 def ready_check(game, players_ids):
+    loop = asyncio.get_event_loop()
     game_id = str(uuid4())
-    asyncio.loop.ensure_future(shared.redis.sadd(f"games:{game_id}:players", *players_ids))
-    future = asyncio.call_later(READY_CHECK_TIMEOUT, ready_check_fail, game_id)
+    glogger = getLogger(f"{__name__}.{game_id}")
+    logger.info("Init new %s with id %s", game.name, game_id)
+    loop.create_task(shared.redis.sadd(f"games:{game_id}:players", *players_ids))
+    future = loop.call_later(READY_CHECK_TIMEOUT, ready_check_fail, game_id)
     shared.games[game_id] = Game(game, future, players_ids, 0)
+    logger.info("Send ready check challenge to users")
     udpbroadcaster_send("ready_check", players_ids, game.name, game_id)
 
 def ready_check_fail(game_id):
+    glogger = getLogger(f"{__name__}.{game_id}")
+    glogger.info("Ready check challenge failed")
+    asyncio.ensure_future(run_redis_script("remove_game.lua", [game_id, str(len(shared.games[game_id].players))], []))
     del shared.games[game_id]
-    asyncio.loop.ensure_future(shared.redis.delete(f"games:{game_id}:players"))
     udpbroadcaster_send("ready_check_fail", game_id)
 
-async def run(game, players_ids):
-    glogger = getLogger(f"{__name__}.{game.name}.{gid}")
-    logger.info("Init new %s with id %s", game.name, gid)
+async def run(game_id):
+    glogger = getLogger(f"{__name__}.{game_id}")
+    glogger.info("Ready check challenge successful !")
+    game = shared.games[game_id].info
+    players_ids = shared.games[game_id].players
+
     await shared.redis.rpush("games:" + gid + ":players", *players_ids)
     relay_to_players = partial(udpbroadcaster_send, "relay_to_players", players_ids)
 
@@ -64,7 +73,7 @@ async def run(game, players_ids):
     await asyncio.sleep(2)
     glogger.info("Stop game")
 
-    await shared.redis.delete(f"games:{gid}:players")
+    await run_redis_script("remove_game.lua", [game_id, len(shared.games[game_id].players)])
 
     await shared.http.delete(f"{API_URL}/games/{gid}")
     relay_to_players(f"gameover {game.name} {gid}")

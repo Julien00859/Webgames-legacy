@@ -44,11 +44,11 @@ class DispatcherMeta(type):
         return wrapper
 
 
-def udpbroadcaster_send(datagram_id, *args):
+def udpbroadcaster_send(datagram_id, *args, addr=None):
     if not shared.udpbroadcaster or shared.udpbroadcaster.is_closing():
         raise OSError("Socket closed")
 
-    shared.udpbroadcaster.sendto(pickle_dumps((datagram_id, *args)))
+    shared.udpbroadcaster.sendto(pickle_dumps((datagram_id, *args)), addr)
 
 
 def cast_using_type_hints(type_hints: dict, kwargs: dict):
@@ -96,13 +96,12 @@ def asyncpartial(func, *args, **keywords):
     newfunc.keywords = keywords
     return newfunc
 
-def get_connected_users(users):
-    for client in shared.clients:
-        if not client.closed \
-           and client.jwtdata is not None \
-           and client.jwtdata.type == "user":
-            if client.jwtdata.id in users:
-                yield client
+def get_connected_users(users_ids):
+    for user_id in users_ids:
+        user = shared.uid_to_client.get(user_id)
+        if user is not None:
+            yield user
+
     raise StopIteration()
 
 

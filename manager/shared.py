@@ -1,11 +1,11 @@
 """Shared object to avoid import loop"""
+from typing import Dict, List, Tuple
 
 redis = None
 http = None
-clients = set()
+uid_to_client: Dict["UUID", "ClientHandler"] = {}
 manager_id = None
-queues = list()
-redis_scripts = {}
+queues: List[str] = list()
 udpbroadcaster = None
-ready_check = {}
-games = {}
+ready_check: Dict["UUID", Tuple[Dict["UUID", bool], "IPAddress"]] = {}
+games: Dict["UUID", "Game"] = {}
