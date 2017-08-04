@@ -4,6 +4,7 @@ from logging import getLogger, WARNING
 from random import randint
 from time import time
 from typing import get_type_hints, NamedTuple
+from uuid import UUID
 import asyncio
 import re
 
@@ -11,9 +12,9 @@ import jwt
 from ujson import loads as ujsonloads
 
 from config import PING_TIMEOUT, PING_HEARTBEAT, JWT_SECRET, API_URL
-from tools import cast_using_type_hints, run_redis_script, call_later_coro, DispatcherMeta
+from tools import cast_using_type_hints, run_redis_script, call_later_coro, DispatcherMeta, udpbroadcaster_send
 import shared
-from games import run as run_game
+from games import ready_check
 
 logger = getLogger(__name__)
 Ping = NamedTuple("Ping", [("value", int), ("time_sent", int)])
@@ -22,6 +23,7 @@ GameData = namedtuple("GameData", ["name", "ports", "enabled", "threshold"])
 Command = namedtuple("Command", ["restricted_to", "regexp", "callback"])
 command_re = re.compile(r"[\w-]+\.[\w-]+\.[\w-]+ [a-z0-9_]+( .*)?")
 spaces_re = re.compile(r"\s+")
+uuid_re = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 
 
 class CommandDispatcherMeta(type):
@@ -56,8 +58,6 @@ class ClientHandler(metaclass=CommandDispatcherMeta):
         """
         Initiate a new client with its socket and peername
         """
-        shared.clients.add(self)
-
         self.peername = peername
         self.send = sendfunc
 
@@ -86,7 +86,7 @@ class ClientHandler(metaclass=CommandDispatcherMeta):
             match = command_re.match(line)
             if not match:
                 logger.warning("Syntax error for line: %s", line)
-                await self.send("error syntax error for line: " + line)
+                await self.send("error syntax error for line: %s" % line)
                 continue
 
             jwt_payload, command, *args = line.split(" ", 2)
@@ -97,6 +97,8 @@ class ClientHandler(metaclass=CommandDispatcherMeta):
                 newjwt = jwt.decode(jwt_payload, JWT_SECRET)
                 if self.jwtdata is None:
                     self.jwtdata = JWTData(type=newjwt["type"], id=newjwt["id"])
+                    shared.uid_to_client[newjwt["id"]] = self
+                    logger.info("%s successfully authenticated." % str(self))
                 else:
                     assert self.jwtdata.id == newjwt["id"]
             except (jwt.InvalidTokenError, AssertionError) as err:
@@ -177,10 +179,8 @@ class ClientHandler(metaclass=CommandDispatcherMeta):
             call.cancel()
         if self.jwtdata is not None and self.jwtdata.type == "user":
             logger.debug("Remove user from cache")
-            await run_redis_script("remove_player_from_queues.lua",
-                                   [self.jwtdata.id],
-                                   shared.queues)
-        shared.clients.remove(self)
+            await run_redis_script("remove_player_from_queues.lua", [self.jwtdata.id], [])
+        del shared.uid_to_client[self.jwtdata.id]
 
 
 # ======== Shared commands ========
@@ -190,7 +190,6 @@ async def help_(client, jwtdata, command: str = ""):
     """
     Get command list or full help about a specific command.
     """
-    cmds = []
     if command:
         cmd = client.__callbacks__.get(command)
         if cmd is None:
@@ -269,10 +268,10 @@ async def join(client, jwtdata, queue: str):
         await client.send("error this game is not available")
         return
 
-    async with shared.http.get(API_URL + "/queues/" + queue) as resp:
+    async with shared.http.get(API_URL + "/queue/" + queue) as resp:
         if resp.status != 200:
             logger.error("Status code for '%s' is not 200: %d",
-                         API_URL + "/queues" + queue, resp.status)
+                         API_URL + "/queue/" + queue, resp.status)
             await client.send("error internal error")
             return
 
@@ -287,7 +286,7 @@ async def join(client, jwtdata, queue: str):
     if players_ids is not None:
         players_ids = list(map(lambda b: b.decode(), players_ids))
         logger.info("Game '%s' filled with %d players", queue, game.threshold)
-        client.loop.create_task(run_game(game, players_ids))
+        client.loop.call_soon(ready_check, game, players_ids)
 
 @ClientHandler.register("user", "(?P<queue>\w+)?")
 async def leave(client, jwtdata):
@@ -295,3 +294,25 @@ async def leave(client, jwtdata):
     Leave a specific queue if a queue is given or all queues otherwise.
     """
     raise NotImplementedError()
+
+@ClientHandler.register("user", r"(?P<game_id>" + uuid_re.pattern + r")")
+async def ready(client, jwtdata, game_id: UUID):
+    from pprint import pprint
+    pprint(shared.ready_check)
+    print(game_id in shared.ready_check)
+    users, addr = shared.ready_check.get(game_id, (None, None))
+    if users is None:
+        logger.warning("%s is ready for a non available game: %s", str(client), game_id)
+        await client.send(f'error game "{game_id!s}" does not exists.\r\n')
+        return
+
+    isready = users.get(client.jwtdata.id)
+    if isready is None:
+        logger.warning('%s tried to join the game "%s" without being invited to.', str(client), game_id)
+        await client.send(f'error you are not invited in tha game "{game_id!s}"')
+        return
+
+    logger.info(f"{client} is ready.")
+    users[jwtdata.id] = True
+    if all(users.values()):
+        udpbroadcaster_send("allready", game_id, len(users))

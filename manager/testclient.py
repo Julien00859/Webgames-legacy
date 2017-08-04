@@ -20,6 +20,7 @@ class Client(Thread):
         Thread.__init__(self)
         self.stopevt = Event()
         self.connectedevt = Event()
+        self.preparedcmd = ""
 
     def bye(self):
         """Send 'quit' command to the server and stop the loop"""
@@ -44,6 +45,10 @@ class Client(Thread):
                         self.connectedevt.set()
                     elif cmd == "quit":
                         self.stopevt.set()
+                    elif cmd == "readycheck":
+                        self.preparedcmd = "ready " + args.split(" ")[1]
+                        print(self.preparedcmd + " ? ")
+
         self.socket.close()
         print("Disconnected")
 
@@ -67,6 +72,8 @@ while True:
     if cli.split(" ")[0] == "quit":
         client.bye()
         break
+    elif cli.casefold() == "y":
+        client.send(client.preparedcmd)
     else:
         client.send(cli)
         sleep(0.05)

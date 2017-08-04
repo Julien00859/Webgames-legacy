@@ -96,6 +96,14 @@ def asyncpartial(func, *args, **keywords):
     newfunc.keywords = keywords
     return newfunc
 
+def get_connected_users(users_ids):
+    for user_id in users_ids:
+        user = shared.uid_to_client.get(user_id)
+        if user is not None:
+            yield user
+
+    raise StopIteration()
+
 
 if __name__ == "__main__":
     # Some useful tools
@@ -115,7 +123,7 @@ if __name__ == "__main__":
                 "sub": "webgames",
                 "iat": datetime.utcnow(),
                 "exp": datetime.utcnow() + JWT_EXPIRATION_TIME,
-                "type": "game",
+                "type": argv[2],
                 "id": tid,
                 "name": tid[:6]
             }, JWT_SECRET)

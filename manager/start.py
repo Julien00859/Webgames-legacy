@@ -16,8 +16,9 @@ import uvloop
 import websockets
 
 import shared
-from tools import DispatcherMeta
+from tools import DispatcherMeta, get_connected_users
 from clients_handler import ClientHandler
+from games import run as rungame
 from config import LOG_LEVEL, API_URL, JWT_SECRET, \
                    MANAGER_HOST, MANAGER_TCP_PORT, MANAGER_WS_PORT, UDP_BROADCASTER_PORT, \
                    USE_SSL, SSL_CERT_FILE, SSL_KEY_FILE, \
@@ -124,9 +125,9 @@ class UDPBroadcaster(metaclass=DispatcherMeta):
             logger.error("%s is not registered as callback", did)
             return
         elif asyncio.iscoroutinefunction(func):
-            asyncio.ensure_future(func(*objs))
+            asyncio.ensure_future(func(addr, *objs))
         else:
-            func(*objs)
+            func(addr, *objs)
 
     def connection_lost(self, exc):
         """on connection lost"""
@@ -134,17 +135,35 @@ class UDPBroadcaster(metaclass=DispatcherMeta):
             logger.error("Err", exc_info=exc)
 
 @UDPBroadcaster.register()
-async def relay_to_players(players_ids, payload):
+async def relay_to_players(sender, players_ids, payload):
     """Relay message to our players"""
-    for client in shared.clients:
-        if not client.closed \
-           and client.jwtdata is not None \
-           and client.jwtdata.type == "user":
-            if client.jwtdata.id in players_ids:
-                logger.debug("Relay to %s: %s", str(client), payload)
-                await client.send(payload)
-            else:
-                logger.debug("Skip user %s", str(client))
+    for client in get_connected_users(players_ids):
+        await client.send(payload)
+
+@UDPBroadcaster.register()
+async def readycheck(sender, players_ids, game_name, game_id):
+    shared.ready_check[game_id] = {}, sender
+    for client in get_connected_users(players_ids):
+        shared.ready_check[game_id][0][client.jwtdata.id] = False
+        await client.send(f"readycheck {game_name} {game_id}\r\n")
+
+@UDPBroadcaster.register()
+async def allready(sender, game_id, player_count):
+    game = shared.games.get(game_id)
+    if game is not None:
+        game.readycnt += player_count
+        if game.threshold == game.readycnt:
+            game.ready_check_fail_future.cancel()
+            asyncio.ensure_future(rungame(game_id))
+
+@UDPBroadcaster.register()
+async def readyfail(sender, game_id):
+    game = shared.ready_check.get(game_id)
+    if game is not None:
+        await relay_to_players(sender,
+                               game[0].keys(),
+                               f"readyfail {game_id}\r\n");
+        del shared.ready_check[game_id]
 
 
 def main():
@@ -263,9 +282,9 @@ def main():
 
     async def kick_all_clients():
         kicking = [client.kick("Server is shutting down...", level=logging.DEBUG)
-                   for client in shared.clients.copy()]
+                   for client in shared.uid_to_client.values()]
         await asyncio.wait(kicking)
-    if shared.clients:
+    if shared.uid_to_client:
         logger.info("Kicking clients...")
         loop.run_until_complete(kick_all_clients())
 
@@ -284,5 +303,4 @@ def main():
     loop.close()
 
 if __name__ == "__main__":
-    main()
     main()
