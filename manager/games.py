@@ -71,7 +71,7 @@ async def run(game_id):
     relay_to_players(f"gamestart {game.name} {game_id} {myports_str}")
 
     glogger.info("Start game")
-    await asyncio.sleep(2)
+    await asyncio.sleep(10)
     glogger.info("Stop game")
 
     await run_redis_script("remove_game.lua", [str(game_id), len(game.players)], [])

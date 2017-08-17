@@ -1,12 +1,9 @@
 # Secret configuration
 .env
-api/.env
-yarn-error.log
-docker-compose.yml
 nginx/conf.d/*.conf
 
 # Virtual Environements
-api/node_modules
+webapi/venv/
 manager/venv/
 
 # Editors
@@ -15,7 +12,10 @@ manager/venv/
 # Python cached compiled files
 manager/__pycache__
 manager/*.pyc
+webapi/auth/__pycache__
+webapi/auth/*.pyv
+webapi/queues/__pycache__
+webapi/queues/*.pyv
+webapi/games/__pycache__
+webapi/games/*.pyv
 
-# Others
-api/yarn-error.log
-.DS_Store

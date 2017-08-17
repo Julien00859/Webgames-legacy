@@ -76,6 +76,6 @@ while True:
         client.send(client.preparedcmd)
     else:
         client.send(cli)
-        sleep(0.05)
+    sleep(5)
 
 client.join()
