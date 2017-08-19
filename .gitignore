@@ -3,8 +3,8 @@
 nginx/conf.d/*.conf
 
 # Virtual Environements
-webapi/venv/
 manager/venv/
+webapi/venv/
 
 # Editors
 .vscode/
@@ -12,10 +12,6 @@ manager/venv/
 # Python cached compiled files
 manager/__pycache__
 manager/*.pyc
-webapi/auth/__pycache__
-webapi/auth/*.pyv
-webapi/queues/__pycache__
-webapi/queues/*.pyv
-webapi/games/__pycache__
-webapi/games/*.pyv
+webapi/__pycache__
+webapi/*.pyv
 

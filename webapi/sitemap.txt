@@ -1,0 +1,17 @@
+/auth/session => réfère à la session en cours
+POST    /auth/session        => se connecter
+DELETE  /auth/session        => avec un jwt, se déconnecter
+
+/auth/account => réfère à son compte
+GET     /auth/account        => avec un jwt, récupèrer les infos de son compte
+POST    /auth/account        => s'inscrire
+POST    /auth/account/forget => envoyer un token de reset
+PUT     /auth/account        => avec un jwt, mettre à jour son compte
+DELETE  /auth/account        => avec un jwt, se désinscrire
+
+/auth/accounts/:id => réfère à un compte précis
+GET     /auth/accounts/:id   => avec un jwt, récupèrer les infos du compte précisé
+GET     /auth/accounts/:id/validate/:token => valider un token d'activation
+POST    /auth/accounts/:id/reset/:token => valider un token de reset
+PUT     /auth/accounts/:id   => étant admin, mettre à jour le compte d'un utilisateur
+DELETE  /auth/accounts/:id   => étant admin, désinscrire un joueur
