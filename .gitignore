@@ -1,8 +1,10 @@
 # Secret configuration
 .env
 nginx/conf.d/*.conf
+postgres-init-scripts/dev.sql
 
 # Virtual Environements
+client-tui/venv/
 manager/venv/
 webapi/venv/
 
@@ -10,8 +12,10 @@ webapi/venv/
 .vscode/
 
 # Python cached compiled files
+client-tui/__pycache__
+client-tui/*.pyc
 manager/__pycache__
 manager/*.pyc
 webapi/__pycache__
-webapi/*.pyv
+webapi/*.pyc
 

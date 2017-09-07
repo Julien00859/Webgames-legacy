@@ -42,7 +42,7 @@ async def login(req):
         "id": str(user["userid"])
     }, JWT_SECRET)
     logger.info(f"Generated token: {jwt}")
-    return json({"token": jwt})
+    return json({"id": str(user["userid"]), "token": jwt})
 
 @auth_bp.route("/session", methods=["DELETE"])
 @safe_http_exception
@@ -91,7 +91,7 @@ async def register(req):
 @jsonfields({"login"})
 async def forget(req):
     stmt = await shared.postgres.prepare("SELECT userid, email, is_verified FROM get_user_by_login($1)")
-    user = stmt.fetchrow(req.json["login"])
+    user = await stmt.fetchrow(req.json["login"])
     if all(map(lambda v: v is None, user.values())):
         logger.warning(f"User \'{req.json['login']}\' not found")
         raise Forbidden("User not found")
@@ -101,28 +101,28 @@ async def forget(req):
         raise Forbidden("You must verify your email first")
 
     reset_token = token_urlsafe()
-    await shared.redis.set(f"users:{userid}:reset_token", reset_token)
-    await shared.redis.expire(f"users:{userid}:reset_token", TOKEN_EXPIRATION_TIME)
+    await shared.redis.set(f"users:{user['userid']}:reset_token", reset_token)
+    await shared.redis.expire(f"users:{user['userid']}:reset_token", TOKEN_EXPIRATION_TIME)
 
     # TODO
     # send an email
 
-    return json({"token": reset_token})
+    return json({"userid": str(user["userid"]), "token": reset_token})
 
 @auth_bp.route("/account", methods=["PUT"])
 @safe_http_exception
 @jsonfields({})
 @authenticate({ClientType.USER, ClientType.ADMIN})
 async def update_my_account(req, jwt):
-    allowed_fields = {"nickname", "email", "password"}
+    allowed_fields = {"nickname", "email"}
     fields = allowed_fields & req.json.keys()
     if not fields:
         logging.warning(f"Unknown fields: {req.json.keys()}")
         raise InvalidUsage(f"Autorized fields are {allowed_fields}")
 
     async with shared.postgres.transaction():
-        sets = " ".join([f"SET {field} = ${idx+2}" for idx, field in enumerate(fields)])
-        stmt = await shared.postgres.prepare(f"UPDATE FROM tb_users {sets} WHERE userid = $1")
+        sets = ", ".join([f"{field} = ${idx+2}" for idx, field in enumerate(fields)])
+        stmt = await shared.postgres.prepare(f"UPDATE tb_users SET {sets} WHERE userid = $1")
         await stmt.fetch(jwt["id"], *map(lambda field: req.json[field], fields))
     
     return text("ok")
@@ -140,17 +140,24 @@ async def delete_my_account(req, jwt):
 
     return text("ok")
 
-uuid_re = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-@auth_bp.route(f"/accounts/<clientid:{uuid_re}>", methods=["GET"])
+@auth_bp.route(f"/accounts/<clientid>", methods=["GET"])
 @safe_http_exception
 @authenticate({ClientType.USER, ClientType.ADMIN})
 async def get_account(req, clientid, jwt):
-    stmt = await shared.postgres.prepare("SELECT userid, email, is_verified, is_admin FROM get_user_by_id($1);")
+    stmt = await shared.postgres.prepare("SELECT userid, nickname, email, is_verified, is_admin FROM get_user_by_id($1);")
     user = await stmt.fetchrow(clientid)
 
-    return json({field: value for field, value in user.items()})
+    obj = {
+        "userid": str(user["userid"]),
+        "nickname": user["nickname"],
+        "is_admin": user["is_admin"]
+    }
+    if jwt["type"] == ClientType.ADMIN:
+        obj.update({"email": user["email"], "is_verified": user["is_verified"]})
 
-@auth_bp.route(f"/accounts/<clientid:{uuid_re}>/validate/<token>", methods=["GET"])
+    return json(obj)
+
+@auth_bp.route(f"/accounts/<clientid>/validate/<token>", methods=["GET"])
 @safe_http_exception
 async def validate(req, clientid, token):
     if not (await shared.redis.exists(f"users:{clientid}:validation_token")):
@@ -168,26 +175,26 @@ async def validate(req, clientid, token):
     
     return text("ok")
 
-@auth_bp.route(f"/accounts/<clientid:{uuid_re}>/reset/<token>", methods=["POST"])
+@auth_bp.route(f"/accounts/<clientid>/reset", methods=["POST"])
 @safe_http_exception
-@jsonfields({"password"})
-async def reset(req, clientid, token, id):
+@jsonfields({"password", "token"})
+async def reset(req, clientid):
     if not (await shared.redis.exists(f"users:{clientid}:reset_token")):
         logger.log(45, f"No reset token available for user {clientid} (IP: {req.ip})")
         raise Forbidden("No reset token available for this account")
 
-    reset_token = await (shared.redis.get(f"users:{clientid}:resettoken"))
-    if not compare_digest(token, reset_token):
+    reset_token = await (shared.redis.get(f"users:{clientid}:reset_token"))
+    if not compare_digest(req.json["token"].encode(), reset_token):
         logger.log(45, f"Wrong reset token for user {clientid} (IP: {req.ip})")
         raise Forbidden("Wrong reset token")
 
     async with shared.postgres.transaction():
-        stmt = await shared.postgres.prepare("UPDATE FROM tb_users SET password = $1 WHERE userid = $2")
-        await stmt.fetch(req.json["password"], clientid)
+        stmt = await shared.postgres.prepare("UPDATE tb_users SET password = $1 WHERE userid = $2")
+        await stmt.fetch(bcrypt.hashpw(req.json["password"].encode(), bcrypt.gensalt()), clientid)
     
     return text("ok")
 
-@auth_bp.route(f"/accounts/<clientid:{uuid_re}>", methods=["PUT"])
+@auth_bp.route(f"/accounts/<clientid>", methods=["PUT"])
 @safe_http_exception
 @jsonfields({})
 @authenticate({ClientType.ADMIN})
@@ -205,7 +212,7 @@ async def update_account(req, clientid, token, jwt):
     
     return text("ok")
 
-@auth_bp.route(f"/accounts/<clientid:{uuid_re}>", methods=["DELETE"])
+@auth_bp.route(f"/accounts/<clientid>", methods=["DELETE"])
 @safe_http_exception
 @jsonfields({})
 @authenticate({ClientType.ADMIN})

@@ -1,0 +1,4 @@
+from logging import DEBUG, INFO, WARNING, ERROR, FATAL
+
+API_URL = "http://127.0.0.1:4173/"
+LOG_LEVEL = DEBUG

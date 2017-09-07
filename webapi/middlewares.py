@@ -7,6 +7,7 @@ from enum import Enum
 from sanic.response import json
 from config import JWT_SECRET
 import shared
+from asyncpg.exceptions import IntegrityConstraintViolationError
 
 logger = getLogger(__name__)
 
@@ -24,6 +25,8 @@ def safe_http_exception(func):
             return await func(req, *args, **kwargs)
         except SanicException as http_error:
             return json({"error": str(http_error)}, http_error.status_code)
+        except IntegrityConstraintViolationError as sql_error:
+            return json({"error": sql_error.args[0]}, 400)
     return wrapped
 
 def authenticate(allowed_types: set):
@@ -66,7 +69,7 @@ def jsonfields(fields: set):
         @wraps(func)
         async def jsonfields_wrapped(req, *args, **kwargs):
             ct = req.headers.get("Content-Type")
-            if ct is None or ct != "application/json":
+            if ct is None or "application/json" not in ct:
                 raise InvalidUsage("JSON required")
             if not fields:
                 pass
