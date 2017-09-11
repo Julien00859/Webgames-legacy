@@ -312,4 +312,5 @@ async def ready(client, jwtdata, game_id: UUID):
     logger.info(f"{client} is ready.")
     users[jwtdata.id] = True
     if all(users.values()):
+        # TODO: queue
         udpbroadcaster_send("allready", game_id, len(users))

@@ -33,18 +33,21 @@ def ready_check(game_info, players_ids):
     future = asyncio.get_event_loop().call_later(READY_CHECK_TIMEOUT, ready_check_fail, game_id)
     shared.games[game_id] = Game(game_info, future, players_ids)
     getLogger(f"{__name__}.{game_id}").info("Send ready check challenge to users")
+    # TODO: queue
     udpbroadcaster_send("readycheck", players_ids, game_info.name, game_id)
 
 def ready_check_fail(game_id):
     getLogger(f"{__name__}.{game_id}").info("Ready check challenge failed")
     asyncio.ensure_future(run_redis_script("remove_game.lua", [str(game_id), str(len(shared.games[game_id].players))], []))
     del shared.games[game_id]
+    # TODO: queue
     udpbroadcaster_send("readyfail", game_id)
 
 async def run(game_id):
     game = shared.games[game_id]
     glogger = getLogger(f"{__name__}.{game_id}")
     glogger.info("Ready check challenge successful !")
+    # TODO: queue
     relay_to_players = partial(udpbroadcaster_send, "relay_to_players", game.players)
 
     glogger.debug("Generate JSON Web Token")
@@ -68,6 +71,7 @@ async def run(game_id):
     myports = [ports.pop() for n in range(len(game.ports))]
     myports_str = " ".join([game.ports[n][1] + ":" + str(myports[n]) for n in range(len(myports))])
 
+    # TODO: queue
     relay_to_players(f"gamestart {game.name} {game_id} {myports_str}")
 
     glogger.info("Start game")
@@ -77,4 +81,6 @@ async def run(game_id):
     await run_redis_script("remove_game.lua", [str(game_id), len(game.players)], [])
 
     await shared.http.delete(f"{API_URL}/games/{game_id}")
+
+    # TODO: queue
     relay_to_players(f"gameover {game.name} {game_id}")
