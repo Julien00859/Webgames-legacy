@@ -1,0 +1,119 @@
+DEBUG:asyncio:connect <socket.socket fd=7, family=AddressFamily.AF_INET, type=2049, proto=6, laddr=('0.0.0.0', 0)> to ('127.0.0.1', 4173)
+DEBUG:asyncio:poll 300469.482 ms took 0.016 ms: 1 events
+DEBUG:asyncio:<socket.socket fd=7, family=AddressFamily.AF_INET, type=2049, proto=6, laddr=('127.0.0.1', 34128), raddr=('127.0.0.1', 4173)> connected to 127.0.0.1:4173: (<_SelectorSocketTransport fd=7 read=polling write=<idle, bufsize=0>>, <aiohttp.client_proto.ResponseHandler object at 0x7f18c8c33160>)
+DEBUG:asyncio:poll 300465.495 ms took 0.629 ms: 1 events
+DEBUG:asyncio:poll 3.301 ms took 1.004 ms: 1 events
+DEBUG:asyncio:poll 3.398 ms took 0.536 ms: 1 events
+DEBUG:asyncio:poll 3.796 ms took 2.219 ms: 1 events
+DEBUG:asyncio:poll 3.509 ms took 1.327 ms: 1 events
+DEBUG:asyncio:poll 3.374 ms took 2.094 ms: 1 events
+DEBUG:asyncio:poll 3.381 ms took 3.500 ms: 1 events
+DEBUG:asyncio:poll 3.345 ms took 1.050 ms: 1 events
+DEBUG:asyncio:poll 3.535 ms took 3.978 ms: 1 events
+DEBUG:asyncio:poll 3.497 ms took 0.149 ms: 1 events
+DEBUG:asyncio:poll 3.533 ms took 3.275 ms: 1 events
+DEBUG:asyncio:poll 3.262 ms took 3.270 ms: 1 events
+DEBUG:asyncio:poll 3.304 ms took 1.134 ms: 1 events
+DEBUG:asyncio:poll 3.211 ms took 1.572 ms: 1 events
+DEBUG:asyncio:poll 3.501 ms took 0.039 ms: 1 events
+DEBUG:asyncio:poll 3.298 ms took 0.303 ms: 1 events
+DEBUG:asyncio:poll 3.230 ms took 1.559 ms: 1 events
+DEBUG:asyncio:poll 3.445 ms took 1.836 ms: 1 events
+DEBUG:asyncio:poll 3.238 ms took 0.738 ms: 1 events
+DEBUG:asyncio:poll 3.674 ms took 3.363 ms: 1 events
+DEBUG:asyncio:poll 3.465 ms took 1.201 ms: 1 events
+DEBUG:asyncio:poll 3.333 ms took 1.813 ms: 1 events
+DEBUG:asyncio:poll 3.254 ms took 0.044 ms: 1 events
+DEBUG:asyncio:poll 3.460 ms took 3.979 ms: 1 events
+DEBUG:asyncio:poll 3.599 ms took 3.372 ms: 1 events
+DEBUG:asyncio:poll 3.636 ms took 0.029 ms: 1 events
+DEBUG:asyncio:poll 3.676 ms took 0.982 ms: 1 events
+DEBUG:asyncio:poll 3.411 ms took 3.716 ms: 1 events
+DEBUG:asyncio:poll 3.455 ms took 0.932 ms: 1 events
+DEBUG:asyncio:poll 3.428 ms took 0.049 ms: 1 events
+DEBUG:asyncio:poll 3.396 ms took 0.431 ms: 1 events
+DEBUG:asyncio:poll 3.471 ms took 0.994 ms: 1 events
+DEBUG:asyncio:poll 3.292 ms took 0.464 ms: 1 events
+DEBUG:asyncio:poll 3.439 ms took 1.110 ms: 1 events
+DEBUG:asyncio:poll 3.173 ms took 2.593 ms: 1 events
+DEBUG:asyncio:poll 3.384 ms took 4.122 ms: 1 events
+DEBUG:asyncio:poll 3.396 ms took 1.061 ms: 1 events
+DEBUG:asyncio:poll 3.497 ms took 4.167 ms: 1 events
+DEBUG:asyncio:poll 3.420 ms took 3.655 ms: 1 events
+DEBUG:asyncio:poll 3.288 ms took 1.218 ms: 1 events
+DEBUG:asyncio:poll 3.657 ms took 1.747 ms: 1 events
+DEBUG:asyncio:poll 3.432 ms took 1.567 ms: 1 events
+DEBUG:asyncio:poll 3.099 ms took 1.543 ms: 1 events
+DEBUG:asyncio:connect <socket.socket fd=7, family=AddressFamily.AF_INET, type=2049, proto=6, laddr=('0.0.0.0', 0)> to ('127.0.0.1', 4173)
+DEBUG:asyncio:poll 2.893 ms took 0.015 ms: 1 events
+DEBUG:asyncio:<socket.socket fd=7, family=AddressFamily.AF_INET, type=2049, proto=6, laddr=('127.0.0.1', 34132), raddr=('127.0.0.1', 4173)> connected to 127.0.0.1:4173: (<_SelectorSocketTransport fd=7 read=polling write=<idle, bufsize=0>>, <aiohttp.client_proto.ResponseHandler object at 0x7f18c8b8fbe0>)
+DEBUG:asyncio:poll 3.805 ms took 0.478 ms: 1 events
+DEBUG:asyncio:poll 3.722 ms took 0.552 ms: 1 events
+DEBUG:asyncio:poll 3.303 ms took 0.529 ms: 1 events
+DEBUG:asyncio:poll 3.668 ms took 3.674 ms: 1 events
+DEBUG:asyncio:poll 3.469 ms took 1.662 ms: 1 events
+DEBUG:asyncio:poll 3.772 ms took 2.301 ms: 1 events
+DEBUG:asyncio:poll 3.463 ms took 4.042 ms: 1 events
+DEBUG:asyncio:poll 3.577 ms took 0.037 ms: 1 events
+DEBUG:asyncio:poll 3.799 ms took 4.019 ms: 1 events
+DEBUG:asyncio:poll 3.453 ms took 0.560 ms: 1 events
+DEBUG:asyncio:poll 3.477 ms took 4.056 ms: 1 events
+DEBUG:asyncio:poll 3.320 ms took 0.047 ms: 1 events
+DEBUG:asyncio:poll 3.501 ms took 3.372 ms: 1 events
+DEBUG:asyncio:poll 3.240 ms took 0.684 ms: 1 events
+DEBUG:asyncio:poll 3.575 ms took 2.444 ms: 1 events
+DEBUG:asyncio:poll 3.460 ms took 0.909 ms: 1 events
+DEBUG:asyncio:poll 3.580 ms took 2.654 ms: 1 events
+DEBUG:asyncio:poll 3.488 ms took 2.313 ms: 1 events
+DEBUG:asyncio:poll 3.342 ms took 0.049 ms: 1 events
+DEBUG:asyncio:poll 3.439 ms took 1.364 ms: 1 events
+DEBUG:asyncio:poll 3.568 ms took 0.628 ms: 1 events
+DEBUG:asyncio:poll 3.474 ms took 0.043 ms: 1 events
+DEBUG:asyncio:poll 3.453 ms took 2.338 ms: 1 events
+DEBUG:asyncio:poll 3.785 ms took 3.777 ms: 1 events
+DEBUG:asyncio:poll 3.257 ms took 3.179 ms: 1 events
+DEBUG:asyncio:poll 3.450 ms took 3.249 ms: 1 events
+DEBUG:asyncio:poll 3.463 ms took 1.690 ms: 1 events
+DEBUG:asyncio:poll 3.378 ms took 3.322 ms: 1 events
+DEBUG:asyncio:poll 3.283 ms took 2.870 ms: 1 events
+DEBUG:asyncio:poll 3.546 ms took 4.023 ms: 1 events
+DEBUG:asyncio:poll 3.460 ms took 0.045 ms: 1 events
+DEBUG:asyncio:poll 3.426 ms took 2.477 ms: 1 events
+DEBUG:asyncio:poll 3.433 ms took 0.045 ms: 1 events
+DEBUG:asyncio:poll 3.309 ms took 0.367 ms: 1 events
+DEBUG:asyncio:poll 3.412 ms took 0.453 ms: 1 events
+DEBUG:asyncio:poll 3.538 ms took 0.039 ms: 1 events
+DEBUG:asyncio:poll 3.444 ms took 1.778 ms: 1 events
+DEBUG:asyncio:poll 3.466 ms took 0.363 ms: 1 events
+DEBUG:asyncio:connect <socket.socket fd=7, family=AddressFamily.AF_INET, type=2049, proto=6, laddr=('0.0.0.0', 0)> to ('127.0.0.1', 4173)
+DEBUG:asyncio:poll 2.655 ms took 0.013 ms: 1 events
+DEBUG:asyncio:<socket.socket fd=7, family=AddressFamily.AF_INET, type=2049, proto=6, laddr=('127.0.0.1', 34172), raddr=('127.0.0.1', 4173)> connected to 127.0.0.1:4173: (<_SelectorSocketTransport fd=7 read=polling write=<idle, bufsize=0>>, <aiohttp.client_proto.ResponseHandler object at 0x7f18c8c33160>)
+DEBUG:asyncio:poll 3.631 ms took 0.028 ms: 1 events
+ERROR:asyncio:<CoroWrapper ok_account_update() running at ./client.py:113, created at /usr/lib/python3.6/asyncio/coroutines.py:84> was never yielded from
+Coroutine object created at (most recent call last):
+  File "./client.py", line 268, in <module>
+    main()
+  File "./client.py", line 75, in main
+    loop=loop)).run()
+  File "/home/julien/Projets/WebGames/client-tui/venv/lib/python3.6/site-packages/urwid/main_loop.py", line 278, in run
+    self._run()
+  File "/home/julien/Projets/WebGames/client-tui/venv/lib/python3.6/site-packages/urwid/main_loop.py", line 376, in _run
+    self.event_loop.run()
+  File "/home/julien/Projets/WebGames/client-tui/venv/lib/python3.6/site-packages/urwid/main_loop.py", line 1326, in run
+    self._loop.run_forever()
+  File "/usr/lib/python3.6/asyncio/base_events.py", line 421, in run_forever
+    self._run_once()
+  File "/usr/lib/python3.6/asyncio/base_events.py", line 1418, in _run_once
+    handle._run()
+  File "/usr/lib/python3.6/asyncio/events.py", line 127, in _run
+    self._callback(*self._args)
+  File "/usr/lib/python3.6/asyncio/coroutines.py", line 125, in send
+    return self.gen.send(value)
+  File "./client.py", line 188, in coro
+    await process_response(resp, callback)
+  File "/usr/lib/python3.6/asyncio/coroutines.py", line 109, in __next__
+    return self.gen.send(None)
+  File "./client.py", line 83, in process_response
+    callback(resp, *args, **kwargs)
+  File "/usr/lib/python3.6/asyncio/coroutines.py", line 84, in debug_wrapper
+    return CoroWrapper(gen, None)

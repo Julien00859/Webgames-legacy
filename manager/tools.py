@@ -45,10 +45,7 @@ class DispatcherMeta(type):
 
 
 def udpbroadcaster_send(datagram_id, *args):
-    if not shared.udpbroadcaster or shared.udpbroadcaster.is_closing():
-        raise OSError("Socket closed")
-
-    shared.udpbroadcaster.sendto(pickle_dumps((datagram_id, *args)))
+    raise RuntimeError("Deprecied function")
 
 
 def cast_using_type_hints(type_hints: dict, kwargs: dict):

@@ -208,7 +208,7 @@ async def quit_(client, jwtdata, reason: str = ""):
     """
     Close the connection, the socket must be closed right after sending or receiving the command.
     """
-    logger.info("%s has closed the connection: %s", str(client), reason or "-no reason given-")
+    logger.info("%s has closed the connection: %s", str(client), reason if reason else "-no reason given-")
     await client.close()
 
 @ClientHandler.register(None, r"(?P<value>[0-9]{4})")
@@ -297,9 +297,6 @@ async def leave(client, jwtdata):
 
 @ClientHandler.register("user", r"(?P<game_id>" + uuid_re.pattern + r")")
 async def ready(client, jwtdata, game_id: UUID):
-    from pprint import pprint
-    pprint(shared.ready_check)
-    print(game_id in shared.ready_check)
     users, addr = shared.ready_check.get(game_id, (None, None))
     if users is None:
         logger.warning("%s is ready for a non available game: %s", str(client), game_id)
@@ -315,4 +312,5 @@ async def ready(client, jwtdata, game_id: UUID):
     logger.info(f"{client} is ready.")
     users[jwtdata.id] = True
     if all(users.values()):
+        # TODO: queue
         udpbroadcaster_send("allready", game_id, len(users))

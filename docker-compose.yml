@@ -6,6 +6,10 @@ services:
       - POSTGRES_USER=webgames
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=webgames
+    volumes:
+      - ./postgres-init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - 5432:5432
   redis:
     image: redis:alpine
     environment:
@@ -22,12 +26,10 @@ services:
     ports:
       - 80:80
       - 443:443
-    command: ["dockerize", "-template", "/etc/nginx/conf.d/redirect.conf.tmpl:/etc/nginx/conf.d/redirect.conf", "-template", "/etc/nginx/conf.d/webapi.conf.tmpl:/etc/nginx/conf.d/webapi.conf", "-wait", "http://webapi:5000/check", "nginx", "-g", "daemon off;"]
+    command: ["dockerize", "-template", "/etc/nginx/conf.d/redirect.conf.tmpl:/etc/nginx/conf.d/redirect.conf", "-template", "/etc/nginx/conf.d/webapi.conf.tmpl:/etc/nginx/conf.d/webapi.conf", "-wait", "http://webapi:4173/status", "nginx", "-g", "daemon off;"]
   webapi:
-    build: ./api
+    build: ./webapi
     environment:
-      - USE_SSL=false
-      - NODE_ENV=production
       - POSTGRES_HOST=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - REDIS_HOST=redis
@@ -38,18 +40,10 @@ services:
       - postgres:postgres
       - redis:redis
     volumes:
-      - ./api/admin:/usr/src/app/admin
-      - ./api/auth:/usr/src/app/auth
-      - ./api/common-middlewares:/usr/src/app/common-middlewares
-      - ./api/data:/usr/src/app/data
-      - ./api/postgres:/usr/src/app/postgres
-      - ./api/queue:/usr/src/app/queue
-      - ./api/socket:/usr/src/app/socket
-      - ./api/config.js:/usr/src/app/config.js
-      - ./api/package.json:/usr/src/app/package.json
-      - ./api/seed.js:/usr/src/app/seed.js
-      - ./api/server.js:/usr/src/app/server.js
-    command: ["dockerize", "-wait", "tcp://postgres:5432", "-wait", "tcp://redis:6379", "yarn", "server:prod"]
+      - ./webapi:/usr/src/app/
+    ports:
+      - 4173:4173
+    command: ["dockerize", "-wait", "tcp://postgres:5432", "-wait", "tcp://redis:6379", "python", "start.py"]
   manager:
     build: ./manager
     environment:
@@ -67,5 +61,5 @@ services:
       - 4171:4171
     volumes:
       - ./manager:/usr/src/app
-    command: ["dockerize", "-wait", "tcp://redis:6379", "-wait", "http://api.webgames.ephec-ti.be/check", "python", "start.py"]
+    command: ["dockerize", "-wait", "tcp://redis:6379", "-wait", "http://api.webgames.ephec-ti.be/status", "python", "start.py"]
 

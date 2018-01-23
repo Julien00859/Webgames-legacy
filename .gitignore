@@ -1,21 +1,21 @@
 # Secret configuration
 .env
-api/.env
-yarn-error.log
-docker-compose.yml
 nginx/conf.d/*.conf
+postgres-init-scripts/dev.sql
 
 # Virtual Environements
-api/node_modules
+client-tui/venv/
 manager/venv/
+webapi/venv/
 
 # Editors
 .vscode/
 
 # Python cached compiled files
+client-tui/__pycache__
+client-tui/*.pyc
 manager/__pycache__
 manager/*.pyc
+webapi/__pycache__
+webapi/*.pyc
 
-# Others
-api/yarn-error.log
-.DS_Store

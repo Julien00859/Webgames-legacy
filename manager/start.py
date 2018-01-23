@@ -222,22 +222,6 @@ def main():
                                loop=loop)
     ws_server = loop.run_until_complete(ws_coro)
 
-    # UDP Broadcaster
-    logger.info("Init UPD Broadcaster on port %i", UDP_BROADCASTER_PORT)
-    udpb_client_coro = loop.create_datagram_endpoint(
-        UDPBroadcaster,
-        remote_addr=("255.255.255.255", UDP_BROADCASTER_PORT),
-        allow_broadcast=True
-    )
-    udpb_server_coro = loop.create_datagram_endpoint(
-        UDPBroadcaster,
-        local_addr=("0.0.0.0", UDP_BROADCASTER_PORT),
-        allow_broadcast=True
-    )
-    udpb_client, _ = loop.run_until_complete(udpb_client_coro)
-    udpb_server, _ = loop.run_until_complete(udpb_server_coro)
-    shared.udpbroadcaster = udpb_client
-
     # Setup clients
     # Redis
     logger.info("Connect to %s Redis Server at %s:%d on database %d %s password",
@@ -291,8 +275,6 @@ def main():
     logger.info("Shutting down servers")
     tcp_server.close()
     ws_server.close()
-    udpb_client.close()
-    udpb_server.close()
     shared.redis.close()
     shared.http.close()
     loop.run_until_complete(asyncio.wait([
