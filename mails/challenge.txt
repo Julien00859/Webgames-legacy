@@ -1,3 +1,0 @@
-To complete your registration, please go to the following url: {scheme}://{domain}/challenge/{challenge}
-
-- The WebGames Team
