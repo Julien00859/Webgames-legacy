@@ -1,0 +1,71 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_USER=webgames
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=webgames
+  redis:
+    image: redis:alpine
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: "redis-server --requirepass $REDIS_PASSWORD"
+  nginx:
+    build: ./nginx
+    links:
+      - webapi:webapi
+    volumes:
+      - ./nginx/www:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - /etc/letsencrypt/live:/etc/letsencrypt/live
+    ports:
+      - 80:80
+      - 443:443
+    command: ["dockerize", "-template", "/etc/nginx/conf.d/redirect.conf.tmpl:/etc/nginx/conf.d/redirect.conf", "-template", "/etc/nginx/conf.d/webapi.conf.tmpl:/etc/nginx/conf.d/webapi.conf", "-wait", "http://webapi:5000/check", "nginx", "-g", "daemon off;"]
+  webapi:
+    build: ./api
+    environment:
+      - USE_SSL=false
+      - NODE_ENV=production
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - MANAGER_HOST=manager
+      - JWT_SECRET=${JWT_SECRET}
+    links:
+      - postgres:postgres
+      - redis:redis
+    volumes:
+      - ./api/admin:/usr/src/app/admin
+      - ./api/auth:/usr/src/app/auth
+      - ./api/common-middlewares:/usr/src/app/common-middlewares
+      - ./api/data:/usr/src/app/data
+      - ./api/postgres:/usr/src/app/postgres
+      - ./api/queue:/usr/src/app/queue
+      - ./api/socket:/usr/src/app/socket
+      - ./api/config.js:/usr/src/app/config.js
+      - ./api/package.json:/usr/src/app/package.json
+      - ./api/seed.js:/usr/src/app/seed.js
+      - ./api/server.js:/usr/src/app/server.js
+    command: ["dockerize", "-wait", "tcp://postgres:5432", "-wait", "tcp://redis:6379", "yarn", "server:prod"]
+  manager:
+    build: ./manager
+    environment:
+      - API_URL=http://api.webgames.ephec-ti.be
+      - LOG_LEVEL=INFO
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    links:
+      - redis:redis
+      - nginx:nginx
+      - nginx:api.webgames.ephec-ti.be
+    ports:
+      - 4170:4170
+      - 4171:4171
+    volumes:
+      - ./manager:/usr/src/app
+    command: ["dockerize", "-wait", "tcp://redis:6379", "-wait", "http://api.webgames.ephec-ti.be/check", "python", "start.py"]
+

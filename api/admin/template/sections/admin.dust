@@ -1,0 +1,23 @@
+{>"base"/}
+
+{<section}
+<div class="content">
+  <h1 class="admin-title">WebGames - Admin page</h1>
+  {#games}
+  <div class="game">
+    <form class="game-form">
+      <h2 class="game-name" data-game-name="{g_name}">{g_name}</h2>
+      <input type="text" name="g_path" class="game-path" value={g_path} required>
+      <input type="text" name="g_executable" class="game-executable" value={g_executable} required>
+      <button type="submit" class="game-update" tabindex="0">update</button>
+    </form>
+    <div class="game-toggle-status-container">
+      <input id="status" type="checkbox" class="toggle-switch-checkbox" name="{g_name}" {?g_status}checked{/g_status}>
+      <label for="status" class="game-toggle-status toggle-switch" tabindex="0">Status</label>
+    </div>
+
+  </div>
+  {/games}
+</div>
+
+{/section}
